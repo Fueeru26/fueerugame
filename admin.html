@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<script>(function(){try{var t=localStorage.getItem('fueeru_theme');if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel — Fueeru Game</title>
+<link rel="icon" type="image/png" href="webpictures/logo.png">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="admin-body">
+
+<!-- ===== VIEW: Login gate ===== -->
+<section id="viewLogin" class="admin-login-wrap">
+  <div class="admin-login-card">
+    <img src="webpictures/logo.png" alt="Logo Fueeru Game">
+    <h1>Admin Panel</h1>
+    <p class="sub">Masukkan kata sandi untuk mengelola Fueeru Game.</p>
+    <form id="loginForm">
+      <input type="password" id="passwordInput" placeholder="Kata sandi" autocomplete="current-password" required>
+      <button type="submit" class="btn-primary">Masuk</button>
+      <div class="admin-error" id="loginError"></div>
+    </form>
+  </div>
+</section>
+
+<!-- ===== Admin shell (setelah login) ===== -->
+<div id="adminShell" class="hidden">
+  <div class="admin-topbar">
+    <div class="brand-mini"><img src="webpictures/logo.png" alt="">Fueeru Game</div>
+    <button class="admin-logout" id="btnLogout">Keluar</button>
+  </div>
+
+  <div class="admin-wrap">
+
+    <!-- ===== VIEW: Menu utama ===== -->
+    <div id="viewMenu" class="admin-panel-card">
+      <h1>Admin Panel</h1>
+      <div class="admin-menu-grid">
+        <button type="button" class="admin-menu-card" id="menuAturPostingan">
+          <span class="amc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4z"/></svg>
+          </span>
+          <span>
+            <div class="amc-title">Atur Postingan</div>
+            <div class="amc-sub">Tambah, edit, dan hapus postingan game</div>
+          </span>
+        </button>
+        <button type="button" class="admin-menu-card" id="menuLihatLaporan">
+          <span class="amc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L14.71 3.86a2 2 0 00-3.42 0z"/></svg>
+          </span>
+          <span>
+            <div class="amc-title">Lihat Laporan</div>
+            <div class="amc-sub">Laporan yang masuk dari pengguna</div>
+          </span>
+        </button>
+        <button type="button" class="admin-menu-card" id="menuManajemenFile">
+          <span class="amc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+          </span>
+          <span>
+            <div class="amc-title">Manajemen File</div>
+            <div class="amc-sub">Lihat &amp; kelola folder / file website</div>
+          </span>
+        </button>
+      </div>
+      <a href="index.html" class="btn-back-to-site">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+        Kembali ke Website
+      </a>
+    </div>
+
+    <!-- ===== VIEW: Atur Postingan (list) ===== -->
+    <div id="viewPosts" class="admin-panel-card hidden">
+      <div class="admin-subheader">
+        <button type="button" class="btn-back-mini" id="btnBackFromPosts">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1>Atur Postingan</h1>
+      </div>
+      <div class="admin-search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="postSearchInput" placeholder="Cari judul postingan…">
+      </div>
+      <button class="btn-add" id="btnAddPost">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Tambahkan Postingan
+      </button>
+      <div id="adminPostList"></div>
+      <div class="pagination" id="postsPagination"></div>
+    </div>
+
+    <!-- ===== VIEW: Add / Edit form ===== -->
+    <div id="viewForm" class="admin-panel-card hidden">
+      <div class="admin-subheader">
+        <button type="button" class="btn-back-mini" id="btnBackFromForm">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1 id="formHeading">Tambah Postingan</h1>
+      </div>
+      <form class="admin-form" id="postForm">
+        <label for="fieldTitle">Masukkan Judul</label>
+        <input type="text" id="fieldTitle" placeholder="Judul postingan" required>
+
+        <label>Upload Gambar Header</label>
+        <div class="upload-box" id="uploadBox">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div id="uploadLabel">Klik untuk upload gambar header</div>
+          <input type="file" id="fieldImage" accept="image/*">
+          <img id="uploadPreview" class="upload-preview" alt="Pratinjau gambar header">
+        </div>
+
+        <label for="fieldJenis">Masukkan Jenis Game</label>
+        <select id="fieldJenis" required></select>
+
+        <label>Masukkan Genre Game</label>
+        <div class="tag-input-wrap" id="genreTagWrap">
+          <div id="genreChipsHolder" style="display:contents;"></div>
+          <input type="text" id="genreInputField" class="tag-input-field" placeholder="Ketik genre lalu Enter…" autocomplete="off">
+          <div class="tag-suggestions" id="genreSuggestions"></div>
+        </div>
+        <div class="tag-hint">Ketik beberapa huruf untuk melihat genre yang sudah ada, atau ketik genre baru lalu tekan Enter.</div>
+
+        <label>Isi Postingan</label>
+        <div class="editor-toolbar" id="editorToolbar">
+          <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+          <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+          <button type="button" data-cmd="underline" title="Underline"><u>U</u></button>
+          <div class="sep"></div>
+          <button type="button" data-cmd="justifyLeft" title="Rata kiri">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
+          </button>
+          <button type="button" data-cmd="justifyCenter" title="Rata tengah">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+          </button>
+          <button type="button" data-cmd="justifyRight" title="Rata kanan">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div class="sep"></div>
+          <button type="button" id="btnInsertImage" title="Sisipkan gambar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </button>
+          <button type="button" id="btnInsertLink" title="Sisipkan link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.07 0l2.83-2.83a5 5 0 00-7.07-7.07L11.5 4.5"/><path d="M14 11a5 5 0 00-7.07 0L4.1 13.83a5 5 0 007.07 7.07L12.5 19.5"/></svg>
+          </button>
+          <input type="file" id="contentImageInput" accept="image/*" class="hidden">
+        </div>
+        <div class="editor-content" id="editorContent" contenteditable="true" data-placeholder="Tulis isi postingan di sini…"></div>
+
+        <div class="admin-form-actions">
+          <button type="button" class="btn-cancel" id="btnCancelForm">Batal</button>
+          <button type="submit" class="btn-primary">Publish</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ===== VIEW: Lihat Laporan ===== -->
+    <div id="viewReports" class="admin-panel-card hidden">
+      <div class="admin-subheader">
+        <button type="button" class="btn-back-mini" id="btnBackFromReports">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1>Lihat Laporan</h1>
+      </div>
+      <div class="admin-search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="reportSearchInput" placeholder="Cari judul, nama, atau isi laporan…">
+      </div>
+      <button type="button" class="btn-danger-outline" id="btnDeleteAllReports">Hapus Semua</button>
+      <div id="adminReportList"></div>
+      <div class="pagination" id="reportsPagination"></div>
+    </div>
+
+    <!-- ===== VIEW: Manajemen File (daftar folder/file) ===== -->
+    <div id="viewFiles" class="admin-panel-card hidden">
+      <div class="admin-subheader">
+        <button type="button" class="btn-back-mini" id="btnBackFromFiles">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1 id="filesHeading">Manajemen File</h1>
+      </div>
+      <div class="admin-search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="fileSearchInput" placeholder="Cari nama folder atau file">
+      </div>
+      <div class="vfs-toolbar">
+        <div class="vfs-dropdown" id="addDropdownWrap">
+          <button type="button" class="vfs-dropdown-btn" id="btnAddDropdownToggle">
+            Tambahkan
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="vfs-dropdown-menu" id="addDropdownMenu">
+            <button type="button" id="btnOpenAddFileModal">Tambahkan File</button>
+            <button type="button" id="btnOpenAddFolderModal">Tambahkan Folder</button>
+          </div>
+        </div>
+        <select class="vfs-sort-select" id="fileSortSelect">
+          <option value="asc">Urutkan A -&gt; Z</option>
+          <option value="desc">Urutkan Z -&gt; A</option>
+        </select>
+      </div>
+
+      <div class="vfs-grid" id="vfsGrid"></div>
+      <div class="pagination" id="vfsGridPagination"></div>
+
+      <div class="vfs-file-list" id="vfsFileList"></div>
+      <div class="pagination" id="vfsFilePagination"></div>
+    </div>
+
+    <!-- ===== VIEW: Edit File (Manajemen File) ===== -->
+    <div id="viewFileEdit" class="admin-panel-card hidden">
+      <div class="admin-subheader">
+        <button type="button" class="btn-back-mini" id="btnBackFromFileEdit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1 id="fileEditHeading">index.html</h1>
+      </div>
+      <div class="subsection-title" style="margin-top:4px;">Edit File</div>
+      <div class="file-edit-note" id="fileEditNote"></div>
+      <textarea class="file-edit-textarea" id="fileEditTextarea" placeholder="(Isi filenya disini)"></textarea>
+      <button type="button" class="btn-primary" id="btnSaveFileEdit" style="margin-top:16px;">Simpan</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== Modal: Sisipkan Link ===== -->
+<div class="modal-backdrop" id="linkModalBackdrop">
+  <div class="modal-box">
+    <h3>Sisipkan Link</h3>
+    <label for="linkUrlInput">Masukkan Link</label>
+    <input type="url" id="linkUrlInput" placeholder="https://">
+    <label for="linkTextInput">Masukkan Teks</label>
+    <input type="text" id="linkTextInput" placeholder="(opsional — jika kosong, link yang tampil)">
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="btnCancelLink">Batal</button>
+      <button type="button" class="btn-primary" id="btnConfirmLink">Sisipkan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: Konfirmasi (dipakai untuk semua aksi hapus) ===== -->
+<div class="modal-backdrop" id="confirmModalBackdrop">
+  <div class="modal-box">
+    <h3 id="confirmModalTitle">Konfirmasi</h3>
+    <p class="modal-text" id="confirmModalMessage"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="btnConfirmModalCancel">Batal</button>
+      <button type="button" class="btn-primary danger" id="btnConfirmModalOk">Hapus</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: Lihat Laporan (detail lengkap) ===== -->
+<div class="modal-backdrop" id="viewReportModalBackdrop">
+  <div class="modal-box" style="max-width:460px;">
+    <h3>Detail Laporan</h3>
+    <div id="viewReportModalBody" class="view-report-body"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="btnCloseViewReport" style="flex:1;">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: Tambahkan File ===== -->
+<div class="modal-backdrop" id="addFileModalBackdrop">
+  <div class="modal-box">
+    <h3>Tambahkan File</h3>
+    <label for="newFileNameInput">Masukkan nama File</label>
+    <input type="text" id="newFileNameInput" placeholder="contoh: catatan.txt">
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="btnCancelAddFile" style="flex:1;">Batal</button>
+      <button type="button" class="btn-primary" id="btnConfirmAddFile" style="flex:1;">Tambahkan</button>
+    </div>
+
+    <div class="modal-divider"><span>atau</span></div>
+
+    <h3>Upload File</h3>
+    <div class="upload-box" id="uploadFileBox">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <div id="uploadFileLabel">Klik untuk pilih file</div>
+      <input type="file" id="uploadFileInput">
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn-primary" id="btnConfirmUploadFile" style="flex:1;">Tambahkan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: Tambahkan Folder ===== -->
+<div class="modal-backdrop" id="addFolderModalBackdrop">
+  <div class="modal-box">
+    <h3>Tambahkan Folder</h3>
+    <label for="newFolderNameInput">Masukkan nama Folder</label>
+    <input type="text" id="newFolderNameInput" placeholder="contoh: assets">
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="btnCancelAddFolder" style="flex:1;">Batal</button>
+      <button type="button" class="btn-primary" id="btnConfirmAddFolder" style="flex:1;">Tambahkan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: Preview Gambar ===== -->
+<div class="modal-backdrop" id="imagePreviewModalBackdrop">
+  <div class="modal-box">
+    <h3 id="imagePreviewName">gambar.png</h3>
+    <img id="imagePreviewImg" class="image-preview-img" alt="">
+    <input type="file" id="replaceImageInput" accept="image/*" class="hidden">
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="btnClosePreview" style="flex:1;">Tutup</button>
+      <button type="button" class="btn-primary" id="btnReplaceImage" style="flex:1;">Ganti Gambar</button>
+    </div>
+    <button type="button" class="btn-danger-outline" id="btnDeleteImageFromPreview" style="margin-top:12px;">Hapus Gambar</button>
+  </div>
+</div>
+
+<!-- ===== Menu titik-tiga (⋮) — dipakai bersama untuk semua item file/folder ===== -->
+<div class="vfs-context-menu" id="vfsContextMenu">
+  <button type="button" data-action="rename">Ganti Nama</button>
+  <button type="button" data-action="detail">Detail</button>
+  <button type="button" data-action="download" id="vfsContextDownload">Download</button>
+  <button type="button" data-action="delete" class="danger">Hapus</button>
+</div>
+
+<!-- ===== Modal: Ganti Nama ===== -->
+<div class="modal-backdrop" id="renameModalBackdrop">
+  <div class="modal-box">
+    <h3>Ganti Nama</h3>
+    <label for="renameInput">Masukkan nama baru</label>
+    <input type="text" id="renameInput">
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="btnCancelRename" style="flex:1;">Batal</button>
+      <button type="button" class="btn-primary" id="btnConfirmRename" style="flex:1;">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: Detail File/Folder ===== -->
+<div class="modal-backdrop" id="detailModalBackdrop">
+  <div class="modal-box">
+    <h3 id="detailModalTitle">Detail</h3>
+    <div id="detailModalBody" class="view-report-body"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="btnCloseDetail" style="flex:1;">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/data.js"></script>
+<script src="js/vfs.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

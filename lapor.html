@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<script>(function(){try{var t=localStorage.getItem('fueeru_theme');if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laporkan — Fueeru Game</title>
+
+<link rel="icon" type="image/png" href="webpictures/logo.png">
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+<body>
+
+<header class="navbar">
+  <button class="icon-btn" id="btnOpenSidebar" aria-label="Buka menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <a href="index.html" class="brand-link" aria-label="Fueeru Game — Beranda">
+    <img src="webpictures/header.png" alt="Fueeru Game">
+  </a>
+  <button class="icon-btn" id="btnOpenSearch" aria-label="Buka atau tutup pencarian">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+  </button>
+</header>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<nav class="sidebar" id="sidebar" aria-hidden="true">
+  <div class="sidebar-head">
+    <img src="webpictures/logo.png" alt="Logo Fueeru Game">
+    <div>
+      <div class="brand-name">Fueeru Game</div>
+      <div class="brand-tag">Portal Game Favoritmu</div>
+    </div>
+    <button class="icon-btn sidebar-close" id="btnCloseSidebar" aria-label="Tutup menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <ul class="sidebar-nav">
+    <li><a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Beranda</a></li>
+    <li><a href="category.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Jenis &amp; Genre</a></li>
+    <li><a href="lapor.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L14.71 3.86a2 2 0 00-3.42 0z"/></svg>Laporkan</a></li>
+    <li><a href="donasi.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 10-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 000-7.8z"/></svg>Donasi</a></li>
+    <li><a href="tentang.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Tentang</a></li>
+  </ul>
+  <div class="theme-toggle-row">
+    <span class="theme-toggle-label">Mode Tampilan</span>
+    <div class="theme-toggle" id="themeToggle">
+      <button type="button" class="theme-btn" data-theme="light" aria-label="Mode Terang">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/><line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/><line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/><line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/></svg>
+      </button>
+      <button type="button" class="theme-btn" data-theme="dark" aria-label="Mode Gelap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="sidebar-foot">© 2026 Fueeru Game. Semua hak dilindungi.</div>
+</nav>
+
+<div class="search-backdrop" id="searchBackdrop"></div>
+<div class="search-panel" id="searchPanel">
+  <div class="search-panel-inner">
+    <form id="searchForm" role="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="18" height="18" style="color:#8fd6fb;flex:0 0 auto;"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="search" id="searchInput" placeholder="Cari judul game…" aria-label="Cari game">
+      <button type="submit" class="search-submit" aria-label="Cari">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+    </form>
+    <button class="search-close-btn" id="btnCloseSearch" type="button" aria-label="Tutup pencarian">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+</div>
+
+<main class="container" style="max-width:640px;">
+  <div class="page-card">
+    <h1 class="page-title">Laporkan</h1>
+    <p class="lede-text" style="margin-bottom:20px;">Temukan link rusak, bug, atau ingin request game? Sampaikan lewat formulir di bawah ini.</p>
+
+    <div class="form-alert success" id="alertSuccess">✓ Laporan berhasil dikirim. Terima kasih!</div>
+    <div class="form-alert error" id="alertError">✕ Gagal mengirim. Judul laporan dan isi laporan wajib diisi.</div>
+
+    <form id="laporForm">
+      <div class="form-field">
+        <label for="fieldJudul">Masukkan Judul Laporan</label>
+        <input type="text" id="fieldJudul" placeholder="Contoh: Link download Post003 rusak">
+      </div>
+      <div class="form-field">
+        <label for="fieldNama">Masukkan Nama</label>
+        <input type="text" id="fieldNama" placeholder="Nama kamu (opsional)">
+      </div>
+      <div class="form-field">
+        <label for="fieldMedia">Masukkan Media Balasan</label>
+        <textarea id="fieldMedia" rows="2" placeholder="Masukkan Email atau Link Media Sosial yang dapat dihubungi (Opsional)"></textarea>
+      </div>
+      <div class="form-field">
+        <label for="fieldIsi">Masukkan Isi Laporan</label>
+        <textarea id="fieldIsi" rows="6" placeholder="Jelaskan laporanmu secara detail…"></textarea>
+      </div>
+      <div class="form-field">
+        <label>Lampiran (Opsional)</label>
+        <div class="file-upload-box" id="uploadBox">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div>Klik untuk upload lampiran (gambar/screenshot)</div>
+          <input type="file" id="fieldLampiran" accept="image/*,.pdf,.txt">
+        </div>
+        <div class="file-name-tag" id="fileNameTag"></div>
+      </div>
+      <button type="submit" class="btn-primary">Kirim</button>
+    </form>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="foot-brand">Fueeru Game</div>
+  Situs kumpulan info &amp; update game buatan komunitas.
+</footer>
+
+<script src="js/data.js"></script>
+<script src="js/main.js"></script>
+<script>
+  const uploadBox = document.getElementById("uploadBox");
+  const fieldLampiran = document.getElementById("fieldLampiran");
+  const fileNameTag = document.getElementById("fileNameTag");
+  let attachmentData = null;
+
+  fieldLampiran.addEventListener("change", function () {
+    const file = fieldLampiran.files && fieldLampiran.files[0];
+    if (!file) { attachmentData = null; fileNameTag.textContent = ""; return; }
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      attachmentData = { name: file.name, dataUrl: e.target.result };
+      fileNameTag.textContent = "Terlampir: " + file.name;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  const alertSuccess = document.getElementById("alertSuccess");
+  const alertError = document.getElementById("alertError");
+
+  document.getElementById("laporForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const judul = document.getElementById("fieldJudul").value.trim();
+    const nama = document.getElementById("fieldNama").value.trim();
+    const media = document.getElementById("fieldMedia").value.trim();
+    const isi = document.getElementById("fieldIsi").value.trim();
+
+    alertSuccess.classList.remove("show");
+    alertError.classList.remove("show");
+
+    if (!judul || !isi) {
+      alertError.classList.add("show");
+      alertError.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
+    addReport(judul, nama, isi, attachmentData, media);
+
+    alertSuccess.classList.add("show");
+    alertSuccess.scrollIntoView({ behavior: "smooth", block: "center" });
+    document.getElementById("laporForm").reset();
+    fileNameTag.textContent = "";
+    attachmentData = null;
+  });
+</script>
+
+</body>
+</html>
