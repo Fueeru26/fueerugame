@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jenis & Genre — Fueeru Game</title>
+
+<link rel="icon" type="image/png" href="webpictures/logo.png">
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+<body>
+
+<header class="navbar">
+  <button class="icon-btn" id="btnOpenSidebar" aria-label="Buka menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <a href="index.html" class="brand-link" aria-label="Fueeru Game — Beranda">
+    <img src="webpictures/header.png" alt="Fueeru Game">
+  </a>
+  <button class="icon-btn" id="btnOpenSearch" aria-label="Buka atau tutup pencarian">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+  </button>
+</header>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<nav class="sidebar" id="sidebar" aria-hidden="true">
+  <div class="sidebar-head">
+    <img src="webpictures/logo.png" alt="Logo Fueeru Game">
+    <div>
+      <div class="brand-name">Fueeru Game</div>
+      <div class="brand-tag">Portal Game Favoritmu</div>
+    </div>
+    <button class="icon-btn sidebar-close" id="btnCloseSidebar" aria-label="Tutup menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <ul class="sidebar-nav">
+    <li><a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Beranda</a></li>
+    <li><a href="category.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Jenis &amp; Genre</a></li>
+    <li><a href="lapor.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L14.71 3.86a2 2 0 00-3.42 0z"/></svg>Laporkan</a></li>
+    <li><a href="donasi.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 10-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 000-7.8z"/></svg>Donasi</a></li>
+    <li><a href="tentang.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Tentang</a></li>
+  </ul>
+  <div class="sidebar-foot">© 2026 Fueeru Game. Semua hak dilindungi.</div>
+</nav>
+
+<div class="search-backdrop" id="searchBackdrop"></div>
+<div class="search-panel" id="searchPanel">
+  <div class="search-panel-inner">
+    <form id="searchForm" role="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="18" height="18" style="color:#8fd6fb;flex:0 0 auto;"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="search" id="searchInput" placeholder="Cari judul game…" aria-label="Cari game">
+      <button type="submit" class="search-submit" aria-label="Cari">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+    </form>
+    <button class="search-close-btn" id="btnCloseSearch" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      Tutup
+    </button>
+  </div>
+</div>
+
+<main class="container">
+  <div id="catContent"></div>
+</main>
+
+<footer class="site-footer">
+  <div class="foot-brand">Fueeru Game</div>
+  Situs kumpulan info &amp; update game buatan komunitas.
+</footer>
+
+<script src="js/data.js"></script>
+<script src="js/main.js"></script>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const jenisParam = params.get("jenis");
+  const genreParam = params.get("genre");
+  const catContent = document.getElementById("catContent");
+  const allPosts = loadPosts();
+
+  function renderOverview() {
+    document.title = "Jenis & Genre — Fueeru Game";
+    const genres = getAllGenres();
+
+    catContent.innerHTML = `
+      <div class="section-head"><h2>Jenis</h2></div>
+      <div class="jenis-grid">
+        ${JENIS_LIST.map((j) => `
+          <a class="category-card" href="category.html?jenis=${encodeURIComponent(j)}">${escapeHtml(j)}</a>
+        `).join("")}
+      </div>
+
+      <div class="subsection-title">Genre</div>
+      <div class="genre-tag-list" id="genreTagList"></div>
+    `;
+
+    const genreListEl = document.getElementById("genreTagList");
+    if (genres.length === 0) {
+      genreListEl.innerHTML = `<p style="color:var(--ink-soft);font-size:.9rem;">Belum ada genre. Genre akan muncul otomatis begitu ada postingan yang memakainya.</p>`;
+    } else {
+      genreListEl.innerHTML = genres
+        .map((g) => `<a class="genre-tag" href="category.html?genre=${encodeURIComponent(g)}">${escapeHtml(g)} <span class="count">(${countPostsByGenre(g)})</span></a>`)
+        .join("");
+    }
+  }
+
+  function renderFilteredList(heading, filterFn) {
+    document.title = heading + " — Fueeru Game";
+    const filtered = allPosts.filter(filterFn).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    catContent.innerHTML = `
+      <a href="category.html" class="cat-back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Jenis &amp; Genre
+      </a>
+      <div class="section-head"><h2>${escapeHtml(heading)}</h2></div>
+      <div class="post-list" id="catPostList"></div>`;
+
+    const listEl = document.getElementById("catPostList");
+    if (filtered.length === 0) {
+      listEl.innerHTML = `
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          <h3>Belum ada postingan</h3>
+          <p>Belum ada game yang cocok. Coba pilihan lain.</p>
+        </div>`;
+    } else {
+      listEl.innerHTML = filtered.map((p) => postRowHtml(p)).join("");
+    }
+  }
+
+  if (jenisParam) {
+    renderFilteredList("Jenis: " + jenisParam, (p) => (p.jenis || "").toLowerCase() === jenisParam.toLowerCase());
+  } else if (genreParam) {
+    renderFilteredList("Genre: " + genreParam, (p) => (p.genres || []).some((g) => g.toLowerCase() === genreParam.toLowerCase()));
+  } else {
+    renderOverview();
+  }
+</script>
+
+</body>
+</html>
