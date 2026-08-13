@@ -75,8 +75,16 @@ document.getElementById("menuManajemenFile").addEventListener("click", () => {
 document.getElementById("btnBackFromPosts").addEventListener("click", () => showSub("viewMenu"));
 document.getElementById("btnBackFromReports").addEventListener("click", () => showSub("viewMenu"));
 document.getElementById("btnBackFromForm").addEventListener("click", () => {
-  showSub("viewPosts");
-  renderPostsList();
+  openConfirmModal(
+    editingId
+      ? "Saat ini sedang mengedit postingan, yakin ingin kembali dan membatalkannya?"
+      : "Saat ini sedang menambahkan postingan, yakin ingin kembali dan membatalkannya?",
+    function () {
+      showSub("viewPosts");
+      renderPostsList();
+    },
+    { title: "Batalkan Perubahan", confirmLabel: "Ya, Kembali" }
+  );
 });
 document.getElementById("btnBackFromFiles").addEventListener("click", () => {
   if (currentFolderPath === "") {
@@ -344,10 +352,6 @@ function openEditForm(id) {
 }
 
 document.getElementById("btnAddPost").addEventListener("click", openAddForm);
-document.getElementById("btnCancelForm").addEventListener("click", () => {
-  showSub("viewPosts");
-  renderPostsList();
-});
 
 // Upload gambar header -> dataURL
 fieldImage.addEventListener("change", function () {
@@ -363,53 +367,137 @@ fieldImage.addEventListener("change", function () {
   reader.readAsDataURL(file);
 });
 
-// ---------- Rich text toolbar ----------
-document.getElementById("editorToolbar").addEventListener("click", function (e) {
-  const btn = e.target.closest("button[data-cmd]");
-  if (!btn) return;
-  editorContent.focus();
-  document.execCommand(btn.getAttribute("data-cmd"), false, null);
+// =========================================================
+// Rich text toolbar (Isi Postingan)
+// =========================================================
+const editorToolbarEl = document.getElementById("editorToolbar");
+
+// Klik tombol toolbar TIDAK boleh menghilangkan seleksi teks yang
+// sedang aktif di editorContent (perilaku default browser: elemen yang
+// di-mousedown akan mengambil fokus & mengosongkan seleksi lama).
+editorToolbarEl.addEventListener("mousedown", function (e) {
+  if (e.target.closest("button")) e.preventDefault();
 });
 
+// Simpan & pulihkan posisi seleksi/kursor di dalam editorContent. Wajib
+// dipakai setiap kali sebuah aksi toolbar membuka dialog/file picker
+// native (yang membuat fokus browser berpindah keluar dari editorContent),
+// supaya sisipan (gambar/link) tidak gagal karena seleksinya sudah hilang.
+// Ini adalah PERBAIKAN BUG: sebelumnya gambar isi postingan gagal
+// tersisip karena posisi kursor hilang saat file picker dibuka.
+let savedSelectionRange = null;
+
+function saveSelection() {
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0 && editorContent.contains(sel.anchorNode)) {
+    savedSelectionRange = sel.getRangeAt(0).cloneRange();
+  }
+}
+function restoreSelection() {
+  editorContent.focus();
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  if (savedSelectionRange) {
+    sel.addRange(savedSelectionRange);
+  } else {
+    const range = document.createRange();
+    range.selectNodeContents(editorContent);
+    range.collapse(false);
+    sel.addRange(range);
+  }
+}
+
+// Bungkus seleksi aktif dengan sebuah elemen (dipakai untuk ukuran huruf
+// & spoiler). Fallback ke extractContents bila surroundContents gagal
+// (mis. seleksi memotong beberapa elemen blok berbeda).
+function wrapSelection(el) {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return false;
+  const range = sel.getRangeAt(0);
+  if (!editorContent.contains(range.commonAncestorContainer)) return false;
+  try {
+    range.surroundContents(el);
+  } catch (err) {
+    try {
+      const content = range.extractContents();
+      el.appendChild(content);
+      range.insertNode(el);
+    } catch (err2) {
+      return false;
+    }
+  }
+  const newRange = document.createRange();
+  newRange.selectNodeContents(el);
+  sel.removeAllRanges();
+  sel.addRange(newRange);
+  savedSelectionRange = newRange.cloneRange();
+  return true;
+}
+
+// ---------- Tombol format dasar (data-cmd) & ukuran huruf (data-fontsize) ----------
+editorToolbarEl.addEventListener("click", function (e) {
+  const cmdBtn = e.target.closest("button[data-cmd]");
+  if (cmdBtn) {
+    editorContent.focus();
+    document.execCommand(cmdBtn.getAttribute("data-cmd"), false, null);
+    return;
+  }
+  const fsBtn = e.target.closest("button[data-fontsize]");
+  if (fsBtn) {
+    applyFontSize(fsBtn.getAttribute("data-fontsize"));
+  }
+});
+
+function applyFontSize(size) {
+  editorContent.focus();
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed) {
+    showToast("Pilih teks yang ingin diubah ukurannya terlebih dahulu");
+    return;
+  }
+  const span = document.createElement("span");
+  span.className = size === "small" ? "fs-sm" : size === "large" ? "fs-lg" : "fs-md";
+  wrapSelection(span);
+}
+
+// ---------- Sisipkan Gambar (isi postingan) ----------
 document.getElementById("btnInsertImage").addEventListener("click", function () {
+  saveSelection();
   document.getElementById("contentImageInput").click();
 });
 
 document.getElementById("contentImageInput").addEventListener("change", function (e) {
   const file = e.target.files && e.target.files[0];
+  e.target.value = "";
   if (!file) return;
   const reader = new FileReader();
   reader.onload = function (ev) {
-    editorContent.focus();
-    document.execCommand("insertImage", false, ev.target.result);
+    restoreSelection();
+    const sel = window.getSelection();
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+    const img = document.createElement("img");
+    img.src = ev.target.result;
+    img.alt = "";
+    range.insertNode(img);
+    range.setStartAfter(img);
+    range.setEndAfter(img);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    savedSelectionRange = range.cloneRange();
   };
   reader.readAsDataURL(file);
-  e.target.value = "";
 });
 
 // ---------- Sisipkan Link (modal 2 field) ----------
 const linkModalBackdrop = document.getElementById("linkModalBackdrop");
 const linkUrlInput = document.getElementById("linkUrlInput");
 const linkTextInput = document.getElementById("linkTextInput");
-let savedSelectionRange = null;
-
-function saveSelection() {
-  const sel = window.getSelection();
-  if (sel && sel.rangeCount > 0) {
-    savedSelectionRange = sel.getRangeAt(0).cloneRange();
-  }
-}
-function restoreSelection() {
-  if (!savedSelectionRange) return;
-  const sel = window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(savedSelectionRange);
-}
 
 document.getElementById("btnInsertLink").addEventListener("click", function () {
   saveSelection();
   linkUrlInput.value = "";
-  linkTextInput.value = "";
+  linkTextInput.value = savedSelectionRange ? savedSelectionRange.toString() : "";
   linkModalBackdrop.classList.add("show");
   setTimeout(() => linkUrlInput.focus(), 100);
 });
@@ -428,16 +516,136 @@ document.getElementById("btnConfirmLink").addEventListener("click", function () 
     return;
   }
   const text = linkTextInput.value.trim() || url;
-  editorContent.focus();
   restoreSelection();
-  const safeUrl = escapeHtmlAdmin(url);
-  const safeText = escapeHtmlAdmin(text);
-  document.execCommand(
-    "insertHTML",
-    false,
-    `<a href="${safeUrl}" target="_blank" rel="noopener" style="color:#2fa8e0;text-decoration:underline;">${safeText}</a>&nbsp;`
-  );
+  const sel = window.getSelection();
+  const range = sel.getRangeAt(0);
+  range.deleteContents();
+  const a = document.createElement("a");
+  a.href = url;
+  a.target = "_blank";
+  a.rel = "noopener";
+  a.style.color = "#2fa8e0";
+  a.style.textDecoration = "underline";
+  a.textContent = text;
+  range.insertNode(a);
+  range.setStartAfter(a);
+  range.setEndAfter(a);
+  sel.removeAllRanges();
+  sel.addRange(range);
+  savedSelectionRange = range.cloneRange();
   linkModalBackdrop.classList.remove("show");
+});
+
+// ---------- Warna Teks ----------
+const colorSwatchMenu = document.getElementById("colorSwatchMenu");
+document.getElementById("btnTextColor").addEventListener("click", function (e) {
+  e.stopPropagation();
+  saveSelection();
+  colorSwatchMenu.classList.toggle("show");
+});
+document.addEventListener("click", function (e) {
+  if (!e.target.closest("#colorDropdownWrap")) colorSwatchMenu.classList.remove("show");
+});
+colorSwatchMenu.addEventListener("click", function (e) {
+  const swatch = e.target.closest(".color-swatch");
+  if (!swatch) return;
+  const color = swatch.getAttribute("data-color");
+  restoreSelection();
+  if (window.getSelection().isCollapsed) {
+    showToast("Pilih teks yang ingin diberi warna terlebih dahulu");
+  } else {
+    document.execCommand("foreColor", false, color);
+  }
+  colorSwatchMenu.classList.remove("show");
+});
+
+// ---------- Kutipan ----------
+document.getElementById("btnQuote").addEventListener("click", function () {
+  editorContent.focus();
+  document.execCommand("formatBlock", false, "blockquote");
+});
+
+// ---------- Ubah huruf besar/kecil (siklus: kecil -> BESAR -> Kapital Awal) ----------
+function toTitleCase(str) {
+  return str.replace(/\S+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+}
+document.getElementById("btnCaseToggle").addEventListener("click", function () {
+  editorContent.focus();
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed || !editorContent.contains(sel.anchorNode)) {
+    showToast("Pilih teks yang ingin diubah terlebih dahulu");
+    return;
+  }
+  const range = sel.getRangeAt(0);
+  const text = range.toString();
+  const lower = text.toLowerCase();
+  const upper = text.toUpperCase();
+  let next;
+  if (text === lower && lower !== upper) {
+    next = upper;
+  } else if (text === upper && lower !== upper) {
+    next = toTitleCase(text);
+  } else {
+    next = lower;
+  }
+  range.deleteContents();
+  const textNode = document.createTextNode(next);
+  range.insertNode(textNode);
+  const newRange = document.createRange();
+  newRange.selectNode(textNode);
+  sel.removeAllRanges();
+  sel.addRange(newRange);
+  savedSelectionRange = newRange.cloneRange();
+});
+
+// ---------- Spoiler ----------
+document.getElementById("btnSpoiler").addEventListener("click", function () {
+  editorContent.focus();
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed || !editorContent.contains(sel.anchorNode)) {
+    showToast("Pilih teks yang ingin dijadikan spoiler terlebih dahulu");
+    return;
+  }
+  const span = document.createElement("span");
+  span.className = "spoiler-content";
+  wrapSelection(span);
+});
+
+// =========================================================
+// Preview Postingan
+// =========================================================
+const previewModalBackdrop = document.getElementById("previewModalBackdrop");
+const previewModalBody = document.getElementById("previewModalBody");
+
+function closePreviewModal() {
+  previewModalBackdrop.classList.remove("show");
+}
+document.getElementById("btnClosePreviewForm").addEventListener("click", closePreviewModal);
+document.getElementById("btnClosePreviewForm2").addEventListener("click", closePreviewModal);
+previewModalBackdrop.addEventListener("click", function (e) {
+  if (e.target === previewModalBackdrop) closePreviewModal();
+});
+
+document.getElementById("btnPreviewForm").addEventListener("click", function () {
+  const title = fieldTitle.value.trim() || "(Judul belum diisi)";
+  const jenis = fieldJenis.value;
+  const genres = currentGenres.slice();
+  const content = editorContent.innerHTML.trim() || "<p><em>(Isi postingan masih kosong)</em></p>";
+  const thumbnail =
+    currentThumbnailData || (editingId ? (getPostById(editingId) || {}).thumbnail : null) || "postheader/Post001.png";
+
+  previewModalBody.innerHTML = `
+    <div class="preview-badge">Pratinjau — belum dipublikasikan</div>
+    <h1 class="post-detail-title">${escapeHtmlAdmin(title)}</h1>
+    <img class="post-detail-img" src="${thumbnail}" alt="">
+    <div class="post-detail-content">${content}</div>
+    <div class="post-detail-meta">
+      <span><strong>Tanggal:</strong> ${escapeHtmlAdmin(formatReportDate(new Date().toISOString()))}</span>
+      <span class="pill">${escapeHtmlAdmin(jenis)}</span>
+    </div>
+    ${genres.length ? `<div class="genre-chip-row" style="margin-top:12px;">${genres.map((g) => `<span class="genre-chip">${escapeHtmlAdmin(g)}</span>`).join("")}</div>` : ""}
+  `;
+  previewModalBackdrop.classList.add("show");
 });
 
 // ---------- Publish (save) ----------
