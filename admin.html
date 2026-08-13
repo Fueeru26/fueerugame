@@ -125,9 +125,24 @@
 
         <label>Isi Postingan</label>
         <div class="editor-toolbar" id="editorToolbar">
+          <button type="button" data-cmd="undo" title="Undo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/></svg>
+          </button>
+          <button type="button" data-cmd="redo" title="Redo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 000 11H13"/></svg>
+          </button>
+          <div class="sep"></div>
           <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
           <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
           <button type="button" data-cmd="underline" title="Underline"><u>U</u></button>
+          <button type="button" data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button>
+          <div class="sep"></div>
+          <button type="button" data-cmd="insertUnorderedList" title="Bullet list">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.5" cy="6" r="1.2" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor" stroke="none"/><line x1="9" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="9" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <button type="button" data-cmd="insertOrderedList" title="Numbered list">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="9" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="9" y1="18" x2="21" y2="18"/><text x="1" y="8" font-size="7" fill="currentColor" stroke="none" font-family="sans-serif">1</text><text x="1" y="14" font-size="7" fill="currentColor" stroke="none" font-family="sans-serif">2</text><text x="1" y="20" font-size="7" fill="currentColor" stroke="none" font-family="sans-serif">3</text></svg>
+          </button>
           <div class="sep"></div>
           <button type="button" data-cmd="justifyLeft" title="Rata kiri">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
@@ -138,19 +153,46 @@
           <button type="button" data-cmd="justifyRight" title="Rata kanan">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>
           </button>
-          <div class="sep"></div>
+
+          <div class="toolbar-break"></div>
+
           <button type="button" id="btnInsertImage" title="Sisipkan gambar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
           </button>
           <button type="button" id="btnInsertLink" title="Sisipkan link">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.07 0l2.83-2.83a5 5 0 00-7.07-7.07L11.5 4.5"/><path d="M14 11a5 5 0 00-7.07 0L4.1 13.83a5 5 0 007.07 7.07L12.5 19.5"/></svg>
           </button>
+          <div class="sep"></div>
+          <div class="vfs-dropdown" id="colorDropdownWrap" style="flex:0 0 auto;">
+            <button type="button" id="btnTextColor" title="Warna teks" class="toolbar-color-btn">A</button>
+            <div class="color-swatch-menu" id="colorSwatchMenu">
+              <button type="button" class="color-swatch" data-color="#0b2947" style="background:#0b2947;" title="Hitam kebiruan"></button>
+              <button type="button" class="color-swatch" data-color="#2fa8e0" style="background:#2fa8e0;" title="Biru"></button>
+              <button type="button" class="color-swatch" data-color="#1c8a4f" style="background:#1c8a4f;" title="Hijau"></button>
+              <button type="button" class="color-swatch" data-color="#e2933a" style="background:#e2933a;" title="Oranye"></button>
+              <button type="button" class="color-swatch" data-color="#d3462f" style="background:#d3462f;" title="Merah"></button>
+              <button type="button" class="color-swatch" data-color="#9b59b6" style="background:#9b59b6;" title="Ungu"></button>
+              <button type="button" class="color-swatch" data-color="#ffffff" style="background:#ffffff;border:1.5px solid var(--sky-200);" title="Putih"></button>
+            </div>
+          </div>
+          <button type="button" data-fontsize="small" title="Ukuran kecil" class="toolbar-fs-btn fs-btn-sm">A</button>
+          <button type="button" data-fontsize="medium" title="Ukuran sedang" class="toolbar-fs-btn fs-btn-md">A</button>
+          <button type="button" data-fontsize="large" title="Ukuran besar" class="toolbar-fs-btn fs-btn-lg">A</button>
+          <div class="sep"></div>
+          <button type="button" id="btnQuote" title="Kutipan">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M7 7c-2.5 0-4.2 2-4.2 4.6 0 2.3 1.6 4.1 3.8 4.1.4 2-1 3.5-2.9 3.9l.4 1.4c3.3-.6 5.6-3 5.6-6.6C9.7 10.9 8.7 7 7 7zm10 0c-2.5 0-4.2 2-4.2 4.6 0 2.3 1.6 4.1 3.8 4.1.4 2-1 3.5-2.9 3.9l.4 1.4c3.3-.6 5.6-3 5.6-6.6C19.7 10.9 18.7 7 17 7z"/></svg>
+          </button>
+          <button type="button" id="btnCaseToggle" title="Ubah huruf besar/kecil">Aa</button>
+          <div class="sep"></div>
+          <button type="button" id="btnSpoiler" title="Spoiler">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="6" height="6" rx="1.5" stroke-dasharray="2.5 2.5"/><path d="M13 4c4 0 7.3 2.8 8.5 5-1.2 2.2-4.5 5-8.5 5s-7.3-2.8-8.5-5"/><line x1="3" y1="19" x2="21" y2="4" stroke-dasharray="0"/></svg>
+          </button>
           <input type="file" id="contentImageInput" accept="image/*" class="hidden">
         </div>
         <div class="editor-content" id="editorContent" contenteditable="true" data-placeholder="Tulis isi postingan di sini…"></div>
 
         <div class="admin-form-actions">
-          <button type="button" class="btn-cancel" id="btnCancelForm">Batal</button>
+          <button type="button" class="btn-cancel" id="btnPreviewForm">Preview</button>
           <button type="submit" class="btn-primary">Publish</button>
         </div>
       </form>
@@ -237,6 +279,22 @@
     <div class="modal-actions">
       <button type="button" class="btn-cancel" id="btnCancelLink">Batal</button>
       <button type="button" class="btn-primary" id="btnConfirmLink">Sisipkan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: Preview Postingan ===== -->
+<div class="modal-backdrop" id="previewModalBackdrop">
+  <div class="modal-box preview-modal-box">
+    <div class="preview-modal-head">
+      <h3>Preview Postingan</h3>
+      <button type="button" class="btn-back-mini" id="btnClosePreviewForm" aria-label="Tutup preview">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div id="previewModalBody" class="preview-modal-body"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="btnClosePreviewForm2" style="flex:1;">Tutup Preview</button>
     </div>
   </div>
 </div>
