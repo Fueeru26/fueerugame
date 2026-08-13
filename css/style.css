@@ -70,6 +70,17 @@
 
 * { box-sizing: border-box; }
 
+/* Matikan efek highlight biru bawaan browser mobile saat elemen
+   link/tombol/gambar disentuh (tap), termasuk area anak-anaknya. */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: default;
+}
+a, button, img, .icon-btn, .game-card, .post-row, .category-card,
+.carousel-arrow, .search-close-btn, .theme-btn, .genre-tag, .pill {
+  -webkit-tap-highlight-color: transparent;
+}
+
 html { scroll-behavior: smooth; }
 
 body {
@@ -759,6 +770,40 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 .post-detail-content p { margin: 0 0 16px; }
 .post-detail-content img { border-radius: var(--radius-sm); margin: 10px 0; }
+
+/* ---------------- Konten kaya: ukuran teks, kutipan, spoiler ----------------
+   Dipakai bersama di editor admin (contenteditable) dan halaman post publik. */
+.fs-sm { font-size: .82em; }
+.fs-md { font-size: 1.2em; }
+.fs-lg { font-size: 1.6em; }
+
+.post-detail-content blockquote,
+.editor-content blockquote {
+  margin: 14px 0;
+  padding: 10px 18px;
+  border-left: 4px solid var(--sky-400);
+  background: var(--sky-50);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+/* Spoiler — di halaman publik, teks disamarkan sampai diklik */
+.spoiler-content {
+  background: var(--ink);
+  color: var(--ink);
+  border-radius: 4px;
+  padding: 0 3px;
+  cursor: pointer;
+  transition: background .18s ease, color .18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.spoiler-content::selection { background: var(--sky-300); }
+.spoiler-content.revealed {
+  background: var(--sky-100);
+  color: inherit;
+  cursor: text;
+}
 .post-detail-meta {
   display: flex;
   justify-content: space-between;
