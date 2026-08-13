@@ -116,6 +116,13 @@
       </div>
       ${genres.length ? `<div class="genre-chip-row" style="margin-top:12px;">${genres.map((g) => `<span class="genre-chip">${escapeHtml(g)}</span>`).join("")}</div>` : ""}
     `;
+
+    // Spoiler: klik untuk menampilkan/menyembunyikan teks yang disamarkan
+    container.querySelectorAll(".spoiler-content").forEach((el) => {
+      el.addEventListener("click", function () {
+        el.classList.toggle("revealed");
+      });
+    });
   }
 </script>
 
