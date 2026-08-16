@@ -1,17 +1,19 @@
 /* =========================================================
    Fueeru Game — Admin Panel logic
    Kata sandi (sementara): admin123
+   Kata sandi darurat (recovery, hardcode): GINTAMA12345
    ========================================================= */
 
-const ADMIN_PASSWORD = "admin123";
 const SESSION_KEY = "fueeru_admin_session";
 const PAGE_SIZE = 10;
+const EMERGENCY_PASSWORD = "GINTAMA12345";
 
 let editingId = null; // null = mode tambah, string = mode edit
 let currentGenres = []; // genre yang sedang dipilih di form
 
 // ---------- Top-level views ----------
 const viewLogin = document.getElementById("viewLogin");
+const viewRecovery = document.getElementById("viewRecovery");
 const adminShell = document.getElementById("adminShell");
 
 function isLoggedIn() {
@@ -23,6 +25,10 @@ function doLogin() {
   viewLogin.classList.add("hidden");
   adminShell.classList.remove("hidden");
   showSub("viewMenu");
+  pushBackTrap(); // baseline: 1x tombol back dari menu utama akan keluar dari Admin Panel
+  checkBackupReminder();
+  updateNotifBadge();
+  purgeOldTrash();
 }
 
 function doLogout() {
@@ -37,7 +43,7 @@ document.getElementById("loginForm").addEventListener("submit", function (e) {
   e.preventDefault();
   const val = document.getElementById("passwordInput").value;
   const errorEl = document.getElementById("loginError");
-  if (val === ADMIN_PASSWORD) {
+  if (val === getAdminPassword()) {
     errorEl.textContent = "";
     doLogin();
   } else {
@@ -45,13 +51,67 @@ document.getElementById("loginForm").addEventListener("submit", function (e) {
   }
 });
 
-document.getElementById("btnLogout").addEventListener("click", doLogout);
+// ---------- Recovery Password ----------
+document.getElementById("btnForgotPassword").addEventListener("click", function (e) {
+  e.preventDefault();
+  document.getElementById("recoveryForm").reset();
+  document.getElementById("recoveryError").textContent = "";
+  viewLogin.classList.add("hidden");
+  viewRecovery.classList.remove("hidden");
+});
+document.getElementById("btnBackToLogin").addEventListener("click", function (e) {
+  e.preventDefault();
+  viewRecovery.classList.add("hidden");
+  viewLogin.classList.remove("hidden");
+});
+document.getElementById("recoveryForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+  const emergencyVal = document.getElementById("emergencyPasswordInput").value;
+  const newVal = document.getElementById("newPasswordRecoveryInput").value;
+  const errorEl = document.getElementById("recoveryError");
+
+  if (emergencyVal !== EMERGENCY_PASSWORD) {
+    errorEl.textContent = "Kata sandi darurat salah.";
+    return;
+  }
+  if (newVal.trim().length < 4) {
+    errorEl.textContent = "Kata sandi baru minimal 4 karakter.";
+    return;
+  }
+  setAdminPassword(newVal.trim());
+  errorEl.textContent = "";
+  viewRecovery.classList.add("hidden");
+  doLogin();
+  showToast("Kata sandi berhasil diubah");
+});
+
+document.getElementById("btnLogout").addEventListener("click", function () {
+  openConfirmModal(
+    "Yakin ingin keluar dari Admin Panel?",
+    doLogout,
+    { title: "Keluar dari Admin Panel", confirmLabel: "Ya, Keluar" }
+  );
+});
 
 // ---------- Sub-view switching within adminShell ----------
-const SUB_VIEWS = ["viewMenu", "viewPosts", "viewForm", "viewReports", "viewFiles", "viewFileEdit"];
+const SUB_VIEWS = [
+  "viewMenu",
+  "viewPosts",
+  "viewForm",
+  "viewPages",
+  "viewPageEdit",
+  "viewReports",
+  "viewFiles",
+  "viewFileEdit",
+  "viewBackup",
+  "viewInfo",
+  "viewRecycleBin",
+  "viewRecycleBinList"
+];
 function showSub(id) {
   SUB_VIEWS.forEach((v) => document.getElementById(v).classList.add("hidden"));
   document.getElementById(id).classList.remove("hidden");
+  if (id === "viewMenu" && typeof updateNotifBadge === "function") updateNotifBadge();
 }
 
 document.getElementById("menuAturPostingan").addEventListener("click", () => {
@@ -61,6 +121,37 @@ document.getElementById("menuAturPostingan").addEventListener("click", () => {
   showSub("viewPosts");
   renderPostsList();
 });
+document.getElementById("menuHalaman").addEventListener("click", () => {
+  showSub("viewPages");
+});
+document.getElementById("btnBackFromPages").addEventListener("click", () => showSub("viewMenu"));
+document.getElementById("btnBackFromPageEdit").addEventListener("click", () => showSub("viewPages"));
+
+// ---------- Edit Halaman (Tutorial Main / Cara Download / Donasi / Tentang) ----------
+let currentEditingPageId = null;
+const editorContentPageEl = document.getElementById("editorContentPage");
+
+document.querySelectorAll(".page-picker-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const pageId = btn.getAttribute("data-page-id");
+    const pageLabel = btn.querySelector("span").textContent;
+    currentEditingPageId = pageId;
+    document.getElementById("pageEditHeading").textContent = pageLabel;
+    editorContentPageEl.innerHTML = getPageContent(pageId).content;
+    showSub("viewPageEdit");
+  });
+});
+
+document.getElementById("btnSavePage").addEventListener("click", function () {
+  if (!currentEditingPageId) return;
+  const result = savePageContent(currentEditingPageId, editorContentPageEl.innerHTML.trim());
+  if (result === "storage-full") {
+    showToast("Gagal menyimpan — penyimpanan penuh. Coba gambar yang lebih kecil.");
+    return;
+  }
+  showToast("Halaman disimpan");
+});
+
 document.getElementById("menuLihatLaporan").addEventListener("click", () => {
   reportSearchQuery = "";
   document.getElementById("reportSearchInput").value = "";
@@ -68,24 +159,54 @@ document.getElementById("menuLihatLaporan").addEventListener("click", () => {
   showSub("viewReports");
   renderReportsList();
 });
+document.getElementById("menuInformasiWeb").addEventListener("click", () => {
+  renderInfoView();
+  showSub("viewInfo");
+});
+document.getElementById("btnBackFromInfo").addEventListener("click", () => showSub("viewMenu"));
 document.getElementById("menuManajemenFile").addEventListener("click", () => {
   navigateToFolder("");
   showSub("viewFiles");
 });
+document.getElementById("menuRecycleBin").addEventListener("click", () => {
+  renderRecycleBinCounts();
+  showSub("viewRecycleBin");
+});
+document.getElementById("btnBackFromRecycleBin").addEventListener("click", () => showSub("viewMenu"));
+document.getElementById("btnOpenTrashPosts").addEventListener("click", () => openTrashList("posts"));
+document.getElementById("btnOpenTrashReports").addEventListener("click", () => openTrashList("reports"));
+document.getElementById("btnBackFromRecycleBinList").addEventListener("click", () => {
+  showSub("viewRecycleBin");
+  renderRecycleBinCounts();
+});
+document.getElementById("menuBackupRestore").addEventListener("click", () => {
+  resetRestoreForm();
+  updateBackupPostCount();
+  showSub("viewBackup");
+});
+document.getElementById("btnBackFromBackup").addEventListener("click", () => showSub("viewMenu"));
 document.getElementById("btnBackFromPosts").addEventListener("click", () => showSub("viewMenu"));
 document.getElementById("btnBackFromReports").addEventListener("click", () => showSub("viewMenu"));
 document.getElementById("btnBackFromForm").addEventListener("click", () => {
-  openConfirmModal(
-    editingId
-      ? "Saat ini sedang mengedit postingan, yakin ingin kembali dan membatalkannya?"
-      : "Saat ini sedang menambahkan postingan, yakin ingin kembali dan membatalkannya?",
-    function () {
-      showSub("viewPosts");
-      renderPostsList();
-    },
-    { title: "Batalkan Perubahan", confirmLabel: "Ya, Kembali" }
-  );
+  goBackFromForm();
 });
+function goBackFromForm(onLeft) {
+  if (isFormDirty()) {
+    openConfirmModal(
+      "Postingan belum disimpan, yakin ingin kembali dan membatalkannya?",
+      function () {
+        showSub("viewPosts");
+        renderPostsList();
+        if (onLeft) onLeft();
+      },
+      { title: "Batalkan Perubahan", confirmLabel: "Ya, Kembali" }
+    );
+  } else {
+    showSub("viewPosts");
+    renderPostsList();
+    if (onLeft) onLeft();
+  }
+}
 document.getElementById("btnBackFromFiles").addEventListener("click", () => {
   if (currentFolderPath === "") {
     showSub("viewMenu");
@@ -98,10 +219,111 @@ document.getElementById("btnBackFromFileEdit").addEventListener("click", () => {
   renderFilesView();
 });
 
+// =========================================================
+// Tombol back HP (hardware/browser back) di dalam Admin Panel
+// Supaya menekan tombol back HP berperilaku SAMA seperti menekan
+// ikon "<" pada menu yang sedang terbuka — bukan langsung menutup
+// seluruh panel admin.
+//
+// Caranya: setiap kali kita "sudah aman" untuk keluar sepenuhnya dari
+// Admin Panel (yaitu saat berada di viewMenu), kita TIDAK menambah
+// history entry apa pun. Tapi selama masih berada di salah satu
+// sub-menu, kita selalu menjaga agar selalu ada 1 history entry
+// "jebakan" (trap) tersisa, sehingga 1x tombol back HP hanya akan
+// memicu event popstate (kita tangani sendiri seperti klik "<"),
+// bukan benar-benar menutup halaman.
+// =========================================================
+function pushBackTrap() {
+  history.pushState({ fueeruAdminTrap: true }, "", location.href);
+}
+function getCurrentSubView() {
+  return SUB_VIEWS.find((v) => !document.getElementById(v).classList.contains("hidden"));
+}
+
+window.addEventListener("popstate", function () {
+  // Masih di layar login / belum masuk admin shell -> biarkan browser
+  // berperilaku normal (misal keluar dari halaman admin.html).
+  if (!viewLogin.classList.contains("hidden") || adminShell.classList.contains("hidden")) return;
+
+  const current = getCurrentSubView();
+  // Sudah di menu utama Admin Panel -> ini "akar" navigasi admin,
+  // biarkan tombol back berikutnya benar-benar keluar dari halaman.
+  if (!current || current === "viewMenu") return;
+
+  if (current === "viewForm") {
+    if (isFormDirty()) {
+      // Batalkan dulu "pop" yang barusan terjadi, tampilkan konfirmasi
+      // seperti saat ikon "<" ditekan. Trap di-pasang lagi supaya
+      // tombol back tidak langsung menutup panel selama modal terbuka.
+      pushBackTrap();
+    }
+    goBackFromForm(function () {
+      pushBackTrap(); // sudah pindah ke viewPosts -> pasang trap lagi
+    });
+    return;
+  }
+
+  if (current === "viewFiles") {
+    if (currentFolderPath === "") {
+      showSub("viewMenu"); // sudah di folder akar -> jangan pasang trap lagi
+    } else {
+      navigateToFolder(parentOf(currentFolderPath));
+      pushBackTrap();
+    }
+    return;
+  }
+
+  if (current === "viewFileEdit") {
+    showSub("viewFiles");
+    renderFilesView();
+    pushBackTrap();
+    return;
+  }
+
+  if (current === "viewRecycleBinList") {
+    showSub("viewRecycleBin");
+    renderRecycleBinCounts();
+    pushBackTrap();
+    return;
+  }
+
+  if (current === "viewPageEdit") {
+    showSub("viewPages");
+    pushBackTrap();
+    return;
+  }
+
+  // viewPosts, viewReports, viewBackup, viewInfo, viewRecycleBin, viewPages -> kembali ke menu utama
+  showSub("viewMenu");
+});
+
 function escapeHtmlAdmin(str) {
   const div = document.createElement("div");
   div.textContent = str == null ? "" : String(str);
   return div.innerHTML;
+}
+
+/* admin.html sekarang berada di folder utama (sama seperti index.html),
+   jadi aset di folder root (webpictures, dsb.) tidak butuh prefix. */
+const ADMIN_ASSET_BASE = "";
+function resolveAdminAsset(path) {
+  if (!path) return path;
+  if (/^(data:|https?:\/\/|\/)/i.test(path)) return path;
+  return ADMIN_ASSET_BASE + path;
+}
+
+/** Aktifkan fungsi buka/tutup (toggle) untuk kotak spoiler di dalam
+ * `container` — dipakai bersama oleh Preview Postingan di Admin.
+ * Label "SPOILER" tetap ada, klik lagi untuk menutup kembali. */
+function initSpoilersAdmin(container) {
+  (container || document).querySelectorAll(".spoiler-content").forEach((box) => {
+    const label = box.querySelector(".spoiler-label");
+    if (!label || label.dataset.spoilerBound) return;
+    label.dataset.spoilerBound = "1";
+    label.addEventListener("click", function () {
+      box.classList.toggle("revealed");
+    });
+  });
 }
 
 // =========================================================
@@ -174,10 +396,12 @@ function renderPostsList() {
     .map(
       (p) => `
     <div class="admin-post-item">
-      <img src="${p.thumbnail}" alt="">
+      <img src="${resolveAdminAsset(p.thumbnail)}" alt="">
       <div class="api-body">
         <div class="api-title">${escapeHtmlAdmin(p.title)}</div>
-        <div class="api-meta">${escapeHtmlAdmin(p.jenis)} • ${escapeHtmlAdmin(formatDate(p.date))}</div>
+        <div class="api-meta">${escapeHtmlAdmin(p.jenis)} • ${
+        p.published === false ? '<span class="draft-label">Draft</span>' : escapeHtmlAdmin(formatDate(p.date))
+      }</div>
       </div>
       <div class="api-actions">
         <button type="button" class="btn-edit" data-id="${p.id}">Edit</button>
@@ -204,12 +428,11 @@ function deletePost(id) {
   const post = getPostById(id);
   if (!post) return;
   openConfirmModal(
-    `Hapus postingan "${post.title}"? Tindakan ini tidak bisa dibatalkan.`,
+    `Hapus postingan "${post.title}"? Postingan akan dipindahkan ke Recycle Bin dan bisa dipulihkan dalam 30 hari.`,
     function () {
-      const posts = loadPosts().filter((p) => p.id !== id);
-      savePosts(posts);
+      trashPost(id);
       renderPostsList();
-      showToast("Postingan dihapus");
+      showToast("Postingan dipindahkan ke Recycle Bin");
     },
     { title: "Hapus Postingan" }
   );
@@ -330,6 +553,7 @@ function openAddForm() {
   resetForm();
   showSub("viewForm");
   fieldTitle.focus();
+  captureFormSnapshot();
 }
 
 function openEditForm(id) {
@@ -345,162 +569,393 @@ function openEditForm(id) {
   renderGenreChips();
   editorContent.innerHTML = post.content;
   currentThumbnailData = post.thumbnail;
-  uploadPreview.src = post.thumbnail;
+  uploadPreview.src = resolveAdminAsset(post.thumbnail);
   uploadPreview.style.display = "block";
   uploadLabel.textContent = "Klik untuk mengganti gambar header";
   showSub("viewForm");
+  captureFormSnapshot();
+}
+
+// ---------- Deteksi perubahan yang belum disimpan ----------
+// Dipakai supaya window "Batalkan Perubahan" hanya muncul jika memang
+// ada perubahan yang belum disimpan, bukan setiap kali menekan "<".
+let formSnapshot = null;
+function getFormSnapshotData() {
+  return {
+    title: fieldTitle.value.trim(),
+    jenis: fieldJenis.value,
+    genres: currentGenres.slice(),
+    content: editorContent.innerHTML.trim(),
+    thumbnail: currentThumbnailData || ""
+  };
+}
+function captureFormSnapshot() {
+  formSnapshot = JSON.stringify(getFormSnapshotData());
+}
+function isFormDirty() {
+  if (formSnapshot === null) return false;
+  return JSON.stringify(getFormSnapshotData()) !== formSnapshot;
 }
 
 document.getElementById("btnAddPost").addEventListener("click", openAddForm);
 
-// Upload gambar header -> dataURL
+/** Kompres & resize gambar upload sebelum disimpan sebagai dataURL.
+ * Ini PENTING: localStorage punya batas ukuran (biasanya ~5-10MB per
+ * situs). Foto asli dari HP/kamera bisa beberapa MB, dan kalau
+ * langsung disimpan mentah sebagai base64 (ukurannya membengkak ~33%),
+ * localStorage bisa penuh sehingga penyimpanan GAGAL TOTAL secara diam-diam
+ * (postingan jadi tidak pernah tersimpan). Fungsi ini me-resize gambar ke
+ * ukuran maksimum yang wajar & mengompresnya jadi WebP (jauh lebih kecil
+ * dari JPEG di kualitas visual yang setara) — dengan fallback otomatis ke
+ * JPEG kalau browser-nya kebetulan tidak mendukung ekspor WebP dari canvas.
+ * Return: Promise<string dataURL>. */
+function compressImageFile(file, maxDim, quality) {
+  return new Promise(function (resolve, reject) {
+    const reader = new FileReader();
+    reader.onerror = function () {
+      reject(new Error("Gagal membaca file gambar"));
+    };
+    reader.onload = function (e) {
+      const img = new Image();
+      img.onerror = function () {
+        reject(new Error("Gagal memuat gambar"));
+      };
+      img.onload = function () {
+        let w = img.naturalWidth || img.width;
+        let h = img.naturalHeight || img.height;
+        const limit = maxDim || 1280;
+        if (w > limit || h > limit) {
+          if (w >= h) {
+            h = Math.round((h * limit) / w);
+            w = limit;
+          } else {
+            w = Math.round((w * limit) / h);
+            h = limit;
+          }
+        }
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          // Latar putih dulu, supaya PNG transparan tidak jadi hitam saat
+          // dikonversi ke WebP/JPEG (keduanya dipakai tanpa alpha di sini).
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          const q = quality || 0.82;
+          let dataUrl = canvas.toDataURL("image/webp", q);
+          // Sebagian kecil browser lawas diam-diam fallback ke PNG kalau
+          // tidak mendukung ekspor WebP dari canvas — deteksi & pakai JPEG
+          // sebagai cadangan supaya ukurannya tetap kecil.
+          if (!dataUrl || dataUrl.indexOf("data:image/webp") !== 0) {
+            dataUrl = canvas.toDataURL("image/jpeg", q);
+          }
+          resolve(dataUrl);
+        } catch (err) {
+          reject(err);
+        }
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+
+// Upload gambar header -> dikompres & di-resize dulu, baru jadi dataURL
 fieldImage.addEventListener("change", function () {
   const file = fieldImage.files && fieldImage.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    currentThumbnailData = e.target.result;
-    uploadPreview.src = currentThumbnailData;
-    uploadPreview.style.display = "block";
-    uploadLabel.textContent = "Klik untuk mengganti gambar header";
-  };
-  reader.readAsDataURL(file);
+  uploadLabel.textContent = "Memproses gambar…";
+  compressImageFile(file, 1280, 0.82)
+    .then(function (dataUrl) {
+      currentThumbnailData = dataUrl;
+      uploadPreview.src = currentThumbnailData;
+      uploadPreview.style.display = "block";
+      uploadLabel.textContent = "Klik untuk mengganti gambar header";
+    })
+    .catch(function () {
+      uploadLabel.textContent = "Klik untuk upload gambar header";
+      showToast("Gagal memproses gambar, coba gambar lain");
+    });
 });
 
 // =========================================================
-// Rich text toolbar (Isi Postingan)
+// Rich text toolbar (Isi Postingan & Edit Halaman)
+// Dibuat sebagai factory function supaya bisa dipakai ulang oleh 2
+// editor berbeda (form postingan & form Halaman) tanpa duplikasi logika.
 // =========================================================
-const editorToolbarEl = document.getElementById("editorToolbar");
+function initRichTextEditor(cfg) {
+  const toolbarEl = document.getElementById(cfg.toolbarId);
+  const contentEl = document.getElementById(cfg.contentId);
+  let savedSelectionRange = null;
 
-// Klik tombol toolbar TIDAK boleh menghilangkan seleksi teks yang
-// sedang aktif di editorContent (perilaku default browser: elemen yang
-// di-mousedown akan mengambil fokus & mengosongkan seleksi lama).
-editorToolbarEl.addEventListener("mousedown", function (e) {
-  if (e.target.closest("button")) e.preventDefault();
-});
+  // Klik tombol toolbar TIDAK boleh menghilangkan seleksi teks yang
+  // sedang aktif di contentEl (perilaku default browser: elemen yang
+  // di-mousedown akan mengambil fokus & mengosongkan seleksi lama).
+  toolbarEl.addEventListener("mousedown", function (e) {
+    if (e.target.closest("button")) e.preventDefault();
+  });
 
-// Simpan & pulihkan posisi seleksi/kursor di dalam editorContent. Wajib
-// dipakai setiap kali sebuah aksi toolbar membuka dialog/file picker
-// native (yang membuat fokus browser berpindah keluar dari editorContent),
-// supaya sisipan (gambar/link) tidak gagal karena seleksinya sudah hilang.
-// Ini adalah PERBAIKAN BUG: sebelumnya gambar isi postingan gagal
-// tersisip karena posisi kursor hilang saat file picker dibuka.
-let savedSelectionRange = null;
-
-function saveSelection() {
-  const sel = window.getSelection();
-  if (sel && sel.rangeCount > 0 && editorContent.contains(sel.anchorNode)) {
-    savedSelectionRange = sel.getRangeAt(0).cloneRange();
-  }
-}
-function restoreSelection() {
-  editorContent.focus();
-  const sel = window.getSelection();
-  sel.removeAllRanges();
-  if (savedSelectionRange) {
-    sel.addRange(savedSelectionRange);
-  } else {
-    const range = document.createRange();
-    range.selectNodeContents(editorContent);
-    range.collapse(false);
-    sel.addRange(range);
-  }
-}
-
-// Bungkus seleksi aktif dengan sebuah elemen (dipakai untuk ukuran huruf
-// & spoiler). Fallback ke extractContents bila surroundContents gagal
-// (mis. seleksi memotong beberapa elemen blok berbeda).
-function wrapSelection(el) {
-  const sel = window.getSelection();
-  if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return false;
-  const range = sel.getRangeAt(0);
-  if (!editorContent.contains(range.commonAncestorContainer)) return false;
-  try {
-    range.surroundContents(el);
-  } catch (err) {
-    try {
-      const content = range.extractContents();
-      el.appendChild(content);
-      range.insertNode(el);
-    } catch (err2) {
-      return false;
+  // Simpan & pulihkan posisi seleksi/kursor di dalam contentEl. Wajib
+  // dipakai setiap kali sebuah aksi toolbar membuka dialog/file picker
+  // native (yang membuat fokus browser berpindah keluar dari contentEl),
+  // supaya sisipan (gambar/link) tidak gagal karena seleksinya sudah hilang.
+  function saveSelection() {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && contentEl.contains(sel.anchorNode)) {
+      savedSelectionRange = sel.getRangeAt(0).cloneRange();
     }
   }
-  const newRange = document.createRange();
-  newRange.selectNodeContents(el);
-  sel.removeAllRanges();
-  sel.addRange(newRange);
-  savedSelectionRange = newRange.cloneRange();
-  return true;
-}
-
-// ---------- Tombol format dasar (data-cmd) & ukuran huruf (data-fontsize) ----------
-editorToolbarEl.addEventListener("click", function (e) {
-  const cmdBtn = e.target.closest("button[data-cmd]");
-  if (cmdBtn) {
-    editorContent.focus();
-    document.execCommand(cmdBtn.getAttribute("data-cmd"), false, null);
-    return;
-  }
-  const fsBtn = e.target.closest("button[data-fontsize]");
-  if (fsBtn) {
-    applyFontSize(fsBtn.getAttribute("data-fontsize"));
-  }
-});
-
-function applyFontSize(size) {
-  editorContent.focus();
-  const sel = window.getSelection();
-  if (!sel || sel.isCollapsed) {
-    showToast("Pilih teks yang ingin diubah ukurannya terlebih dahulu");
-    return;
-  }
-  const span = document.createElement("span");
-  span.className = size === "small" ? "fs-sm" : size === "large" ? "fs-lg" : "fs-md";
-  wrapSelection(span);
-}
-
-// ---------- Sisipkan Gambar (isi postingan) ----------
-document.getElementById("btnInsertImage").addEventListener("click", function () {
-  saveSelection();
-  document.getElementById("contentImageInput").click();
-});
-
-document.getElementById("contentImageInput").addEventListener("change", function (e) {
-  const file = e.target.files && e.target.files[0];
-  e.target.value = "";
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function (ev) {
-    restoreSelection();
+  function restoreSelection() {
+    contentEl.focus();
     const sel = window.getSelection();
-    const range = sel.getRangeAt(0);
-    range.deleteContents();
-    const img = document.createElement("img");
-    img.src = ev.target.result;
-    img.alt = "";
-    range.insertNode(img);
-    range.setStartAfter(img);
-    range.setEndAfter(img);
     sel.removeAllRanges();
-    sel.addRange(range);
-    savedSelectionRange = range.cloneRange();
-  };
-  reader.readAsDataURL(file);
-});
+    if (savedSelectionRange) {
+      sel.addRange(savedSelectionRange);
+    } else {
+      const range = document.createRange();
+      range.selectNodeContents(contentEl);
+      range.collapse(false);
+      sel.addRange(range);
+    }
+  }
 
-// ---------- Sisipkan Link (modal 2 field) ----------
+  // Bungkus seleksi aktif dengan sebuah elemen (dipakai untuk ukuran
+  // huruf, spoiler, & label). Fallback ke extractContents bila
+  // surroundContents gagal (mis. seleksi memotong beberapa elemen
+  // blok berbeda).
+  function wrapSelection(el) {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return false;
+    const range = sel.getRangeAt(0);
+    if (!contentEl.contains(range.commonAncestorContainer)) return false;
+    try {
+      range.surroundContents(el);
+    } catch (err) {
+      try {
+        const content = range.extractContents();
+        el.appendChild(content);
+        range.insertNode(el);
+      } catch (err2) {
+        return false;
+      }
+    }
+    const newRange = document.createRange();
+    newRange.selectNodeContents(el);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+    savedSelectionRange = newRange.cloneRange();
+    return true;
+  }
+
+  // ---------- Tombol format dasar (data-cmd) & ukuran huruf (data-fontsize) ----------
+  toolbarEl.addEventListener("click", function (e) {
+    const cmdBtn = e.target.closest("button[data-cmd]");
+    if (cmdBtn) {
+      contentEl.focus();
+      document.execCommand(cmdBtn.getAttribute("data-cmd"), false, null);
+      return;
+    }
+    const fsBtn = e.target.closest("button[data-fontsize]");
+    if (fsBtn) {
+      applyFontSize(fsBtn.getAttribute("data-fontsize"));
+    }
+  });
+
+  function applyFontSize(size) {
+    contentEl.focus();
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) {
+      showToast("Pilih teks yang ingin diubah ukurannya terlebih dahulu");
+      return;
+    }
+    const span = document.createElement("span");
+    span.className = size === "small" ? "fs-sm" : size === "large" ? "fs-lg" : "fs-md";
+    wrapSelection(span);
+  }
+
+  // ---------- Sisipkan Gambar ----------
+  document.getElementById(cfg.insertImageBtnId).addEventListener("click", function () {
+    saveSelection();
+    document.getElementById(cfg.imageInputId).click();
+  });
+
+  document.getElementById(cfg.imageInputId).addEventListener("change", function (e) {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    compressImageFile(file, 1000, 0.8)
+      .then(function (dataUrl) {
+        restoreSelection();
+        const sel = window.getSelection();
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        const img = document.createElement("img");
+        img.src = dataUrl;
+        img.alt = "";
+        range.insertNode(img);
+        range.setStartAfter(img);
+        range.setEndAfter(img);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        savedSelectionRange = range.cloneRange();
+      })
+      .catch(function () {
+        showToast("Gagal memproses gambar, coba gambar lain");
+      });
+  });
+
+  // ---------- Sisipkan Link (pakai modal bersama linkModalBackdrop) ----------
+  document.getElementById(cfg.insertLinkBtnId).addEventListener("click", function () {
+    saveSelection();
+    activeRichEditor = api; // tandai editor ini sebagai target modal link
+    linkUrlInput.value = "";
+    linkTextInput.value = savedSelectionRange ? savedSelectionRange.toString() : "";
+    linkModalBackdrop.classList.add("show");
+    setTimeout(() => linkUrlInput.focus(), 100);
+  });
+
+  // ---------- Warna Teks ----------
+  const colorSwatchMenuEl = document.getElementById(cfg.colorMenuId);
+  document.getElementById(cfg.colorBtnId).addEventListener("click", function (e) {
+    e.stopPropagation();
+    saveSelection();
+    activeRichEditor = api;
+    colorSwatchMenuEl.classList.toggle("show");
+  });
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest("#" + cfg.colorWrapId)) colorSwatchMenuEl.classList.remove("show");
+  });
+  colorSwatchMenuEl.addEventListener("click", function (e) {
+    const swatch = e.target.closest(".color-swatch");
+    if (!swatch) return;
+    const color = swatch.getAttribute("data-color");
+    restoreSelection();
+    if (window.getSelection().isCollapsed) {
+      showToast("Pilih teks yang ingin diberi warna terlebih dahulu");
+    } else {
+      document.execCommand("foreColor", false, color);
+    }
+    colorSwatchMenuEl.classList.remove("show");
+  });
+
+  // ---------- Kutipan ----------
+  document.getElementById(cfg.quoteBtnId).addEventListener("click", function () {
+    contentEl.focus();
+    document.execCommand("formatBlock", false, "blockquote");
+  });
+
+  // ---------- Ubah huruf besar/kecil (siklus: kecil -> BESAR -> Kapital Awal) ----------
+  document.getElementById(cfg.caseToggleBtnId).addEventListener("click", function () {
+    contentEl.focus();
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !contentEl.contains(sel.anchorNode)) {
+      showToast("Pilih teks yang ingin diubah terlebih dahulu");
+      return;
+    }
+    const range = sel.getRangeAt(0);
+    const text = range.toString();
+    const lower = text.toLowerCase();
+    const upper = text.toUpperCase();
+    let next;
+    if (text === lower && lower !== upper) {
+      next = upper;
+    } else if (text === upper && lower !== upper) {
+      next = toTitleCase(text);
+    } else {
+      next = lower;
+    }
+    range.deleteContents();
+    const textNode = document.createTextNode(next);
+    range.insertNode(textNode);
+    const newRange = document.createRange();
+    newRange.selectNode(textNode);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+    savedSelectionRange = newRange.cloneRange();
+  });
+
+  // ---------- Spoiler ----------
+  // Bungkus teks dan/atau gambar yang dipilih ke dalam kotak spoiler:
+  // label "SPOILER" yang bisa diklik pengunjung untuk membuka isinya.
+  document.getElementById(cfg.spoilerBtnId).addEventListener("click", function () {
+    contentEl.focus();
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed || !contentEl.contains(sel.anchorNode)) {
+      showToast("Pilih teks atau gambar yang ingin dijadikan spoiler terlebih dahulu");
+      return;
+    }
+    const range = sel.getRangeAt(0);
+    if (!contentEl.contains(range.commonAncestorContainer)) return;
+
+    let extracted;
+    try {
+      extracted = range.extractContents();
+    } catch (err) {
+      showToast("Gagal membuat spoiler pada seleksi ini");
+      return;
+    }
+    if (!extracted || !extracted.hasChildNodes()) {
+      showToast("Gagal membuat spoiler pada seleksi ini");
+      return;
+    }
+
+    const inner = document.createElement("span");
+    inner.className = "spoiler-inner";
+    inner.appendChild(extracted);
+
+    const label = document.createElement("span");
+    label.className = "spoiler-label";
+    label.setAttribute("contenteditable", "false");
+    label.textContent = "SPOILER";
+
+    const wrapper = document.createElement("span");
+    wrapper.className = "spoiler-content";
+    wrapper.appendChild(label);
+    wrapper.appendChild(inner);
+
+    range.insertNode(wrapper);
+
+    const newRange = document.createRange();
+    newRange.setStartAfter(wrapper);
+    newRange.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+    savedSelectionRange = newRange.cloneRange();
+  });
+
+  // ---------- Label ----------
+  // Bungkus teks (bisa lebih dari 1 paragraf) yang dipilih dengan kotak
+  // berborder biru muda (mirip kotak pembungkus di menu Informasi Web).
+  document.getElementById(cfg.labelBtnId).addEventListener("click", function () {
+    contentEl.focus();
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed || !contentEl.contains(sel.anchorNode)) {
+      showToast("Pilih teks yang ingin diberi Label terlebih dahulu");
+      return;
+    }
+    const div = document.createElement("div");
+    div.className = "label-box";
+    if (!wrapSelection(div)) {
+      showToast("Gagal membuat Label pada seleksi ini");
+    }
+  });
+
+  const api = { saveSelection, restoreSelection, contentEl };
+  return api;
+}
+
+function toTitleCase(str) {
+  return str.replace(/\S+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+}
+
+// ---------- Modal bersama: Sisipkan Link (dipakai oleh semua editor) ----------
 const linkModalBackdrop = document.getElementById("linkModalBackdrop");
 const linkUrlInput = document.getElementById("linkUrlInput");
 const linkTextInput = document.getElementById("linkTextInput");
-
-document.getElementById("btnInsertLink").addEventListener("click", function () {
-  saveSelection();
-  linkUrlInput.value = "";
-  linkTextInput.value = savedSelectionRange ? savedSelectionRange.toString() : "";
-  linkModalBackdrop.classList.add("show");
-  setTimeout(() => linkUrlInput.focus(), 100);
-});
+let activeRichEditor = null; // editor mana yang sedang memakai modal link / dropdown warna
 
 document.getElementById("btnCancelLink").addEventListener("click", function () {
   linkModalBackdrop.classList.remove("show");
@@ -510,13 +965,14 @@ linkModalBackdrop.addEventListener("click", function (e) {
 });
 
 document.getElementById("btnConfirmLink").addEventListener("click", function () {
+  if (!activeRichEditor) return;
   const url = linkUrlInput.value.trim();
   if (!url) {
     linkUrlInput.focus();
     return;
   }
   const text = linkTextInput.value.trim() || url;
-  restoreSelection();
+  activeRichEditor.restoreSelection();
   const sel = window.getSelection();
   const range = sel.getRangeAt(0);
   range.deleteContents();
@@ -532,83 +988,39 @@ document.getElementById("btnConfirmLink").addEventListener("click", function () 
   range.setEndAfter(a);
   sel.removeAllRanges();
   sel.addRange(range);
-  savedSelectionRange = range.cloneRange();
   linkModalBackdrop.classList.remove("show");
 });
 
-// ---------- Warna Teks ----------
-const colorSwatchMenu = document.getElementById("colorSwatchMenu");
-document.getElementById("btnTextColor").addEventListener("click", function (e) {
-  e.stopPropagation();
-  saveSelection();
-  colorSwatchMenu.classList.toggle("show");
-});
-document.addEventListener("click", function (e) {
-  if (!e.target.closest("#colorDropdownWrap")) colorSwatchMenu.classList.remove("show");
-});
-colorSwatchMenu.addEventListener("click", function (e) {
-  const swatch = e.target.closest(".color-swatch");
-  if (!swatch) return;
-  const color = swatch.getAttribute("data-color");
-  restoreSelection();
-  if (window.getSelection().isCollapsed) {
-    showToast("Pilih teks yang ingin diberi warna terlebih dahulu");
-  } else {
-    document.execCommand("foreColor", false, color);
-  }
-  colorSwatchMenu.classList.remove("show");
+// ---------- Instance editor: Isi Postingan ----------
+initRichTextEditor({
+  toolbarId: "editorToolbar",
+  contentId: "editorContent",
+  insertImageBtnId: "btnInsertImage",
+  imageInputId: "contentImageInput",
+  insertLinkBtnId: "btnInsertLink",
+  colorBtnId: "btnTextColor",
+  colorMenuId: "colorSwatchMenu",
+  colorWrapId: "colorDropdownWrap",
+  quoteBtnId: "btnQuote",
+  caseToggleBtnId: "btnCaseToggle",
+  spoilerBtnId: "btnSpoiler",
+  labelBtnId: "btnLabel"
 });
 
-// ---------- Kutipan ----------
-document.getElementById("btnQuote").addEventListener("click", function () {
-  editorContent.focus();
-  document.execCommand("formatBlock", false, "blockquote");
-});
-
-// ---------- Ubah huruf besar/kecil (siklus: kecil -> BESAR -> Kapital Awal) ----------
-function toTitleCase(str) {
-  return str.replace(/\S+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
-}
-document.getElementById("btnCaseToggle").addEventListener("click", function () {
-  editorContent.focus();
-  const sel = window.getSelection();
-  if (!sel || sel.isCollapsed || !editorContent.contains(sel.anchorNode)) {
-    showToast("Pilih teks yang ingin diubah terlebih dahulu");
-    return;
-  }
-  const range = sel.getRangeAt(0);
-  const text = range.toString();
-  const lower = text.toLowerCase();
-  const upper = text.toUpperCase();
-  let next;
-  if (text === lower && lower !== upper) {
-    next = upper;
-  } else if (text === upper && lower !== upper) {
-    next = toTitleCase(text);
-  } else {
-    next = lower;
-  }
-  range.deleteContents();
-  const textNode = document.createTextNode(next);
-  range.insertNode(textNode);
-  const newRange = document.createRange();
-  newRange.selectNode(textNode);
-  sel.removeAllRanges();
-  sel.addRange(newRange);
-  savedSelectionRange = newRange.cloneRange();
-});
-
-// ---------- Spoiler ----------
-document.getElementById("btnSpoiler").addEventListener("click", function () {
-  editorContent.focus();
-  const sel = window.getSelection();
-  if (!sel || sel.isCollapsed || !editorContent.contains(sel.anchorNode)) {
-    showToast("Pilih teks yang ingin dijadikan spoiler terlebih dahulu");
-    return;
-  }
-  const span = document.createElement("span");
-  span.className = "spoiler-content";
-  wrapSelection(span);
+// ---------- Instance editor: Edit Halaman ----------
+initRichTextEditor({
+  toolbarId: "editorToolbarPage",
+  contentId: "editorContentPage",
+  insertImageBtnId: "btnInsertImagePage",
+  imageInputId: "contentImageInputPage",
+  insertLinkBtnId: "btnInsertLinkPage",
+  colorBtnId: "btnTextColorPage",
+  colorMenuId: "colorSwatchMenuPage",
+  colorWrapId: "colorDropdownWrapPage",
+  quoteBtnId: "btnQuotePage",
+  caseToggleBtnId: "btnCaseTogglePage",
+  spoilerBtnId: "btnSpoilerPage",
+  labelBtnId: "btnLabelPage"
 });
 
 // =========================================================
@@ -620,7 +1032,6 @@ const previewModalBody = document.getElementById("previewModalBody");
 function closePreviewModal() {
   previewModalBackdrop.classList.remove("show");
 }
-document.getElementById("btnClosePreviewForm").addEventListener("click", closePreviewModal);
 document.getElementById("btnClosePreviewForm2").addEventListener("click", closePreviewModal);
 previewModalBackdrop.addEventListener("click", function (e) {
   if (e.target === previewModalBackdrop) closePreviewModal();
@@ -632,12 +1043,14 @@ document.getElementById("btnPreviewForm").addEventListener("click", function () 
   const genres = currentGenres.slice();
   const content = editorContent.innerHTML.trim() || "<p><em>(Isi postingan masih kosong)</em></p>";
   const thumbnail =
-    currentThumbnailData || (editingId ? (getPostById(editingId) || {}).thumbnail : null) || "postheader/Post001.png";
+    currentThumbnailData ||
+    (editingId ? (getPostById(editingId) || {}).thumbnail : null) ||
+    "webpictures/postplaceholder.webp";
 
   previewModalBody.innerHTML = `
     <div class="preview-badge">Pratinjau — belum dipublikasikan</div>
     <h1 class="post-detail-title">${escapeHtmlAdmin(title)}</h1>
-    <img class="post-detail-img" src="${thumbnail}" alt="">
+    <img class="post-detail-img" src="${resolveAdminAsset(thumbnail)}" alt="">
     <div class="post-detail-content">${content}</div>
     <div class="post-detail-meta">
       <span><strong>Tanggal:</strong> ${escapeHtmlAdmin(formatReportDate(new Date().toISOString()))}</span>
@@ -645,33 +1058,56 @@ document.getElementById("btnPreviewForm").addEventListener("click", function () 
     </div>
     ${genres.length ? `<div class="genre-chip-row" style="margin-top:12px;">${genres.map((g) => `<span class="genre-chip">${escapeHtmlAdmin(g)}</span>`).join("")}</div>` : ""}
   `;
+  // Spoiler di preview sebelumnya tidak berfungsi sama sekali —
+  // pasang handler toggle yang sama seperti di halaman publik.
+  initSpoilersAdmin(previewModalBody);
   previewModalBackdrop.classList.add("show");
 });
 
-// ---------- Publish (save) ----------
-document.getElementById("postForm").addEventListener("submit", function (e) {
-  e.preventDefault();
-
+// ---------- Simpan (draft) / Publish ----------
+/** Ambil & validasi field form. Return null kalau tidak valid (judul kosong). */
+function readPostFormFields() {
   const title = fieldTitle.value.trim();
   if (!title) {
     fieldTitle.focus();
-    return;
+    return null;
   }
-  const content = editorContent.innerHTML.trim();
-  const jenis = fieldJenis.value;
-  const genres = currentGenres.slice();
+  return {
+    title,
+    content: editorContent.innerHTML.trim(),
+    jenis: fieldJenis.value,
+    genres: currentGenres.slice()
+  };
+}
+
+/** Simpan form. publish=true -> Publish (postingan jadi live, tampil di
+ * publik). publish=false -> Simpan (draft, TIDAK tampil di publik) —
+ * berlaku apa adanya setiap kali ditekan, tidak peduli status
+ * sebelumnya, supaya "Simpan" selalu berarti draft dan "Publish" selalu
+ * berarti live.
+ * Return: "ok" | "invalid" (judul kosong) | "storage-full" (localStorage
+ * penuh, biasanya karena gambar terlalu besar — lihat compressImageFile). */
+function savePostForm(publish) {
+  const fields = readPostFormFields();
+  if (!fields) return "invalid";
+  const { title, content, jenis, genres } = fields;
   const posts = loadPosts();
+  let newPostId = null;
 
   if (editingId) {
     const idx = posts.findIndex((p) => p.id === editingId);
     if (idx !== -1) {
+      const wasPublished = posts[idx].published !== false;
       posts[idx] = {
         ...posts[idx],
         title,
         jenis,
         genres,
         content,
-        thumbnail: currentThumbnailData || posts[idx].thumbnail
+        thumbnail: currentThumbnailData || posts[idx].thumbnail,
+        published: publish,
+        // Kalau baru pertama kali dipublish sekarang, catat tanggal publish-nya.
+        date: publish && !wasPublished ? new Date().toISOString().slice(0, 10) : posts[idx].date
       };
     }
   } else {
@@ -681,16 +1117,51 @@ document.getElementById("postForm").addEventListener("submit", function (e) {
       jenis,
       genres,
       date: new Date().toISOString().slice(0, 10),
-      thumbnail: currentThumbnailData || "postheader/Post001.png",
-      content
+      thumbnail: currentThumbnailData || "webpictures/postplaceholder.webp",
+      content,
+      published: publish
     };
     posts.unshift(newPost);
+    newPostId = newPost.id;
   }
 
-  savePosts(posts);
+  const ok = savePosts(posts);
+  if (!ok) return "storage-full";
+
+  if (newPostId) {
+    // Baru berhasil disimpan sebagai postingan baru -> supaya klik
+    // Simpan/Publish berikutnya mengedit postingan yang sama, bukan
+    // membuat duplikat baru.
+    editingId = newPostId;
+    document.getElementById("formHeading").textContent = "Edit Postingan";
+  }
+  captureFormSnapshot(); // baseline baru — belum ada perubahan sejak disimpan
+  return "ok";
+}
+
+document.getElementById("btnSaveDraft").addEventListener("click", function () {
+  const result = savePostForm(false);
+  if (result === "invalid") return;
+  if (result === "storage-full") {
+    showToast("Gagal menyimpan — penyimpanan penuh. Coba gambar yang lebih kecil.");
+    return;
+  }
+  showToast("Postingan Disimpan");
+  // Sengaja TIDAK pindah ke Menu Atur Postingan — tetap di form.
+});
+
+document.getElementById("postForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+  const wasEditing = !!editingId;
+  const result = savePostForm(true);
+  if (result === "invalid") return;
+  if (result === "storage-full") {
+    showToast("Gagal menyimpan — penyimpanan penuh. Coba gambar yang lebih kecil.");
+    return;
+  }
   showSub("viewPosts");
   renderPostsList();
-  showToast(editingId ? "Postingan diperbarui" : "Postingan dipublikasikan");
+  showToast(wasEditing ? "Postingan diperbarui" : "Postingan dipublikasikan");
 });
 
 // =========================================================
@@ -713,6 +1184,18 @@ function formatReportDate(iso) {
   } catch (e) {
     return iso;
   }
+}
+
+const REPORT_STATUS_LABELS = { belum: "Belum ditangani", sedang: "Sedang ditangani", selesai: "Sudah ditangani" };
+function reportStatusIconSvg(status) {
+  const s = status || "belum";
+  if (s === "selesai") {
+    return `<span class="report-status-icon selesai" title="${REPORT_STATUS_LABELS.selesai}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>`;
+  }
+  if (s === "sedang") {
+    return `<span class="report-status-icon sedang" title="${REPORT_STATUS_LABELS.sedang}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></span>`;
+  }
+  return `<span class="report-status-icon belum" title="${REPORT_STATUS_LABELS.belum}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>`;
 }
 
 function renderReportsList() {
@@ -747,7 +1230,7 @@ function renderReportsList() {
       (r) => `
     <div class="admin-post-item">
       <div class="api-body">
-        <div class="api-title">${escapeHtmlAdmin(r.title)}</div>
+        <div class="api-title">${reportStatusIconSvg(r.status)}${escapeHtmlAdmin(r.title)}</div>
         <div class="api-meta">${escapeHtmlAdmin(formatReportDate(r.date))}</div>
       </div>
       <div class="api-actions">
@@ -808,8 +1291,26 @@ function openViewReportModal(id) {
   html += row("Tanggal", formatReportDate(r.date), false);
 
   viewReportModalBody.innerHTML = html;
+  currentViewingReportId = r.id;
+  const radio = document.querySelector(`input[name="reportStatus"][value="${r.status || "belum"}"]`);
+  if (radio) radio.checked = true;
   viewReportModalBackdrop.classList.add("show");
 }
+
+let currentViewingReportId = null;
+document.getElementById("btnUpdateReportStatus").addEventListener("click", function () {
+  if (!currentViewingReportId) return;
+  const selected = document.querySelector('input[name="reportStatus"]:checked');
+  if (!selected) return;
+  const reports = loadReports();
+  const idx = reports.findIndex((r) => r.id === currentViewingReportId);
+  if (idx === -1) return;
+  reports[idx].status = selected.value;
+  saveReports(reports);
+  viewReportModalBackdrop.classList.remove("show");
+  renderReportsList();
+  showToast("Status laporan diperbarui");
+});
 
 document.getElementById("btnCloseViewReport").addEventListener("click", function () {
   viewReportModalBackdrop.classList.remove("show");
@@ -820,26 +1321,26 @@ viewReportModalBackdrop.addEventListener("click", function (e) {
 
 function deleteReport(id) {
   openConfirmModal(
-    "Hapus laporan ini? Tindakan ini tidak bisa dibatalkan.",
+    "Hapus laporan ini? Laporan akan dipindahkan ke Recycle Bin dan bisa dipulihkan dalam 30 hari.",
     function () {
-      const reports = loadReports().filter((r) => r.id !== id);
-      saveReports(reports);
+      trashReport(id);
       renderReportsList();
-      showToast("Laporan dihapus");
+      showToast("Laporan dipindahkan ke Recycle Bin");
     },
     { title: "Hapus Laporan" }
   );
 }
 
 document.getElementById("btnDeleteAllReports").addEventListener("click", function () {
-  if (loadReports().length === 0) return;
+  const reports = loadReports();
+  if (reports.length === 0) return;
   openConfirmModal(
-    "Yakin ingin hapus semua laporan?",
+    "Yakin ingin hapus semua laporan? Laporan akan dipindahkan ke Recycle Bin dan bisa dipulihkan dalam 30 hari.",
     function () {
-      saveReports([]);
+      reports.forEach((r) => trashReport(r.id));
       reportsPage = 1;
       renderReportsList();
-      showToast("Semua laporan dihapus");
+      showToast("Semua laporan dipindahkan ke Recycle Bin");
     },
     { title: "Hapus Semua Laporan" }
   );
@@ -1133,12 +1634,17 @@ document.getElementById("btnConfirmUploadFile").addEventListener("click", functi
 function openFileEdit(path) {
   const node = vfsGetNode(path);
   if (!node) return;
+  if (!node.isText) {
+    showToast("File ini tidak bisa dibuka");
+    return;
+  }
   currentEditingFilePath = path;
   document.getElementById("fileEditHeading").textContent = node.name;
   const textarea = document.getElementById("fileEditTextarea");
   const note = document.getElementById("fileEditNote");
   textarea.value = "";
   note.textContent = "";
+  pushBackTrap();
 
   if (node.content != null) {
     textarea.value = node.content;
@@ -1151,7 +1657,7 @@ function openFileEdit(path) {
     // dibuka lewat server/http, tidak berhasil jika dibuka via file://
     note.textContent = "Memuat isi file…";
     showSub("viewFileEdit");
-    fetch(node.path)
+    fetch(vfsRealPath(node.path))
       .then((res) => {
         if (!res.ok) throw new Error("fetch gagal");
         return res.text();
@@ -1394,7 +1900,7 @@ function downloadVfsNode(path) {
   } else if (node.content != null) {
     a.href = URL.createObjectURL(new Blob([node.content], { type: "text/plain" }));
   } else if (node.original) {
-    a.href = node.path;
+    a.href = vfsRealPath(node.path);
   } else {
     showToast("File ini belum memiliki isi untuk diunduh");
     return;
@@ -1418,9 +1924,7 @@ function renderPagination(containerId, totalItems, pageSize, currentPage, onChan
   let html = "";
   html += `<button data-page="1" ${currentPage === 1 ? "disabled" : ""} aria-label="Halaman pertama">&laquo;</button>`;
   html += `<button data-page="${currentPage - 1}" ${currentPage === 1 ? "disabled" : ""} aria-label="Sebelumnya">&lsaquo;</button>`;
-  for (let i = 1; i <= totalPages; i++) {
-    html += `<button data-page="${i}" class="${i === currentPage ? "active" : ""}">${i}</button>`;
-  }
+  html += `<button data-page="${currentPage}" class="active" aria-current="page">${currentPage}</button>`;
   html += `<button data-page="${currentPage + 1}" ${currentPage === totalPages ? "disabled" : ""} aria-label="Berikutnya">&rsaquo;</button>`;
   html += `<button data-page="${totalPages}" ${currentPage === totalPages ? "disabled" : ""} aria-label="Halaman terakhir">&raquo;</button>`;
   el.innerHTML = html;
@@ -1432,6 +1936,603 @@ function renderPagination(containerId, totalItems, pageSize, currentPage, onChan
   });
 }
 
+// =========================================================
+// Backup & Restore (data postingan)
+// =========================================================
+const restoreFileInput = document.getElementById("restoreFileInput");
+const restoreFileNameEl = document.getElementById("restoreFileName");
+const restoreFileLabel = document.querySelector(".backup-file-label");
+const btnRestoreBackup = document.getElementById("btnRestoreBackup");
+const backupStatusEl = document.getElementById("backupStatus");
+let pendingRestoreData = null; // array post hasil parsing file yang dipilih
+
+function updateBackupPostCount() {
+  const n = loadPosts().length;
+  document.getElementById("backupPostCount").textContent =
+    n === 0 ? "Belum ada postingan tersimpan." : `Saat ini ada ${n} postingan tersimpan.`;
+}
+
+function resetRestoreForm() {
+  restoreFileInput.value = "";
+  restoreFileNameEl.textContent = "Belum ada file dipilih";
+  restoreFileLabel.classList.remove("has-file");
+  btnRestoreBackup.disabled = true;
+  pendingRestoreData = null;
+  backupStatusEl.textContent = "";
+  backupStatusEl.className = "backup-status";
+  document.querySelector('input[name="restoreMode"][value="merge"]').checked = true;
+}
+
+function setBackupStatus(msg, type) {
+  backupStatusEl.textContent = msg;
+  backupStatusEl.className = "backup-status" + (type ? " " + type : "");
+}
+
+// ---------- Backup (download) ----------
+document.getElementById("btnDownloadBackup").addEventListener("click", function () {
+  const posts = loadPosts();
+  const payload = {
+    app: "fueeru-game-backup",
+    type: "posts",
+    version: DATA_VERSION,
+    exportedAt: new Date().toISOString(),
+    count: posts.length,
+    posts: posts
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `fueeru-posts-backup-${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  markBackupDone();
+  // Backup baru saja dilakukan -> hapus notifikasi pengingat backup yang lama (kalau ada)
+  saveNotifications(loadNotifications().filter((n) => n.type !== "backup_reminder"));
+  showToast("Backup postingan berhasil diunduh");
+});
+
+// ---------- Restore (pilih file) ----------
+restoreFileInput.addEventListener("change", function () {
+  const file = restoreFileInput.files && restoreFileInput.files[0];
+  pendingRestoreData = null;
+  btnRestoreBackup.disabled = true;
+  setBackupStatus("", "");
+
+  if (!file) {
+    restoreFileNameEl.textContent = "Belum ada file dipilih";
+    restoreFileLabel.classList.remove("has-file");
+    return;
+  }
+  restoreFileNameEl.textContent = file.name;
+  restoreFileLabel.classList.add("has-file");
+
+  const reader = new FileReader();
+  reader.onload = function () {
+    try {
+      const parsed = JSON.parse(reader.result);
+      const posts = Array.isArray(parsed) ? parsed : parsed.posts;
+      if (!Array.isArray(posts)) {
+        throw new Error("Format file tidak dikenali (tidak ditemukan daftar postingan).");
+      }
+      const valid = posts.every(
+        (p) => p && typeof p === "object" && typeof p.id === "string" && typeof p.title === "string"
+      );
+      if (!valid || posts.length === 0) {
+        throw new Error("Isi file tidak sesuai format data postingan Fueeru Game.");
+      }
+      pendingRestoreData = posts;
+      btnRestoreBackup.disabled = false;
+      setBackupStatus(`File valid — berisi ${posts.length} postingan, siap dipulihkan.`, "success");
+    } catch (err) {
+      pendingRestoreData = null;
+      btnRestoreBackup.disabled = true;
+      setBackupStatus("Gagal membaca file: " + err.message, "error");
+    }
+  };
+  reader.onerror = function () {
+    setBackupStatus("Gagal membaca file. Coba lagi.", "error");
+  };
+  reader.readAsText(file);
+});
+
+// ---------- Restore (eksekusi) ----------
+btnRestoreBackup.addEventListener("click", function () {
+  if (!pendingRestoreData) return;
+  const mode = document.querySelector('input[name="restoreMode"]:checked').value;
+  const incoming = pendingRestoreData;
+
+  const message =
+    mode === "replace"
+      ? `Semua postingan yang ada sekarang (${loadPosts().length}) akan DIHAPUS dan diganti dengan ${incoming.length} postingan dari file backup. Lanjutkan?`
+      : `${incoming.length} postingan dari file backup akan digabungkan dengan data yang ada (postingan dengan ID sama akan diperbarui). Lanjutkan?`;
+
+  openConfirmModal(
+    message,
+    function () {
+      let finalPosts;
+      if (mode === "replace") {
+        finalPosts = incoming.slice();
+      } else {
+        const existing = loadPosts();
+        const map = new Map(existing.map((p) => [p.id, p]));
+        incoming.forEach((p) => map.set(p.id, p));
+        finalPosts = Array.from(map.values());
+      }
+      savePosts(finalPosts);
+      updateBackupPostCount();
+      resetRestoreForm();
+      setBackupStatus(`Berhasil dipulihkan — total sekarang ${finalPosts.length} postingan.`, "success");
+      showToast("Data postingan berhasil dipulihkan");
+    },
+    { title: "Konfirmasi Restore", confirmLabel: mode === "replace" ? "Ya, Timpa Semua" : "Ya, Gabungkan" }
+  );
+});
+
+// =========================================================
+// Informasi Web (statistik + kata sandi admin)
+// =========================================================
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+}
+
+function renderInfoView() {
+  const visitStats = getVisitStats();
+  const posts = loadPosts();
+  const reports = loadReports();
+  const viewStats = getPostViewStats();
+
+  document.getElementById("infoTotalVisits").textContent = visitStats.total;
+  document.getElementById("infoVisitsThisWeek").textContent = visitStats.thisWeek;
+  document.getElementById("infoVisitsLastWeek").textContent = visitStats.lastWeek;
+  document.getElementById("infoTotalPosts").textContent = posts.length;
+  document.getElementById("infoTotalReports").textContent = reports.length;
+  document.getElementById("infoReportsPending").textContent = reports.filter(
+    (r) => (r.status || "belum") === "belum"
+  ).length;
+  document.getElementById("infoStorageSize").textContent = formatBytes(getStorageSizeEstimate());
+
+  document.getElementById("infoViewsTotal").textContent = viewStats.total;
+  document.getElementById("infoViewsThisWeek").textContent = viewStats.thisWeek;
+  document.getElementById("infoViewsLastWeek").textContent = viewStats.lastWeek;
+
+  document.getElementById("infoCurrentPassword").textContent = getAdminPassword();
+  document.getElementById("newPasswordInput").value = "";
+  document.getElementById("passwordStatus").textContent = "";
+  document.getElementById("passwordStatus").className = "backup-status";
+}
+
+document.getElementById("btnSavePassword").addEventListener("click", function () {
+  const input = document.getElementById("newPasswordInput");
+  const statusEl = document.getElementById("passwordStatus");
+  const val = input.value.trim();
+  if (val.length < 4) {
+    statusEl.textContent = "Kata sandi minimal 4 karakter.";
+    statusEl.className = "backup-status error";
+    return;
+  }
+  setAdminPassword(val);
+  document.getElementById("infoCurrentPassword").textContent = val;
+  input.value = "";
+  statusEl.textContent = "Kata sandi admin berhasil diganti.";
+  statusEl.className = "backup-status success";
+  showToast("Kata sandi admin diperbarui");
+});
+
+// ---------- Modal: Notifikasi ----------
+const notifModalBackdrop = document.getElementById("notifModalBackdrop");
+let notifPage = 1;
+const NOTIF_ICONS = {
+  report: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L14.71 3.86a2 2 0 00-3.42 0z"/></svg>`,
+  backup_reminder: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8H3v13h18V8z"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>`
+};
+
+function updateNotifBadge() {
+  const badge = document.getElementById("notifBadge");
+  const n = loadNotifications().length;
+  if (n > 0) {
+    badge.textContent = n > 99 ? "99+" : String(n);
+    badge.classList.remove("hidden");
+  } else {
+    badge.classList.add("hidden");
+  }
+}
+
+function renderNotifModal() {
+  const notifs = loadNotifications();
+  const list = document.getElementById("notifList");
+
+  if (notifs.length === 0) {
+    list.innerHTML = `<div class="empty-state"><h3>Tidak ada notifikasi</h3></div>`;
+    renderPagination("notifPagination", 0, PAGE_SIZE, 1, () => {});
+    return;
+  }
+
+  const totalPages = Math.max(1, Math.ceil(notifs.length / PAGE_SIZE));
+  if (notifPage > totalPages) notifPage = totalPages;
+  const start = (notifPage - 1) * PAGE_SIZE;
+  const pageNotifs = notifs.slice(start, start + PAGE_SIZE);
+
+  list.innerHTML = pageNotifs
+    .map(
+      (n) => `
+    <div class="notif-item type-${n.type}">
+      <span class="notif-icon">${NOTIF_ICONS[n.type] || NOTIF_ICONS.report}</span>
+      <div class="notif-body">
+        <div class="notif-text">${escapeHtmlAdmin(n.text)}</div>
+        <div class="notif-time">${escapeHtmlAdmin(formatReportDate(n.date))}</div>
+      </div>
+    </div>`
+    )
+    .join("");
+
+  renderPagination("notifPagination", notifs.length, PAGE_SIZE, notifPage, (page) => {
+    notifPage = page;
+    renderNotifModal();
+  });
+}
+
+document.getElementById("btnNotifications").addEventListener("click", function () {
+  notifPage = 1;
+  renderNotifModal();
+  notifModalBackdrop.classList.add("show");
+});
+document.getElementById("btnCloseNotifs").addEventListener("click", function () {
+  notifModalBackdrop.classList.remove("show");
+});
+notifModalBackdrop.addEventListener("click", function (e) {
+  if (e.target === notifModalBackdrop) notifModalBackdrop.classList.remove("show");
+});
+document.getElementById("btnClearNotifs").addEventListener("click", function () {
+  if (loadNotifications().length === 0) return;
+  openConfirmModal(
+    "Hapus semua notifikasi?",
+    function () {
+      clearAllNotifications();
+      notifPage = 1;
+      renderNotifModal();
+      updateNotifBadge();
+      showToast("Semua notifikasi dihapus");
+    },
+    { title: "Hapus Semua Notifikasi", confirmLabel: "Ya, Hapus" }
+  );
+});
+
+// ---------- Modal: Views Postingan ----------
+const postViewsModalBackdrop = document.getElementById("postViewsModalBackdrop");
+let postViewsPage = 1;
+
+document.getElementById("btnViewPostViews").addEventListener("click", function () {
+  postViewsPage = 1;
+  renderPostViewsModal();
+  postViewsModalBackdrop.classList.add("show");
+});
+document.getElementById("btnClosePostViews").addEventListener("click", function () {
+  postViewsModalBackdrop.classList.remove("show");
+});
+postViewsModalBackdrop.addEventListener("click", function (e) {
+  if (e.target === postViewsModalBackdrop) postViewsModalBackdrop.classList.remove("show");
+});
+document.getElementById("postViewsSort").addEventListener("change", function () {
+  postViewsPage = 1;
+  renderPostViewsModal();
+});
+
+function renderPostViewsModal() {
+  const sortMode = document.getElementById("postViewsSort").value;
+  let posts = loadPosts().map((p) => ({ ...p, _views: getViewsForPost(p.id) }));
+
+  posts.sort((a, b) => {
+    if (sortMode === "views_desc") return b._views - a._views;
+    if (sortMode === "views_asc") return a._views - b._views;
+    const ta = new Date(a.date).getTime();
+    const tb = new Date(b.date).getTime();
+    return sortMode === "terlama" ? ta - tb : tb - ta;
+  });
+
+  const list = document.getElementById("postViewsList");
+  if (posts.length === 0) {
+    list.innerHTML = `<div class="empty-state"><h3>Belum ada postingan</h3></div>`;
+    renderPagination("postViewsPagination", 0, PAGE_SIZE, 1, () => {});
+    return;
+  }
+
+  const totalPages = Math.max(1, Math.ceil(posts.length / PAGE_SIZE));
+  if (postViewsPage > totalPages) postViewsPage = totalPages;
+  const start = (postViewsPage - 1) * PAGE_SIZE;
+  const pagePosts = posts.slice(start, start + PAGE_SIZE);
+
+  list.innerHTML = pagePosts
+    .map(
+      (p) => `
+    <div class="post-view-item">
+      <img src="${resolveAdminAsset(p.thumbnail)}" alt="">
+      <div class="pvi-body">
+        <div class="pvi-title">${escapeHtmlAdmin(p.title)}</div>
+        <div class="pvi-meta">${escapeHtmlAdmin(p.jenis)} • ${
+        p.published === false ? '<span class="draft-label">Draft</span>' : escapeHtmlAdmin(formatDate(p.date))
+      }</div>
+      </div>
+      <div class="pvi-count">Jumlah Views:<br>${p._views}</div>
+    </div>`
+    )
+    .join("");
+
+  renderPagination("postViewsPagination", posts.length, PAGE_SIZE, postViewsPage, (page) => {
+    postViewsPage = page;
+    renderPostViewsModal();
+  });
+}
+
+// =========================================================
+// RECYCLE BIN
+// =========================================================
+let trashViewType = "posts"; // "posts" | "reports"
+let trashSearchQuery = "";
+let trashSortMode = "az"; // az | za | newest | oldest
+let trashPage = 1;
+
+function renderRecycleBinCounts() {
+  document.getElementById("trashPostCount").textContent = loadTrashPosts().length;
+  document.getElementById("trashReportCount").textContent = loadTrashReports().length;
+}
+
+function openTrashList(type) {
+  trashViewType = type;
+  trashSearchQuery = "";
+  trashSortMode = "az";
+  trashPage = 1;
+  document.getElementById("trashSearchInput").value = "";
+  document.getElementById("trashSortSelect").value = "az";
+  document.getElementById("recycleBinListHeading").textContent = type === "posts" ? "Postingan" : "Laporan";
+  showSub("viewRecycleBinList");
+  renderTrashList();
+}
+
+function getFilteredTrash() {
+  const raw = trashViewType === "posts" ? loadTrashPosts() : loadTrashReports();
+  const q = trashSearchQuery.trim().toLowerCase();
+  const filtered = q ? raw.filter((item) => (item.title || "").toLowerCase().includes(q)) : raw.slice();
+  filtered.sort((a, b) => {
+    if (trashSortMode === "az") return (a.title || "").localeCompare(b.title || "");
+    if (trashSortMode === "za") return (b.title || "").localeCompare(a.title || "");
+    if (trashSortMode === "newest") return new Date(b.deletedAt) - new Date(a.deletedAt);
+    return new Date(a.deletedAt) - new Date(b.deletedAt); // oldest
+  });
+  return filtered;
+}
+
+function findTrashItem(id) {
+  const raw = trashViewType === "posts" ? loadTrashPosts() : loadTrashReports();
+  return raw.find((item) => item.id === id);
+}
+
+function renderTrashList() {
+  const filtered = getFilteredTrash();
+  const list = document.getElementById("trashList");
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty-state"><h3>Recycle Bin kosong</h3></div>`;
+    renderPagination("trashPagination", 0, PAGE_SIZE, 1, () => {});
+    return;
+  }
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  if (trashPage > totalPages) trashPage = totalPages;
+  const start = (trashPage - 1) * PAGE_SIZE;
+  const pageItems = filtered.slice(start, start + PAGE_SIZE);
+
+  list.innerHTML = pageItems
+    .map(
+      (item) => `
+    <div class="trash-item" data-id="${item.id}">
+      <div class="trash-item-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <div class="trash-item-title">${escapeHtmlAdmin(item.title || "(Tanpa judul)")}</div>
+        <button type="button" class="trash-item-menu-btn" data-menu-toggle="${item.id}">⋮</button>
+      </div>
+      <div class="trash-item-menu hidden" data-menu="${item.id}">
+        <button type="button" data-action="preview" data-id="${item.id}">Buka Preview</button>
+        <button type="button" data-action="detail" data-id="${item.id}">Detail</button>
+        <button type="button" data-action="restore" data-id="${item.id}">Pulihkan</button>
+        <button type="button" class="danger" data-action="delete" data-id="${item.id}">Hapus Permanen</button>
+      </div>
+    </div>`
+    )
+    .join("");
+
+  list.querySelectorAll("[data-menu-toggle]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute("data-menu-toggle");
+      const menu = list.querySelector(`[data-menu="${id}"]`);
+      const wasHidden = menu.classList.contains("hidden");
+      list.querySelectorAll(".trash-item-menu").forEach((m) => m.classList.add("hidden"));
+      if (wasHidden) menu.classList.remove("hidden");
+    });
+  });
+
+  list.querySelectorAll("[data-action]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-id");
+      const action = btn.getAttribute("data-action");
+      list.querySelectorAll(".trash-item-menu").forEach((m) => m.classList.add("hidden"));
+      if (action === "preview") openTrashPreview(id);
+      else if (action === "detail") openTrashDetail(id);
+      else if (action === "restore") restoreTrashItem(id);
+      else if (action === "delete") deleteTrashItemPermanently(id);
+    });
+  });
+
+  renderPagination("trashPagination", filtered.length, PAGE_SIZE, trashPage, (page) => {
+    trashPage = page;
+    renderTrashList();
+  });
+}
+
+// Tutup dropdown menu ⋮ kalau klik di luar area menu.
+document.addEventListener("click", function () {
+  document.querySelectorAll(".trash-item-menu").forEach((m) => m.classList.add("hidden"));
+});
+
+document.getElementById("trashSearchInput").addEventListener("input", function () {
+  trashSearchQuery = this.value;
+  trashPage = 1;
+  renderTrashList();
+});
+document.getElementById("trashSortSelect").addEventListener("change", function () {
+  trashSortMode = this.value;
+  trashPage = 1;
+  renderTrashList();
+});
+
+function restoreTrashItem(id) {
+  const item = findTrashItem(id);
+  if (!item) return;
+  const label = trashViewType === "posts" ? "postingan" : "laporan";
+  openConfirmModal(
+    `Pulihkan "${item.title}"? Item akan dikembalikan ke daftar ${label} aktif.`,
+    function () {
+      restoreFromTrash(trashViewType, id);
+      renderTrashList();
+      renderRecycleBinCounts();
+      showToast("Berhasil dipulihkan");
+    },
+    { title: "Pulihkan", confirmLabel: "Ya, Pulihkan" }
+  );
+}
+
+function deleteTrashItemPermanently(id) {
+  const item = findTrashItem(id);
+  if (!item) return;
+  openConfirmModal(
+    `Hapus permanen "${item.title}"? Tindakan ini TIDAK BISA dibatalkan.`,
+    function () {
+      permanentlyDeleteFromTrash(trashViewType, id);
+      renderTrashList();
+      renderRecycleBinCounts();
+      showToast("Item dihapus permanen");
+    },
+    { title: "Hapus Permanen", confirmLabel: "Ya, Hapus Permanen" }
+  );
+}
+
+document.getElementById("btnRestoreAllTrash").addEventListener("click", function () {
+  const filtered = getFilteredTrash();
+  if (filtered.length === 0) return;
+  const label = trashViewType === "posts" ? "postingan" : "laporan";
+  openConfirmModal(
+    `Pulihkan semua (${filtered.length}) ${label} yang ditampilkan?`,
+    function () {
+      restoreAllFromTrash(
+        trashViewType,
+        filtered.map((i) => i.id)
+      );
+      trashPage = 1;
+      renderTrashList();
+      renderRecycleBinCounts();
+      showToast("Semua item dipulihkan");
+    },
+    { title: "Pulihkan Semua", confirmLabel: "Ya, Pulihkan Semua" }
+  );
+});
+
+document.getElementById("btnDeleteAllTrash").addEventListener("click", function () {
+  const filtered = getFilteredTrash();
+  if (filtered.length === 0) return;
+  const label = trashViewType === "posts" ? "postingan" : "laporan";
+  openConfirmModal(
+    `Hapus permanen semua (${filtered.length}) ${label} yang ditampilkan? Tindakan ini TIDAK BISA dibatalkan.`,
+    function () {
+      permanentlyDeleteAllFromTrash(
+        trashViewType,
+        filtered.map((i) => i.id)
+      );
+      trashPage = 1;
+      renderTrashList();
+      renderRecycleBinCounts();
+      showToast("Semua item dihapus permanen");
+    },
+    { title: "Hapus Permanen Semua", confirmLabel: "Ya, Hapus Semua" }
+  );
+});
+
+// ---------- Modal: Preview item Recycle Bin ----------
+const trashPreviewModalBackdrop = document.getElementById("trashPreviewModalBackdrop");
+function openTrashPreview(id) {
+  const item = findTrashItem(id);
+  if (!item) return;
+  const body = document.getElementById("trashPreviewBody");
+  if (trashViewType === "posts") {
+    body.innerHTML = `
+      <h1 class="post-detail-title" style="margin-top:0;">${escapeHtmlAdmin(item.title)}</h1>
+      <img class="post-detail-img" src="${resolveAdminAsset(item.thumbnail)}" alt="">
+      <div class="post-detail-content">${item.content}</div>
+    `;
+    initSpoilersAdmin(body);
+  } else {
+    function row(label, value, isEmpty) {
+      return `
+        <div class="vrb-row">
+          <div class="vrb-label">${escapeHtmlAdmin(label)}</div>
+          <div class="vrb-value${isEmpty ? " empty" : ""}">${isEmpty ? value : escapeHtmlAdmin(value)}</div>
+        </div>`;
+    }
+    let html = "";
+    html += row("Judul Laporan", item.title, false);
+    html += row("Nama", item.name || "Anonim", !item.name);
+    html += row("Media Balasan", item.contactMedia || "Tidak diisi", !item.contactMedia);
+    html += row("Isi Laporan", item.content, false);
+    if (item.attachment) {
+      html += `
+        <div class="vrb-row">
+          <div class="vrb-label">Lampiran</div>
+          <div class="vrb-value">
+            <a class="rep-attachment" href="${item.attachment.dataUrl}" download="${escapeHtmlAdmin(item.attachment.name)}">${escapeHtmlAdmin(item.attachment.name)}</a>
+          </div>
+        </div>`;
+    }
+    body.innerHTML = html;
+  }
+  trashPreviewModalBackdrop.classList.add("show");
+}
+document.getElementById("btnCloseTrashPreview").addEventListener("click", function () {
+  trashPreviewModalBackdrop.classList.remove("show");
+});
+trashPreviewModalBackdrop.addEventListener("click", function (e) {
+  if (e.target === trashPreviewModalBackdrop) trashPreviewModalBackdrop.classList.remove("show");
+});
+
+// ---------- Modal: Detail item Recycle Bin ----------
+const trashDetailModalBackdrop = document.getElementById("trashDetailModalBackdrop");
+function openTrashDetail(id) {
+  const item = findTrashItem(id);
+  if (!item) return;
+  const body = document.getElementById("trashDetailBody");
+  body.innerHTML = `
+    <div class="vrb-row">
+      <div class="vrb-label">Judul</div>
+      <div class="vrb-value">${escapeHtmlAdmin(item.title || "(Tanpa judul)")}</div>
+    </div>
+    <div class="vrb-row">
+      <div class="vrb-label">Dihapus pada</div>
+      <div class="vrb-value">${escapeHtmlAdmin(formatReportDate(item.deletedAt))}</div>
+    </div>
+  `;
+  trashDetailModalBackdrop.classList.add("show");
+}
+document.getElementById("btnCloseTrashDetail").addEventListener("click", function () {
+  trashDetailModalBackdrop.classList.remove("show");
+});
+trashDetailModalBackdrop.addEventListener("click", function (e) {
+  if (e.target === trashDetailModalBackdrop) trashDetailModalBackdrop.classList.remove("show");
+});
+
 // ---------- Toast ----------
 let toastTimer = null;
 function showToast(msg) {
@@ -1441,6 +2542,59 @@ function showToast(msg) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
 }
+
+// =========================================================
+// PWA Admin Panel: "Tambah ke Layar Utama" + Service Worker
+// Sengaja pakai manifest terpisah (admin-manifest.json, start_url
+// admin.html) supaya kalau di-install jadi app sendiri, ikonnya di
+// layar utama langsung membuka Admin Panel — bukan situs publik.
+// =========================================================
+let deferredAdminInstallPrompt = null;
+
+window.addEventListener("beforeinstallprompt", function (e) {
+  e.preventDefault();
+  deferredAdminInstallPrompt = e;
+});
+window.addEventListener("appinstalled", function () {
+  deferredAdminInstallPrompt = null;
+});
+
+(function initAdminPWA() {
+  const btn = document.getElementById("btnInstallAdminPWA");
+  if (!btn) return;
+
+  const isStandalone =
+    window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  if (isStandalone) {
+    btn.style.display = "none";
+  } else {
+    btn.addEventListener("click", async function () {
+      if (deferredAdminInstallPrompt) {
+        deferredAdminInstallPrompt.prompt();
+        try {
+          await deferredAdminInstallPrompt.userChoice;
+        } catch (err) {
+          /* diabaikan */
+        }
+        deferredAdminInstallPrompt = null;
+      } else {
+        alert(
+          "Browser ini belum menawarkan instalasi otomatis (atau Admin Panel sudah terpasang).\n\n" +
+            "Di iPhone/iPad: buka menu Share lalu pilih \"Tambah ke Layar Utama\".\n" +
+            "Di HP/PC lain: cari ikon Install di address bar browser."
+        );
+      }
+    });
+  }
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js", { scope: "./" }).catch(function () {
+        /* diabaikan — Admin Panel tetap berjalan normal tanpa Service Worker */
+      });
+    });
+  }
+})();
 
 // ---------- Init ----------
 document.addEventListener("DOMContentLoaded", function () {

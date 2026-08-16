@@ -7,6 +7,19 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
+/* Font custom (FredokaOne) — dipakai khusus untuk teks "Random Game",
+   "New Update Game", dan judul postingan (lihat #randomHeading,
+   #updateHeading, .prow-title, .gc-title, .post-detail-title di bawah).
+   Menu sidebar, isi postingan, dan Admin Panel TIDAK memakai font ini. */
+@font-face {
+  font-family: 'FueeruDisplay';
+  src: url('../font/FredokaOne-Regular.otf') format('opentype'),
+       url('../font/FredokaOne-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --ink: #0b2947;
   --ink-soft: #4a6a89;
@@ -408,6 +421,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   position: relative;
   z-index: 2;
 }
+#randomHeading,
+#updateHeading {
+  font-family: 'FueeruDisplay', 'Poppins', sans-serif;
+}
 .section-head::before {
   content: "";
   position: absolute;
@@ -491,7 +508,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   min-height: 0;
 }
 .game-card .gc-title {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'FueeruDisplay', 'Poppins', sans-serif;
   font-weight: 700;
   font-size: .8rem;
   line-height: 1.28;
@@ -547,7 +564,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 .post-row .prow-body { min-width: 0; flex: 1; }
 .post-row .prow-title {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'FueeruDisplay', 'Poppins', sans-serif;
   font-weight: 700;
   font-size: 1.02rem;
   color: var(--sky-700);
@@ -748,6 +765,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 
 /* ---------------- Post detail page ---------------- */
 .post-detail-title {
+  font-family: 'FueeruDisplay', 'Poppins', sans-serif;
   font-size: 1.6rem;
   font-weight: 800;
   color: var(--sky-700);
@@ -788,22 +806,80 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   font-style: italic;
 }
 
-/* Spoiler — di halaman publik, teks disamarkan sampai diklik */
+/* Label — kotak dengan border biru muda di sekitar teks yang dipilih. */
+.post-detail-content .label-box,
+.editor-content .label-box {
+  display: block;
+  border: 1.5px solid var(--sky-200);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin: 12px 0;
+}
+
+/* Spoiler — di halaman publik, isi (teks/gambar) tersembunyi di
+   dalam kotak sampai label "SPOILER" diklik untuk membukanya. */
 .spoiler-content {
-  background: var(--ink);
-  color: var(--ink);
-  border-radius: 4px;
-  padding: 0 3px;
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: top;
+  margin: 4px 0;
+}
+.spoiler-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(47, 168, 224, 0.12);
+  border: 1.5px solid var(--sky-500);
+  color: var(--sky-700);
+  font-weight: 700;
+  font-size: .76rem;
+  letter-spacing: .04em;
+  padding: 7px 16px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background .18s ease, color .18s ease;
   -webkit-tap-highlight-color: transparent;
+  transition: background .18s ease;
+  margin-bottom: 4px;
 }
-.spoiler-content::selection { background: var(--sky-300); }
-.spoiler-content.revealed {
-  background: var(--sky-100);
-  color: inherit;
-  cursor: text;
+.spoiler-label::before {
+  content: "";
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  background-color: currentColor;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
 }
+.spoiler-label:hover { background: rgba(47, 168, 224, 0.22); }
+.spoiler-content.revealed .spoiler-label::before {
+  /* Ikon mata tercoret (seperti ikon "sembunyikan kata sandi") saat spoiler sedang terbuka */
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17.94 17.94A10.94 10.94 0 0112 20c-7 0-11-8-11-8a21.8 21.8 0 015.06-6.06M9.9 4.24A10.94 10.94 0 0112 4c7 0 11 8 11 8a21.77 21.77 0 01-2.16 3.19M14.12 14.12a3 3 0 11-4.24-4.24'/%3E%3Cline x1='1' y1='1' x2='23' y2='23'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17.94 17.94A10.94 10.94 0 0112 20c-7 0-11-8-11-8a21.8 21.8 0 015.06-6.06M9.9 4.24A10.94 10.94 0 0112 4c7 0 11 8 11 8a21.77 21.77 0 01-2.16 3.19M14.12 14.12a3 3 0 11-4.24-4.24'/%3E%3Cline x1='1' y1='1' x2='23' y2='23'/%3E%3C/svg%3E");
+}
+
+.spoiler-inner {
+  display: block;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  border-left: 3px solid var(--sky-500);
+  background: var(--sky-50);
+  border-radius: 0 8px 8px 0;
+  transition: max-height .3s ease, opacity .25s ease, padding .25s ease;
+}
+.spoiler-content.revealed .spoiler-inner {
+  max-height: 4000px;
+  opacity: 1;
+  padding: 10px 14px;
+}
+.spoiler-inner img { max-width: 100%; border-radius: 8px; vertical-align: middle; }
 .post-detail-meta {
   display: flex;
   justify-content: space-between;
@@ -902,6 +978,24 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .form-alert.show { display: block; }
 .form-alert.success { background: #e3f8ec; color: #1c8a4f; border: 1.5px solid #b9ecd0; }
 .form-alert.error { background: #ffe6e2; color: #c8402a; border: 1.5px solid #ffc7bd; }
+
+.form-field .btn-primary,
+.form-field + .btn-primary,
+.btn-primary {
+  display: block;
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--sky-500);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: background .2s ease;
+}
+.btn-primary:hover { background: var(--sky-600); }
 
 /* ---------------- Empty state ---------------- */
 .empty-state {

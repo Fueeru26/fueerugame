@@ -11,13 +11,17 @@
    bersangkutan.
    ========================================================= */
 
-const VFS_KEY = "fueeru_vfs_v2";
+const VFS_KEY = "fueeru_vfs_v3";
 /* Tanggal tetap yang dipakai sebagai "Tanggal Ditambahkan" untuk semua
    file/folder bawaan (seed) situs — merepresentasikan kapan situs ini
    pertama kali dibuat. */
 const SEED_DATE = "2026-08-01T00:00:00.000Z";
 
 const IMAGE_EXT = ["png", "jpg", "jpeg", "gif", "webp", "svg"];
+/* Ekstensi yang dianggap "berbasis teks" (bisa dibuka & diedit lewat
+ * Manajemen File). Selain ini (misalnya font .otf/.ttf) dianggap file
+ * biner dan tidak bisa dibuka lewat editor teks. */
+const TEXT_EXT = ["html", "css", "js", "json", "md", "txt", "xml", "csv"];
 
 function fileExt(name) {
   const idx = name.lastIndexOf(".");
@@ -25,6 +29,9 @@ function fileExt(name) {
 }
 function isImageName(name) {
   return IMAGE_EXT.includes(fileExt(name));
+}
+function isTextName(name) {
+  return TEXT_EXT.includes(fileExt(name));
 }
 function parentOf(path) {
   const idx = path.lastIndexOf("/");
@@ -39,34 +46,56 @@ function joinPath(parent, name) {
 }
 
 /* Struktur folder & file asli di server (real relative path, dipakai
-   sebagai src gambar / target fetch() langsung — bukan disalin). */
+   sebagai src gambar / target fetch() langsung — bukan disalin).
+   Path di sini merepresentasikan lokasi sebenarnya relatif terhadap
+   folder utama situs (tempat index.html berada). */
 const SEED_PATHS = [
   { path: "css", type: "folder" },
   { path: "js", type: "folder" },
+  { path: "font", type: "folder" },
   { path: "pictures", type: "folder" },
   { path: "postheader", type: "folder" },
   { path: "webpictures", type: "folder" },
-  { path: "admin.html", type: "file" },
-  { path: "category.html", type: "file" },
-  { path: "donasi.html", type: "file" },
+  { path: "web", type: "folder" },
   { path: "index.html", type: "file" },
-  { path: "lapor.html", type: "file" },
-  { path: "post.html", type: "file" },
-  { path: "search.html", type: "file" },
-  { path: "tentang.html", type: "file" },
+  { path: "admin.html", type: "file" },
+  { path: "web/category.html", type: "file" },
+  { path: "web/donasi.html", type: "file" },
+  { path: "web/lapor.html", type: "file" },
+  { path: "web/post.html", type: "file" },
+  { path: "web/search.html", type: "file" },
+  { path: "web/tentang.html", type: "file" },
+  { path: "web/404.html", type: "file" },
   { path: "css/admin.css", type: "file" },
   { path: "css/style.css", type: "file" },
+  { path: "css/info.md", type: "file" },
   { path: "js/admin.js", type: "file" },
   { path: "js/data.js", type: "file" },
   { path: "js/main.js", type: "file" },
   { path: "js/vfs.js", type: "file" },
-  { path: "pictures/README.txt", type: "file" },
+  { path: "js/info.md", type: "file" },
+  { path: "web/info.md", type: "file" },
+  { path: "font/FredokaOne-Regular.otf", type: "file" },
+  { path: "font/FredokaOne-Regular.ttf", type: "file" },
+  { path: "font/OFL.txt", type: "file" },
+  { path: "font/info.md", type: "file" },
+  { path: "pictures/info.md", type: "file" },
+  { path: "postheader/info.md", type: "file" },
   { path: "webpictures/header.png", type: "file" },
-  { path: "webpictures/logo.png", type: "file" }
+  { path: "webpictures/header.webp", type: "file" },
+  { path: "webpictures/logo.png", type: "file" },
+  { path: "webpictures/logo.webp", type: "file" },
+  { path: "webpictures/404.png", type: "file" },
+  { path: "webpictures/404.webp", type: "file" },
+  { path: "webpictures/postplaceholder.png", type: "file" },
+  { path: "webpictures/postplaceholder.webp", type: "file" },
+  { path: "webpictures/info.md", type: "file" }
 ];
-for (let n = 1; n <= 20; n++) {
-  SEED_PATHS.push({ path: "postheader/Post" + String(n).padStart(3, "0") + ".png", type: "file" });
-}
+
+/* Catatan: folder "postheader" & "pictures" sengaja dibiarkan kosong
+   (dipakai sebagai folder backup gambar yang akan diupload lewat Admin —
+   lihat info.md di masing-masing folder), jadi tidak ada file seed di
+   dalamnya. */
 
 function buildSeedVFS() {
   const map = {};
@@ -76,6 +105,7 @@ function buildSeedVFS() {
       name: nameOf(entry.path),
       type: entry.type,
       isImage: entry.type === "file" ? isImageName(entry.path) : false,
+      isText: entry.type === "file" ? isTextName(entry.path) : false,
       original: true,
       content: null,
       dataUrl: null,
@@ -162,6 +192,7 @@ function vfsAddFile(parentPath, name, opts) {
     name,
     type: "file",
     isImage: isImageName(name),
+    isText: isTextName(name),
     original: false,
     content: opts.dataUrl ? null : opts.content != null ? opts.content : "",
     dataUrl: opts.dataUrl || null,
@@ -211,7 +242,15 @@ function vfsReplaceImage(path, dataUrl) {
 
 /** Sumber tampilan gambar: dataUrl (jika ada override) atau path asli di disk. */
 function vfsImageSrc(node) {
-  return node.dataUrl || (node.original ? node.path : "");
+  return node.dataUrl || (node.original ? vfsRealPath(node.path) : "");
+}
+
+/** admin.html (satu-satunya pemakai vfs.js) sekarang berada di folder
+ * utama situs (sama seperti index.html), jadi path asli (relatif ke
+ * root situs) yang tersimpan di VFS bisa dipakai langsung tanpa
+ * prefix tambahan sebagai src gambar / target fetch(). */
+function vfsRealPath(path) {
+  return path;
 }
 
 /** Ganti nama file/folder. Untuk folder, seluruh path anak ikut disesuaikan. */
@@ -313,7 +352,7 @@ function vfsTryPreserveImageBytes(path) {
       resolve();
       return;
     }
-    fetch(node.path)
+    fetch(vfsRealPath(node.path))
       .then((res) => {
         if (!res.ok) throw new Error("fetch gagal");
         return res.blob();

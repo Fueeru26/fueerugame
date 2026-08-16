@@ -1,0 +1,18 @@
+{
+  "name": "Fueeru Game Admin",
+  "short_name": "Fueeru Admin",
+  "description": "Panel admin untuk mengelola situs Fueeru Game.",
+  "start_url": "admin.html",
+  "scope": "./",
+  "id": "admin",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b2947",
+  "theme_color": "#0b2947",
+  "icons": [
+    { "src": "webpictures/icon-admin-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "webpictures/icon-admin-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "webpictures/icon-admin-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "webpictures/icon-admin-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

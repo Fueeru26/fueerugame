@@ -23,6 +23,43 @@ body.admin-body {
   font-weight: 800;
 }
 .admin-topbar .brand-mini img { width: 34px; height: 34px; border-radius: 50%; background: #fff; }
+.admin-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.admin-notif-btn {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.admin-notif-btn:hover { background: rgba(255,255,255,0.26); }
+.admin-notif-btn svg { width: 19px; height: 19px; }
+.notif-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: #e0453a;
+  color: #fff;
+  font-size: .62rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--navy-700);
+}
 .admin-logout {
   background: rgba(255,255,255,0.16);
   color: #fff;
@@ -69,6 +106,15 @@ body.admin-body {
   outline: none;
 }
 .admin-login-card input[type="password"]:focus { border-color: var(--sky-500); }
+.forgot-password-link {
+  display: inline-block;
+  color: var(--sky-600);
+  font-weight: 700;
+  font-size: .86rem;
+  text-decoration: none;
+  margin-bottom: 16px;
+}
+.forgot-password-link:hover { text-decoration: underline; }
 .btn-primary {
   width: 100%;
   padding: 13px;
@@ -152,6 +198,7 @@ body.admin-body {
   text-overflow: ellipsis;
 }
 .admin-post-item .api-meta { font-size: .76rem; color: var(--ink-soft); margin-top: 2px; }
+.admin-post-item .api-meta .draft-label { color: var(--sky-700); font-weight: 800; }
 .api-actions { display: flex; gap: 6px; flex: 0 0 auto; }
 .api-actions button {
   padding: 8px 12px;
@@ -267,20 +314,19 @@ body.admin-body {
   top: calc(100% + 6px);
   left: 0;
   display: none;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(4, 30px);
+  gap: 10px;
   background: var(--surface);
   border: 1.5px solid var(--sky-200);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-soft);
-  padding: 10px;
+  padding: 12px;
   z-index: 25;
-  width: 168px;
 }
 .color-swatch-menu.show { display: grid; }
 .color-swatch {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   border: 1.5px solid rgba(11,41,71,0.15);
   padding: 0;
@@ -310,16 +356,38 @@ body.admin-body {
   content: attr(data-placeholder);
   color: #9db6cb;
 }
-/* Spoiler tetap terbaca & ditandai jelas saat sedang diedit di admin
-   (di halaman publik, .spoiler-content disamarkan — lihat style.css) */
+/* Spoiler tetap terbaca & bisa diedit normal saat sedang diedit di
+   admin — ditandai dengan kotak putus-putus + label "SPOILER" di
+   pojok. Di halaman publik, isinya baru tampil setelah label diklik
+   (lihat style.css & post.html). */
 .editor-content .spoiler-content {
-  background: rgba(211, 70, 47, 0.12);
-  color: inherit;
-  border-bottom: 2px dashed #d3462f;
-  padding: 0 2px;
-  border-radius: 3px;
-  cursor: text;
+  display: inline-flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  border: 1.5px dashed var(--sky-500);
+  background: rgba(47, 168, 224, 0.08);
+  border-radius: 8px;
+  padding: 6px 10px;
+  max-width: 100%;
+  vertical-align: top;
 }
+.editor-content .spoiler-label {
+  flex: 0 0 auto;
+  background: rgba(47, 168, 224, 0.18);
+  color: var(--sky-700);
+  font-weight: 700;
+  font-size: .68rem;
+  letter-spacing: .04em;
+  padding: 3px 9px;
+  border-radius: 5px;
+  user-select: none;
+  cursor: default;
+}
+.editor-content .spoiler-inner {
+  color: inherit;
+}
+.editor-content .spoiler-inner img { max-width: 100%; vertical-align: middle; }
 
 .admin-form-actions {
   display: flex;
@@ -336,7 +404,12 @@ body.admin-body {
   font-weight: 700;
 }
 .btn-cancel:hover { background: var(--sky-50); }
-.admin-form-actions .btn-primary { flex: 2; }
+.btn-publish {
+  width: 100%;
+  margin-top: 12px;
+  padding: 14px;
+  font-size: 1rem;
+}
 
 .toast {
   position: fixed;
@@ -380,6 +453,7 @@ body.admin-body {
 }
 .admin-menu-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-soft); }
 .admin-menu-card:nth-child(2) { background: linear-gradient(135deg, #7fd4c0, var(--navy-700)); }
+.admin-menu-card:nth-child(3) { background: linear-gradient(135deg, #e88fb0, var(--navy-700)); }
 .admin-menu-card .amc-icon {
   width: 48px;
   height: 48px;
@@ -906,6 +980,276 @@ body.admin-body {
 }
 .file-edit-textarea:focus { border-color: var(--sky-500); }
 
+/* ---------------- Backup & Restore ---------------- */
+.admin-menu-card:nth-child(4) { background: linear-gradient(135deg, #f0b45c, var(--navy-700)); }
+.admin-menu-card:nth-child(5) { background: linear-gradient(135deg, #8f9bd6, var(--navy-700)); }
+.admin-menu-card:nth-child(6) { background: linear-gradient(135deg, #b79cf0, var(--navy-700)); }
+.admin-menu-card:nth-child(7) { background: linear-gradient(135deg, #4fb8a8, var(--navy-700)); }
+
+.backup-section {
+  border: 1.5px solid var(--sky-150);
+  border-radius: var(--radius-md);
+  padding: 16px 18px 18px;
+  margin-top: 16px;
+}
+.backup-section:first-of-type { margin-top: 4px; }
+.backup-desc {
+  font-size: .84rem;
+  color: var(--ink-soft);
+  line-height: 1.55;
+  margin: 6px 0 10px;
+}
+.backup-desc code {
+  background: var(--sky-100);
+  color: var(--sky-700);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: .82em;
+}
+.backup-count {
+  font-size: .82rem;
+  font-weight: 700;
+  color: var(--sky-700);
+  margin: 0 0 12px;
+}
+
+.backup-file-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1.5px dashed var(--sky-300);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  cursor: pointer;
+  background: var(--sky-50);
+  transition: border-color .18s ease, background .18s ease;
+}
+.backup-file-label:hover { border-color: var(--sky-500); background: var(--sky-100); }
+.backup-file-label #restoreFileName {
+  font-size: .82rem;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.backup-file-label.has-file #restoreFileName { color: var(--ink); font-weight: 600; }
+
+.btn-secondary {
+  flex: 0 0 auto;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--sky-500);
+  color: #fff;
+  font-weight: 700;
+  font-size: .8rem;
+  white-space: nowrap;
+}
+
+.restore-mode-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 14px 0 16px;
+}
+.restore-mode-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: .82rem;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  cursor: pointer;
+}
+.restore-mode-option input[type="radio"] {
+  margin-top: 3px;
+  accent-color: var(--sky-500);
+  flex: 0 0 auto;
+}
+.restore-mode-option strong { color: var(--ink); }
+
+.backup-status {
+  font-size: .82rem;
+  margin-top: 12px;
+  min-height: 1.2em;
+  line-height: 1.5;
+}
+.backup-status.success { color: #1b8f5c; }
+.backup-status.error { color: #d3462f; }
+
+/* ---------------- Status Laporan ---------------- */
+.report-status-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.report-status-section .report-status-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: .88rem;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+  padding: 3px 0;
+  margin: 0;
+}
+.report-status-option input[type="radio"] {
+  width: 19px;
+  height: 19px;
+  accent-color: var(--sky-500);
+  flex: 0 0 auto;
+}
+
+.report-status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  margin-right: 6px;
+  vertical-align: -3px;
+}
+.report-status-icon svg { width: 11px; height: 11px; }
+.report-status-icon.belum { background: #e0453a; color: #fff; }
+.report-status-icon.sedang { background: #f0b41d; color: #fff; }
+.report-status-icon.selesai { background: #24b562; color: #fff; }
+
+/* ---------------- Informasi Web ---------------- */
+.info-box {
+  border: 1.5px solid var(--sky-150);
+  border-radius: var(--radius-md);
+  padding: 18px 18px 20px;
+  margin-top: 16px;
+}
+.info-box:first-of-type { margin-top: 4px; }
+.info-box-title {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--sky-700);
+  margin-bottom: 12px;
+}
+.info-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 0;
+  font-size: .88rem;
+  color: var(--ink-soft);
+  font-weight: 600;
+  border-bottom: 1px dashed var(--sky-150);
+}
+.info-row:last-of-type { border-bottom: none; }
+.info-row strong { color: var(--sky-700); font-size: .96rem; font-weight: 800; flex: 0 0 auto; }
+
+.info-text-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--sky-200);
+  font-size: .92rem;
+  font-family: inherit;
+  outline: none;
+  background: var(--surface);
+  color: var(--ink);
+}
+.info-text-input:focus { border-color: var(--sky-500); }
+
+/* Modal Views Postingan: box dibatasi tingginya & hanya daftar postingan
+ * yang scroll di dalam — judul, dropdown urutkan, dan pagination selalu
+ * terlihat (tidak ikut ter-scroll keluar layar). */
+.post-views-modal {
+  display: flex;
+  flex-direction: column;
+  max-height: 82vh;
+}
+.post-views-modal #postViewsSort { flex: 0 0 auto; }
+.post-views-modal .pagination { flex: 0 0 auto; }
+.post-views-modal .modal-actions { flex: 0 0 auto; }
+.post-views-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  border: 1.5px solid var(--sky-200);
+  border-radius: var(--radius-md);
+  padding: 4px 10px;
+  margin-bottom: 12px;
+}
+.post-view-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px dashed var(--sky-150);
+}
+.post-view-item:last-child { border-bottom: none; }
+.post-view-item img {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex: 0 0 auto;
+  background: var(--sky-100);
+}
+.post-view-item .pvi-body { flex: 1; min-width: 0; }
+.post-view-item .pvi-title {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: .88rem;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.post-view-item .pvi-meta { font-size: .74rem; color: var(--ink-soft); margin-top: 2px; }
+.post-view-item .pvi-count {
+  flex: 0 0 auto;
+  text-align: right;
+  font-weight: 800;
+  font-size: .8rem;
+  color: var(--sky-700);
+  line-height: 1.35;
+}
+
+/* ---------------- Notifikasi ---------------- */
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px dashed var(--sky-150);
+}
+.notif-item:last-child { border-bottom: none; }
+.notif-item .notif-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--sky-100);
+  color: var(--sky-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.notif-item.type-backup_reminder .notif-icon { background: #fff2d6; color: #b8860b; }
+.notif-item .notif-icon svg { width: 17px; height: 17px; }
+.notif-item .notif-body { flex: 1; min-width: 0; }
+.notif-item .notif-text { font-size: .85rem; color: var(--ink); line-height: 1.5; font-weight: 600; }
+.notif-item .notif-time { font-size: .72rem; color: var(--ink-soft); margin-top: 3px; }
+
+
+
+
 .modal-divider {
   display: flex;
   align-items: center;
@@ -973,9 +1317,13 @@ body.admin-body {
 
 /* ---------------- View Report modal body ---------------- */
 .view-report-body {
-  max-height: 55vh;
+  max-height: 42vh;
   overflow-y: auto;
   padding-right: 2px;
+  border: 1.5px solid var(--sky-200);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-bottom: 14px;
 }
 .vrb-row { margin-bottom: 14px; }
 .vrb-row:last-child { margin-bottom: 0; }
@@ -995,3 +1343,138 @@ body.admin-body {
   word-break: break-word;
 }
 .vrb-value.empty { color: var(--ink-soft); font-style: italic; }
+
+/* ---------------- Recycle Bin ---------------- */
+.btn-danger-solid { background: #e0453a; }
+.btn-danger-solid:hover { background: #c8392f; }
+
+.recycle-folder-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 4px;
+}
+.recycle-folder-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 12px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--sky-150);
+  background: var(--sky-50);
+  color: var(--sky-700);
+  font-weight: 700;
+  font-size: .92rem;
+  transition: background .18s ease, border-color .18s ease;
+}
+.recycle-folder-btn:hover { background: var(--sky-100); border-color: var(--sky-300); }
+.recycle-folder-btn svg { width: 40px; height: 40px; }
+
+.trash-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+.trash-item { position: relative; }
+.trash-item-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 14px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--sky-150);
+  background: var(--sky-50);
+}
+.trash-item-row svg {
+  width: 19px;
+  height: 19px;
+  color: var(--sky-600);
+  flex: 0 0 auto;
+}
+.trash-item-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  font-size: .88rem;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.trash-item-menu-btn {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--sky-700);
+  font-size: 1.2rem;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+.trash-item-menu-btn:hover { background: var(--sky-150); }
+.trash-item-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  min-width: 170px;
+  background: var(--surface);
+  border: 1.5px solid var(--sky-200);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+.trash-item-menu.hidden { display: none; }
+.trash-item-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.trash-item-menu button:hover { background: var(--sky-50); }
+.trash-item-menu button.danger { color: #c8402a; }
+.trash-item-menu button.danger:hover { background: #ffe6e2; }
+
+/* ---------------- Halaman (menu "Halaman" di Admin Panel) ---------------- */
+.page-picker-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 4px;
+}
+.page-picker-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 26px 12px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--sky-150);
+  background: var(--sky-50);
+  color: var(--sky-700);
+  font-weight: 700;
+  font-size: .92rem;
+  transition: background .18s ease, border-color .18s ease;
+}
+.page-picker-btn:hover { background: var(--sky-100); border-color: var(--sky-300); }
+.page-picker-btn svg { width: 40px; height: 40px; }
+
+/* ---------------- Label (kotak border biru muda di sekitar teks) ---------------- */
+.label-box {
+  display: block;
+  border: 1.5px solid var(--sky-200);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin: 12px 0;
+}
+.editor-content .label-box { background: var(--sky-50); }

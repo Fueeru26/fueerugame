@@ -3,7 +3,30 @@
    Dipakai di semua halaman publik.
    ========================================================= */
 
+/* ---------------- Path helpers ----------------
+   Situs punya beberapa "kedalaman" folder (root, web/).
+   Halaman yang membutuhkan prefix berbeda mengatur window.SITE_BASE
+   (prefix menuju folder "web/") dan/atau window.ASSET_BASE
+   (prefix menuju aset di folder root: css/js/webpictures/font) lewat
+   inline <script> sebelum data.js & main.js dimuat. */
+function siteBase() {
+  return (typeof window !== "undefined" && window.SITE_BASE) || "";
+}
+function assetBase() {
+  return (typeof window !== "undefined" && window.ASSET_BASE) || "";
+}
+/** Resolusikan path aset (mis. thumbnail) supaya tetap benar di halaman
+ * manapun. Tidak menyentuh data URL / URL absolut. */
+function resolveAsset(path) {
+  if (!path) return path;
+  if (/^(data:|https?:\/\/|\/)/i.test(path)) return path;
+  return assetBase() + path;
+}
+
 function initChrome() {
+  // Catat 1 kunjungan halaman publik (statistik lokal untuk Informasi Web di Admin Panel)
+  if (typeof logVisit === "function") logVisit();
+
   // ---------------- Dark mode toggle ----------------
   const THEME_KEY = "fueeru_theme";
   const themeButtons = document.querySelectorAll(".theme-btn");
@@ -85,7 +108,7 @@ function initChrome() {
     searchForm.addEventListener("submit", function (e) {
       e.preventDefault();
       const q = (searchInput.value || "").trim();
-      window.location.href = "search.html" + (q ? "?q=" + encodeURIComponent(q) : "");
+      window.location.href = siteBase() + "search.html" + (q ? "?q=" + encodeURIComponent(q) : "");
     });
   }
 
@@ -105,6 +128,20 @@ function initChrome() {
   });
 }
 
+/** Aktifkan fungsi buka/tutup (toggle) untuk semua kotak spoiler yang
+ * ada di dalam `container` (default: seluruh dokumen). Label "SPOILER"
+ * tetap ada setelah dibuka — klik lagi untuk menutupnya kembali. */
+function initSpoilers(container) {
+  (container || document).querySelectorAll(".spoiler-content").forEach((box) => {
+    const label = box.querySelector(".spoiler-label");
+    if (!label || label.dataset.spoilerBound) return;
+    label.dataset.spoilerBound = "1";
+    label.addEventListener("click", function () {
+      box.classList.toggle("revealed");
+    });
+  });
+}
+
 /** Render kartu untuk carousel "Random Game" */
 function renderCarousel(containerId, posts) {
   const track = document.getElementById(containerId);
@@ -112,8 +149,8 @@ function renderCarousel(containerId, posts) {
   track.innerHTML = posts
     .map(
       (p) => `
-    <a class="game-card" href="post.html?id=${encodeURIComponent(p.id)}">
-      <img class="thumb" src="${p.thumbnail}" alt="Thumbnail ${escapeHtml(p.title)}" loading="lazy">
+    <a class="game-card" href="${siteBase()}post.html?id=${encodeURIComponent(p.id)}">
+      <img class="thumb" src="${resolveAsset(p.thumbnail)}" alt="Thumbnail ${escapeHtml(p.title)}" loading="lazy">
       <div class="gc-body">
         <div class="gc-title">${escapeHtml(p.title)}</div>
       </div>
@@ -144,11 +181,11 @@ function postRowHtml(p, opts) {
 
   return `
     <div class="post-row">
-      <a href="post.html?id=${encodeURIComponent(p.id)}" style="flex:0 0 auto;">
-        <img class="thumb" src="${p.thumbnail}" alt="Thumbnail ${escapeHtml(p.title)}" loading="lazy">
+      <a href="${siteBase()}post.html?id=${encodeURIComponent(p.id)}" style="flex:0 0 auto;">
+        <img class="thumb" src="${resolveAsset(p.thumbnail)}" alt="Thumbnail ${escapeHtml(p.title)}" loading="lazy">
       </a>
       <div class="prow-body">
-        <a href="post.html?id=${encodeURIComponent(p.id)}">
+        <a href="${siteBase()}post.html?id=${encodeURIComponent(p.id)}">
           <div class="prow-title">${escapeHtml(p.title)}</div>
         </a>
         ${showPreview ? `<div class="prow-preview">${escapeHtml(makePreview(p.content))}</div>` : ""}
@@ -168,6 +205,8 @@ function escapeHtml(str) {
 }
 
 /** Komponen pagination generik.
+ * Hanya menampilkan nomor halaman yang sedang aktif (bukan daftar semua
+ * nomor halaman) — supaya tetap ringkas walau jumlah halaman terus bertambah.
  * onChange(page) dipanggil setiap kali user pindah halaman.
  */
 function renderPagination(containerId, totalItems, pageSize, currentPage, onChange) {
@@ -181,9 +220,7 @@ function renderPagination(containerId, totalItems, pageSize, currentPage, onChan
   let html = "";
   html += `<button data-page="1" ${currentPage === 1 ? "disabled" : ""} aria-label="Halaman pertama">&laquo;</button>`;
   html += `<button data-page="${currentPage - 1}" ${currentPage === 1 ? "disabled" : ""} aria-label="Sebelumnya">&lsaquo;</button>`;
-  for (let i = 1; i <= totalPages; i++) {
-    html += `<button data-page="${i}" class="${i === currentPage ? "active" : ""}">${i}</button>`;
-  }
+  html += `<button data-page="${currentPage}" class="active" aria-current="page">${currentPage}</button>`;
   html += `<button data-page="${currentPage + 1}" ${currentPage === totalPages ? "disabled" : ""} aria-label="Berikutnya">&rsaquo;</button>`;
   html += `<button data-page="${totalPages}" ${currentPage === totalPages ? "disabled" : ""} aria-label="Halaman terakhir">&raquo;</button>`;
   el.innerHTML = html;
@@ -195,4 +232,71 @@ function renderPagination(containerId, totalItems, pageSize, currentPage, onChan
   });
 }
 
+/* ---------------- PWA: "Tambah ke Layar Utama" ----------------
+   Sengaja TIDAK memakai prompt otomatis bawaan browser (yang suka
+   muncul tiba-tiba tanpa diminta). Event `beforeinstallprompt`
+   ditangkap & ditahan dulu (preventDefault), baru benar-benar
+   ditampilkan saat pengunjung sendiri menekan menu "Tambah ke Layar
+   Utama" di sidebar. */
+let deferredInstallPrompt = null;
+
+window.addEventListener("beforeinstallprompt", function (e) {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+});
+
+window.addEventListener("appinstalled", function () {
+  deferredInstallPrompt = null;
+});
+
+function initPWAInstallMenu() {
+  const btn = document.getElementById("btnInstallPWA");
+  if (!btn) return;
+
+  // Kalau situs sedang dibuka dalam mode "sudah terinstall" (standalone),
+  // menu ini tidak relevan lagi -> sembunyikan.
+  const isStandalone =
+    window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  if (isStandalone) {
+    const li = btn.closest("li");
+    if (li) li.style.display = "none";
+    return;
+  }
+
+  btn.addEventListener("click", async function (e) {
+    e.preventDefault();
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      try {
+        await deferredInstallPrompt.userChoice;
+      } catch (err) {
+        /* diabaikan */
+      }
+      deferredInstallPrompt = null;
+    } else {
+      alert(
+        "Browser ini belum menawarkan instalasi otomatis (atau situs sudah terpasang).\n\n" +
+          "Di iPhone/iPad: buka menu Share lalu pilih \"Tambah ke Layar Utama\".\n" +
+          "Di HP/PC lain: cari ikon Install di address bar browser."
+      );
+    }
+  });
+}
+
+/* ---------------- PWA: registrasi Service Worker ----------------
+   Meng-cache aset statis supaya situs lebih cepat dibuka kedua kali
+   dan tetap bisa diakses (versi cache) walau sedang offline. */
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  const swUrl = assetBase() + "sw.js";
+  const swScope = assetBase() || "./";
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register(swUrl, { scope: swScope }).catch(function () {
+      /* diabaikan — situs tetap berjalan normal tanpa Service Worker */
+    });
+  });
+}
+registerServiceWorker();
+
 document.addEventListener("DOMContentLoaded", initChrome);
+document.addEventListener("DOMContentLoaded", initPWAInstallMenu);
