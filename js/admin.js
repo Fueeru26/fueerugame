@@ -5,6 +5,7 @@
    ========================================================= */
 
 const SESSION_KEY = "fueeru_admin_session";
+const REMEMBER_KEY = "fueeru_admin_remember";
 const PAGE_SIZE = 10;
 const EMERGENCY_PASSWORD = "GINTAMA12345";
 
@@ -17,11 +18,14 @@ const viewRecovery = document.getElementById("viewRecovery");
 const adminShell = document.getElementById("adminShell");
 
 function isLoggedIn() {
-  return sessionStorage.getItem(SESSION_KEY) === "1";
+  return sessionStorage.getItem(SESSION_KEY) === "1" || localStorage.getItem(REMEMBER_KEY) === "1";
 }
 
-function doLogin() {
+function doLogin(remember) {
   sessionStorage.setItem(SESSION_KEY, "1");
+  if (remember) {
+    localStorage.setItem(REMEMBER_KEY, "1");
+  }
   viewLogin.classList.add("hidden");
   adminShell.classList.remove("hidden");
   showSub("viewMenu");
@@ -33,7 +37,9 @@ function doLogin() {
 
 function doLogout() {
   sessionStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(REMEMBER_KEY);
   document.getElementById("passwordInput").value = "";
+  document.getElementById("rememberMeInput").checked = false;
   document.getElementById("loginError").textContent = "";
   adminShell.classList.add("hidden");
   viewLogin.classList.remove("hidden");
@@ -43,9 +49,10 @@ document.getElementById("loginForm").addEventListener("submit", function (e) {
   e.preventDefault();
   const val = document.getElementById("passwordInput").value;
   const errorEl = document.getElementById("loginError");
+  const remember = document.getElementById("rememberMeInput").checked;
   if (val === getAdminPassword()) {
     errorEl.textContent = "";
-    doLogin();
+    doLogin(remember);
   } else {
     errorEl.textContent = "Kata sandi salah. Coba lagi.";
   }
@@ -1501,6 +1508,21 @@ function deleteVfsNode(path) {
     { title: isFolder ? "Hapus Folder" : "Hapus File" }
   );
 }
+
+document.getElementById("btnRefreshFiles").addEventListener("click", function () {
+  const btn = this;
+  btn.classList.remove("is-spinning");
+  void btn.offsetWidth; // restart animasi kalau diklik berkali-kali
+  btn.classList.add("is-spinning");
+
+  const added = vfsSyncWithSeed();
+  vfsGridPage = 1;
+  vfsFilePage = 1;
+  renderFilesView();
+  showToast(added > 0 ? `${added} folder/file baru ditemukan & ditambahkan` : "Tidak ada folder/file baru");
+
+  setTimeout(() => btn.classList.remove("is-spinning"), 650);
+});
 
 document.getElementById("fileSearchInput").addEventListener("input", function () {
   fileSearchQuery = this.value.trim();

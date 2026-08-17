@@ -59,6 +59,7 @@ const SEED_PATHS = [
   { path: "web", type: "folder" },
   { path: "index.html", type: "file" },
   { path: "admin.html", type: "file" },
+  { path: "404.html", type: "file" },
   { path: "web/category.html", type: "file" },
   { path: "web/donasi.html", type: "file" },
   { path: "web/lapor.html", type: "file" },
@@ -137,6 +138,42 @@ function saveVFS(map) {
   } catch (e) {
     return false;
   }
+}
+
+/** Sinkronkan VFS yang tersimpan dengan SEED_PATHS terkini.
+ *
+ * loadVFS() hanya membangun VFS dari SEED_PATHS SEKALI, saat localStorage
+ * situs itu masih kosong — setelah itu isi localStorage dipakai apa
+ * adanya. Akibatnya, kalau SEED_PATHS ditambah entri baru di kode (mis.
+ * ada folder/file baru yang memang sudah ada di situs) lalu situs
+ * di-deploy ulang, browser admin yang localStorage-nya sudah terisi
+ * duluan TIDAK akan pernah melihat entri baru itu di Manajemen File.
+ *
+ * Fungsi ini dipanggil lewat tombol "Refresh": menambahkan ke VFS semua
+ * path di SEED_PATHS yang belum tercatat, tanpa pernah menimpa atau
+ * menghapus node yang sudah ada (termasuk file/folder yang ditambahkan
+ * atau diedit sendiri lewat panel ini). Mengembalikan jumlah entri baru
+ * yang ditambahkan. */
+function vfsSyncWithSeed() {
+  const map = loadVFS();
+  let added = 0;
+  SEED_PATHS.forEach((entry) => {
+    if (map[entry.path]) return;
+    map[entry.path] = {
+      path: entry.path,
+      name: nameOf(entry.path),
+      type: entry.type,
+      isImage: entry.type === "file" ? isImageName(entry.path) : false,
+      isText: entry.type === "file" ? isTextName(entry.path) : false,
+      original: true,
+      content: null,
+      dataUrl: null,
+      dateAdded: new Date().toISOString()
+    };
+    added++;
+  });
+  if (added > 0) saveVFS(map);
+  return added;
 }
 
 /** Ambil daftar folder & file langsung di dalam folderPath ("" = root). */

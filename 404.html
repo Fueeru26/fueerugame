@@ -4,8 +4,8 @@
 <script>(function(){try{var t=localStorage.getItem('fueeru_theme');if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fueeru Game — Beranda</title>
-<meta name="description" content="Fueeru Game — kumpulan game terbaru, laporkan masalah, dan info seputar dunia gaming.">
+<title>Halaman Tidak Ditemukan — Fueeru Game</title>
+<meta name="description" content="Halaman yang kamu cari tidak ditemukan.">
 <link rel="icon" type="image/png" href="webpictures/logo.webp">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2fa8e0">
@@ -79,29 +79,13 @@
   </div>
 </div>
 
-<main class="container hero-bubbles">
-  <div class="bubble" style="width:60px;height:60px;top:6px;left:6%;"></div>
-  <div class="bubble" style="width:34px;height:34px;top:60px;right:10%;animation-delay:1.2s;"></div>
-  <div class="bubble" style="width:22px;height:22px;top:120px;left:22%;animation-delay:2.4s;"></div>
-
-  <section aria-labelledby="randomHeading">
-    <div class="section-head"><h2 id="randomHeading">Random Game</h2></div>
-    <div class="carousel-wrap">
-      <button class="carousel-arrow prev" id="randomPrev" aria-label="Geser ke kiri">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
-      <div class="carousel-track" id="randomTrack"></div>
-      <button class="carousel-arrow next" id="randomNext" aria-label="Geser ke kanan">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </button>
-    </div>
-  </section>
-
-  <section aria-labelledby="updateHeading">
-    <div class="section-head"><h2 id="updateHeading">New Update Game</h2></div>
-    <div class="post-list" id="updateList"></div>
-    <div class="pagination" id="updatePagination"></div>
-  </section>
+<main class="container" style="max-width:640px;">
+  <div class="empty-state" style="padding:40px 12px;">
+    <img src="webpictures/404.webp" alt="Halaman tidak ditemukan" style="max-width:100%;width:320px;height:auto;margin:0 auto 18px;display:block;">
+    <h3>Halaman Tidak Ditemukan</h3>
+    <p>Halaman yang kamu cari mungkin sudah dipindahkan, dihapus, atau tautannya salah.</p>
+    <p><a href="index.html" class="back-link" style="justify-content:center;margin-top:10px;">← Kembali ke Beranda</a></p>
+  </div>
 </main>
 
 <footer class="site-footer">
@@ -110,36 +94,7 @@
 </footer>
 
 <script>window.SITE_BASE = "web/";</script>
-<script src="js/data.js"></script>
 <script src="js/main.js"></script>
-<script>
-  const PAGE_SIZE = 10;
-  let currentPage = 1;
-
-  const allPosts = getPublishedPosts();
-
-  // Random Game: sampai 10 post acak
-  const randomPosts = shuffleArray(allPosts).slice(0, 10);
-  renderCarousel("randomTrack", randomPosts);
-  initCarouselArrows("randomTrack", "randomPrev", "randomNext");
-
-  // New Update Game: terbaru dulu, dengan pagination (hanya judul, tanggal, jenis)
-  const sortedPosts = allPosts.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  function renderUpdatePage(page) {
-    currentPage = page;
-    const start = (page - 1) * PAGE_SIZE;
-    const pagePosts = sortedPosts.slice(start, start + PAGE_SIZE);
-    const list = document.getElementById("updateList");
-    if (pagePosts.length === 0) {
-      list.innerHTML = `<div class="empty-state"><h3>Belum ada postingan</h3><p>Silakan tambahkan postingan lewat Admin Panel.</p></div>`;
-    } else {
-      list.innerHTML = pagePosts.map((p) => postRowHtml(p, { showPreview: false, showGenres: false })).join("");
-    }
-    renderPagination("updatePagination", sortedPosts.length, PAGE_SIZE, currentPage, renderUpdatePage);
-  }
-  renderUpdatePage(1);
-</script>
 
 </body>
 </html>

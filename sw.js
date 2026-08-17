@@ -10,7 +10,11 @@
    belakang layar.
    ========================================================= */
 
-const CACHE_NAME = "fueeru-game-cache-v1";
+/* Naikkan angka versi ini tiap kali PRECACHE_URLS berubah, atau saat
+   perlu memaksa semua browser membuang cache lama (mis. ada aset yang
+   sempat ke-cache dalam kondisi rusak/gagal muat di deploy sebelumnya).
+   Cache lama otomatis dihapus lewat event "activate" di bawah. */
+const CACHE_NAME = "fueeru-game-cache-v2";
 
 const PRECACHE_URLS = [
   "./",
@@ -33,13 +37,23 @@ const PRECACHE_URLS = [
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches
-      .open(CACHE_NAME)
-      .then((cache) => cache.addAll(PRECACHE_URLS))
-      .catch(() => {
-        /* Kalau salah satu URL gagal di-precache (mis. belum ada koneksi
-           saat install), jangan gagalkan instalasi SW-nya. */
-      })
+    caches.open(CACHE_NAME).then((cache) =>
+      /* PENTING: pakai cache.add() satu-satu (bukan cache.addAll()).
+         addAll() bersifat all-or-nothing — kalau SATU SAJA URL gagal
+         dimuat (mis. koneksi lambat/putus saat instalasi, atau file
+         baru saja di-deploy dan belum sepenuhnya tersedia), SELURUH
+         daftar gagal di-cache, termasuk aset yang sebenarnya baik-baik
+         saja. Dengan Promise.allSettled + cache.add() per file, satu
+         aset yang gagal tidak lagi menggagalkan/mengosongkan cache
+         aset lain. */
+      Promise.allSettled(
+        PRECACHE_URLS.map((url) =>
+          cache.add(url).catch(() => {
+            /* diabaikan — aset ini akan tetap dicoba lewat network saat diminta */
+          })
+        )
+      )
+    )
   );
   self.skipWaiting();
 });

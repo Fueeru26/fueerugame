@@ -22,6 +22,10 @@
     <p class="sub">Masukkan kata sandi untuk mengelola Fueeru Game.</p>
     <form id="loginForm">
       <input type="password" id="passwordInput" placeholder="Kata sandi" autocomplete="current-password" required>
+      <label class="remember-me-label">
+        <input type="checkbox" id="rememberMeInput">
+        <span>Ingat saya</span>
+      </label>
       <a href="#" id="btnForgotPassword" class="forgot-password-link">Lupa kata sandi?</a>
       <button type="submit" class="btn-primary">Masuk</button>
       <div class="admin-error" id="loginError"></div>
@@ -414,9 +418,14 @@
         </button>
         <h1 id="filesHeading">Manajemen File</h1>
       </div>
-      <div class="admin-search-box">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="fileSearchInput" placeholder="Cari nama folder atau file">
+      <div class="admin-filesearch-row">
+        <div class="admin-search-box admin-search-box--compact">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="fileSearchInput" placeholder="Cari nama folder atau file">
+        </div>
+        <button type="button" class="vfs-refresh-btn" id="btnRefreshFiles" title="Refresh daftar folder &amp; file" aria-label="Refresh daftar folder dan file">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        </button>
       </div>
       <div class="vfs-toolbar">
         <div class="vfs-dropdown" id="addDropdownWrap">

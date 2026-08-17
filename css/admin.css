@@ -106,6 +106,24 @@ body.admin-body {
   outline: none;
 }
 .admin-login-card input[type="password"]:focus { border-color: var(--sky-500); }
+.remember-me-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  font-size: .86rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+  user-select: none;
+}
+.remember-me-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--sky-500);
+  cursor: pointer;
+  margin: 0;
+}
 .forgot-password-link {
   display: inline-block;
   color: var(--sky-600);
@@ -510,6 +528,40 @@ body.admin-body {
   font-family: inherit;
   font-size: .92rem;
   padding: 9px 0;
+}
+
+/* Baris search + tombol refresh (Manajemen File) */
+.admin-filesearch-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.admin-filesearch-row .admin-search-box.admin-search-box--compact {
+  flex: 1;
+  min-width: 0;
+  max-width: 78%;
+  margin-bottom: 0;
+}
+.vfs-refresh-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid var(--sky-200);
+  background: var(--surface);
+  color: var(--sky-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.vfs-refresh-btn svg { width: 19px; height: 19px; }
+.vfs-refresh-btn:hover { background: var(--sky-50); }
+.vfs-refresh-btn:active { background: var(--sky-100); }
+.vfs-refresh-btn.is-spinning svg { animation: vfsRefreshSpin .6s linear; }
+@keyframes vfsRefreshSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .btn-danger-outline {
