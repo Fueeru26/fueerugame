@@ -143,6 +143,14 @@ function initSpoilers(container) {
 }
 
 /** Render kartu untuk carousel "Random Game" */
+/** Fallback: kalau src gambar gagal dimuat (mis. data lama menunjuk ke
+ * file yang tak pernah benar-benar ada di server, seperti placeholder
+ * "postheader/..."), otomatis ganti ke gambar placeholder bawaan supaya
+ * tidak tampil ikon gambar rusak. */
+function thumbFallbackAttr() {
+  return `onerror="this.onerror=null;this.src='${resolveAsset('webpictures/postplaceholder.webp')}';"`;
+}
+
 function renderCarousel(containerId, posts) {
   const track = document.getElementById(containerId);
   if (!track) return;
@@ -150,7 +158,7 @@ function renderCarousel(containerId, posts) {
     .map(
       (p) => `
     <a class="game-card" href="${siteBase()}post.html?id=${encodeURIComponent(p.id)}">
-      <img class="thumb" src="${resolveAsset(p.thumbnail)}" alt="Thumbnail ${escapeHtml(p.title)}" loading="lazy">
+      <img class="thumb" src="${resolveAsset(p.thumbnail)}" alt="Thumbnail ${escapeHtml(p.title)}" loading="lazy" ${thumbFallbackAttr()}>
       <div class="gc-body">
         <div class="gc-title">${escapeHtml(p.title)}</div>
       </div>
@@ -182,7 +190,7 @@ function postRowHtml(p, opts) {
   return `
     <div class="post-row">
       <a href="${siteBase()}post.html?id=${encodeURIComponent(p.id)}" style="flex:0 0 auto;">
-        <img class="thumb" src="${resolveAsset(p.thumbnail)}" alt="Thumbnail ${escapeHtml(p.title)}" loading="lazy">
+        <img class="thumb" src="${resolveAsset(p.thumbnail)}" alt="Thumbnail ${escapeHtml(p.title)}" loading="lazy" ${thumbFallbackAttr()}>
       </a>
       <div class="prow-body">
         <a href="${siteBase()}post.html?id=${encodeURIComponent(p.id)}">

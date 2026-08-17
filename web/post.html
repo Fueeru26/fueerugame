@@ -120,7 +120,7 @@
         <a href="category.html?jenis=${encodeURIComponent(post.jenis)}">${escapeHtml(post.jenis)}</a>
       </nav>
       <h1 class="post-detail-title">${escapeHtml(post.title)}</h1>
-      <img class="post-detail-img" src="${resolveAsset(post.thumbnail)}" alt="Header ${escapeHtml(post.title)}">
+      <img class="post-detail-img" src="${resolveAsset(post.thumbnail)}" alt="Header ${escapeHtml(post.title)}" onerror="this.onerror=null;this.src='${assetBase()}webpictures/postplaceholder.webp';">
       <div class="post-detail-content">${post.content}</div>
       <div class="post-detail-meta">
         <span><strong>Tanggal:</strong> ${escapeHtml(formatDate(post.date))}</span>

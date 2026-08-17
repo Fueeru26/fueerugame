@@ -318,6 +318,11 @@ function resolveAdminAsset(path) {
   if (/^(data:|https?:\/\/|\/)/i.test(path)) return path;
   return ADMIN_ASSET_BASE + path;
 }
+/** Fallback kalau src thumbnail gagal dimuat (mis. data lama menunjuk
+ * ke file yang tak pernah benar-benar ada, seperti "postheader/..."). */
+function adminThumbFallbackAttr() {
+  return `onerror="this.onerror=null;this.src='${resolveAdminAsset("webpictures/postplaceholder.webp")}';"`;
+}
 
 /** Aktifkan fungsi buka/tutup (toggle) untuk kotak spoiler di dalam
  * `container` — dipakai bersama oleh Preview Postingan di Admin.
@@ -403,7 +408,7 @@ function renderPostsList() {
     .map(
       (p) => `
     <div class="admin-post-item">
-      <img src="${resolveAdminAsset(p.thumbnail)}" alt="">
+      <img src="${resolveAdminAsset(p.thumbnail)}" alt="" ${adminThumbFallbackAttr()}>
       <div class="api-body">
         <div class="api-title">${escapeHtmlAdmin(p.title)}</div>
         <div class="api-meta">${escapeHtmlAdmin(p.jenis)} • ${
@@ -1057,7 +1062,7 @@ document.getElementById("btnPreviewForm").addEventListener("click", function () 
   previewModalBody.innerHTML = `
     <div class="preview-badge">Pratinjau — belum dipublikasikan</div>
     <h1 class="post-detail-title">${escapeHtmlAdmin(title)}</h1>
-    <img class="post-detail-img" src="${resolveAdminAsset(thumbnail)}" alt="">
+    <img class="post-detail-img" src="${resolveAdminAsset(thumbnail)}" alt="" ${adminThumbFallbackAttr()}>
     <div class="post-detail-content">${content}</div>
     <div class="post-detail-meta">
       <span><strong>Tanggal:</strong> ${escapeHtmlAdmin(formatReportDate(new Date().toISOString()))}</span>
@@ -2273,7 +2278,7 @@ function renderPostViewsModal() {
     .map(
       (p) => `
     <div class="post-view-item">
-      <img src="${resolveAdminAsset(p.thumbnail)}" alt="">
+      <img src="${resolveAdminAsset(p.thumbnail)}" alt="" ${adminThumbFallbackAttr()}>
       <div class="pvi-body">
         <div class="pvi-title">${escapeHtmlAdmin(p.title)}</div>
         <div class="pvi-meta">${escapeHtmlAdmin(p.jenis)} • ${
@@ -2493,7 +2498,7 @@ function openTrashPreview(id) {
   if (trashViewType === "posts") {
     body.innerHTML = `
       <h1 class="post-detail-title" style="margin-top:0;">${escapeHtmlAdmin(item.title)}</h1>
-      <img class="post-detail-img" src="${resolveAdminAsset(item.thumbnail)}" alt="">
+      <img class="post-detail-img" src="${resolveAdminAsset(item.thumbnail)}" alt="" ${adminThumbFallbackAttr()}>
       <div class="post-detail-content">${item.content}</div>
     `;
     initSpoilersAdmin(body);
