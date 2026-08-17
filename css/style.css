@@ -51,6 +51,9 @@
   --shadow-soft: 0 10px 30px -12px rgba(20, 106, 168, 0.28);
   --shadow-card: 0 6px 18px -8px rgba(11, 41, 71, 0.18);
   --container: 1080px;
+  /* Border tipis + "warna inner" (inner glow) untuk kartu game/postingan */
+  --card-border-color: var(--sky-150);
+  --shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.75), inset 0 -6px 14px -10px rgba(20, 106, 168, 0.16);
 }
 
 /* ---------------- Dark mode ---------------- */
@@ -75,6 +78,8 @@
   --input-bg: #0d2136;
   --shadow-soft: 0 10px 30px -12px rgba(0, 0, 0, 0.55);
   --shadow-card: 0 6px 18px -8px rgba(0, 0, 0, 0.5);
+  --card-border-color: var(--sky-200);
+  --shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 0 -6px 14px -10px rgba(0, 0, 0, 0.45);
 }
 
 :root.dark body {
@@ -484,14 +489,18 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   scroll-snap-align: start;
   background: var(--surface);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-card), var(--shadow-inner);
   overflow: hidden;
-  transition: transform .25s ease, box-shadow .25s ease;
-  border: 1px solid var(--sky-100);
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+  border: 1.5px solid var(--card-border-color);
   display: flex;
   flex-direction: column;
 }
-.game-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-soft); }
+.game-card:hover, .game-card:active {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-soft), var(--shadow-inner);
+  border-color: var(--sky-300);
+}
 .game-card .thumb {
   width: 100%;
   height: 134px;
@@ -543,16 +552,24 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .post-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 12px;
 }
 .post-row {
   display: flex;
   gap: 14px;
-  padding: 16px 6px;
-  border-bottom: 1px dashed var(--sky-200);
+  padding: 14px;
   align-items: flex-start;
+  background: var(--surface);
+  border: 1.5px solid var(--card-border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card), var(--shadow-inner);
+  transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
 }
-.post-row:last-child { border-bottom: none; }
+.post-row:hover, .post-row:active {
+  transform: translateX(8px);
+  box-shadow: var(--shadow-soft), var(--shadow-inner);
+  border-color: var(--sky-300);
+}
 .post-row .thumb {
   flex: 0 0 auto;
   width: 96px;
@@ -561,6 +578,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   object-fit: cover;
   background: var(--sky-100);
   box-shadow: var(--shadow-card);
+  border: 1px solid var(--card-border-color);
 }
 .post-row .prow-body { min-width: 0; flex: 1; }
 .post-row .prow-title {
