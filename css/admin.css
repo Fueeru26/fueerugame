@@ -403,7 +403,18 @@ body.admin-body {
   cursor: default;
 }
 .editor-content .spoiler-inner {
+  display: block;
+  flex: 1 1 100%;
+  width: 100%;
+  max-height: none;
+  overflow: visible;
+  opacity: 1;
   color: inherit;
+  border-left: 3px solid var(--sky-500);
+  background: var(--sky-50);
+  border-radius: 0 8px 8px 0;
+  padding: 8px 12px;
+  margin-top: 2px;
 }
 .editor-content .spoiler-inner img { max-width: 100%; vertical-align: middle; }
 
