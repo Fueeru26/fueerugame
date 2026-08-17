@@ -323,7 +323,7 @@ body.admin-body {
   font-weight: 800;
   color: var(--sky-700);
   font-size: 1rem;
-  padding: 16px 10px 14px;
+  padding: 6px 10px 8px;
   pointer-events: none;
   user-select: none;
 }
