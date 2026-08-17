@@ -145,6 +145,7 @@ document.querySelectorAll(".page-picker-btn").forEach((btn) => {
     currentEditingPageId = pageId;
     document.getElementById("pageEditHeading").textContent = pageLabel;
     editorContentPageEl.innerHTML = getPageContent(pageId).content;
+    if (richPageEditor) richPageEditor.resetHistory();
     showSub("viewPageEdit");
   });
 });
@@ -558,6 +559,7 @@ function resetForm() {
   renderGenreChips();
   genreInputField.value = "";
   editorContent.innerHTML = "";
+  if (richPostEditor) richPostEditor.resetHistory();
   document.getElementById("formHeading").textContent = "Tambah Postingan";
 }
 
@@ -710,6 +712,119 @@ function initRichTextEditor(cfg) {
     if (e.target.closest("button")) e.preventDefault();
   });
 
+  // ---------- Riwayat Undo/Redo kustom ----------
+  // document.execCommand("undo"/"redo") bawaan browser HANYA mencatat
+  // perubahan yang dilakukan lewat execCommand. Aksi manual di editor ini
+  // (spoiler, label, ukuran huruf, sisip gambar/link, ubah kapital, clear
+  // format, dll) memanipulasi DOM secara langsung sehingga tidak tercatat
+  // oleh riwayat bawaan — akibatnya undo/redo bawaan jadi tidak sinkron,
+  // gagal menghapus format tsb, atau malah merusak isi editor.
+  // Solusinya: riwayat kustom berbasis snapshot innerHTML yang mencakup
+  // SEMUA jenis aksi (toolbar maupun pengetikan biasa).
+  const HISTORY_LIMIT = 100;
+  const TYPING_DEBOUNCE_MS = 600;
+  let undoStack = [];
+  let redoStack = [];
+  let isRestoringHistory = false;
+  let typingSessionActive = false;
+  let typingDebounceTimer = null;
+
+  function snapshot() {
+    return contentEl.innerHTML;
+  }
+
+  // Simpan state SEBELUM sebuah perubahan terjadi. Dipanggil di awal
+  // setiap aksi toolbar (sebelum DOM-nya diubah) supaya undo bisa
+  // mengembalikan tepat ke kondisi sebelum aksi tsb dilakukan.
+  function recordBeforeChange() {
+    if (isRestoringHistory) return;
+    const html = snapshot();
+    if (undoStack.length && undoStack[undoStack.length - 1] === html) return;
+    undoStack.push(html);
+    if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
+    redoStack = [];
+  }
+
+  function placeCursorAtEnd() {
+    const range = document.createRange();
+    range.selectNodeContents(contentEl);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    savedSelectionRange = range.cloneRange();
+  }
+
+  function applyHistoryState(html) {
+    isRestoringHistory = true;
+    contentEl.innerHTML = html;
+    isRestoringHistory = false;
+    typingSessionActive = false;
+    clearTimeout(typingDebounceTimer);
+    contentEl.focus();
+    placeCursorAtEnd();
+  }
+
+  function doUndo() {
+    if (!undoStack.length) return;
+    contentEl.focus();
+    const current = snapshot();
+    const prev = undoStack.pop();
+    redoStack.push(current);
+    applyHistoryState(prev);
+  }
+
+  function doRedo() {
+    if (!redoStack.length) return;
+    contentEl.focus();
+    const current = snapshot();
+    const next = redoStack.pop();
+    undoStack.push(current);
+    applyHistoryState(next);
+  }
+
+  // Reset riwayat setiap kali isi editor dimuat ulang secara terprogram
+  // (form baru dibuka, postingan/halaman lain dipilih untuk diedit),
+  // supaya undo tidak "bocor" ke sesi edit sebelumnya.
+  function resetHistory() {
+    undoStack = [];
+    redoStack = [];
+    typingSessionActive = false;
+    clearTimeout(typingDebounceTimer);
+  }
+
+  // Pengetikan biasa (huruf per huruf) dikelompokkan jadi satu langkah
+  // undo per "sesi" (dipisah oleh jeda >600ms), meniru editor pada
+  // umumnya, memakai event beforeinput supaya snapshot diambil TEPAT
+  // sebelum karakter tsb benar-benar disisipkan ke DOM.
+  contentEl.addEventListener("beforeinput", function () {
+    if (isRestoringHistory) return;
+    if (!typingSessionActive) {
+      recordBeforeChange();
+      typingSessionActive = true;
+    }
+    clearTimeout(typingDebounceTimer);
+    typingDebounceTimer = setTimeout(function () {
+      typingSessionActive = false;
+    }, TYPING_DEBOUNCE_MS);
+  });
+
+  // Tombol Undo/Redo pada keyboard (Ctrl/Cmd+Z, Ctrl/Cmd+Y atau
+  // Ctrl/Cmd+Shift+Z) juga dialihkan ke riwayat kustom, supaya tidak
+  // memicu undo bawaan browser yang bermasalah.
+  contentEl.addEventListener("keydown", function (e) {
+    const key = e.key ? e.key.toLowerCase() : "";
+    const mod = e.ctrlKey || e.metaKey;
+    if (!mod || key !== "z" && key !== "y") return;
+    if (key === "z" && !e.shiftKey) {
+      e.preventDefault();
+      doUndo();
+    } else if (key === "y" || (key === "z" && e.shiftKey)) {
+      e.preventDefault();
+      doRedo();
+    }
+  });
+
   // Simpan & pulihkan posisi seleksi/kursor di dalam contentEl. Wajib
   // dipakai setiap kali sebuah aksi toolbar membuka dialog/file picker
   // native (yang membuat fokus browser berpindah keluar dari contentEl),
@@ -766,8 +881,12 @@ function initRichTextEditor(cfg) {
   toolbarEl.addEventListener("click", function (e) {
     const cmdBtn = e.target.closest("button[data-cmd]");
     if (cmdBtn) {
+      const cmd = cmdBtn.getAttribute("data-cmd");
+      if (cmd === "undo") { doUndo(); return; }
+      if (cmd === "redo") { doRedo(); return; }
       contentEl.focus();
-      document.execCommand(cmdBtn.getAttribute("data-cmd"), false, null);
+      recordBeforeChange();
+      document.execCommand(cmd, false, null);
       return;
     }
     const fsBtn = e.target.closest("button[data-fontsize]");
@@ -783,9 +902,10 @@ function initRichTextEditor(cfg) {
       showToast("Pilih teks yang ingin diubah ukurannya terlebih dahulu");
       return;
     }
+    recordBeforeChange();
     const span = document.createElement("span");
     span.className = size === "small" ? "fs-sm" : size === "large" ? "fs-lg" : "fs-md";
-    wrapSelection(span);
+    if (!wrapSelection(span)) undoStack.pop();
   }
 
   // ---------- Sisipkan Gambar ----------
@@ -801,6 +921,7 @@ function initRichTextEditor(cfg) {
     compressImageFile(file, 1000, 0.8)
       .then(function (dataUrl) {
         restoreSelection();
+        recordBeforeChange();
         const sel = window.getSelection();
         const range = sel.getRangeAt(0);
         range.deleteContents();
@@ -848,6 +969,7 @@ function initRichTextEditor(cfg) {
     if (window.getSelection().isCollapsed) {
       showToast("Pilih teks yang ingin diberi warna terlebih dahulu");
     } else {
+      recordBeforeChange();
       document.execCommand("foreColor", false, color);
     }
     colorSwatchMenuEl.classList.remove("show");
@@ -856,6 +978,7 @@ function initRichTextEditor(cfg) {
   // ---------- Kutipan ----------
   document.getElementById(cfg.quoteBtnId).addEventListener("click", function () {
     contentEl.focus();
+    recordBeforeChange();
     document.execCommand("formatBlock", false, "blockquote");
   });
 
@@ -879,6 +1002,7 @@ function initRichTextEditor(cfg) {
     } else {
       next = lower;
     }
+    recordBeforeChange();
     range.deleteContents();
     const textNode = document.createTextNode(next);
     range.insertNode(textNode);
@@ -902,14 +1026,17 @@ function initRichTextEditor(cfg) {
     const range = sel.getRangeAt(0);
     if (!contentEl.contains(range.commonAncestorContainer)) return;
 
+    recordBeforeChange();
     let extracted;
     try {
       extracted = range.extractContents();
     } catch (err) {
+      undoStack.pop();
       showToast("Gagal membuat spoiler pada seleksi ini");
       return;
     }
     if (!extracted || !extracted.hasChildNodes()) {
+      undoStack.pop();
       showToast("Gagal membuat spoiler pada seleksi ini");
       return;
     }
@@ -948,14 +1075,88 @@ function initRichTextEditor(cfg) {
       showToast("Pilih teks yang ingin diberi Label terlebih dahulu");
       return;
     }
+    recordBeforeChange();
     const div = document.createElement("div");
     div.className = "label-box";
     if (!wrapSelection(div)) {
+      undoStack.pop();
       showToast("Gagal membuat Label pada seleksi ini");
     }
   });
 
-  const api = { saveSelection, restoreSelection, contentEl };
+  // ---------- Clear All Formatting ----------
+  // Hapus SELURUH format yang diterapkan pada teks terpilih (warna,
+  // ukuran huruf, bold/italic/underline/strikethrough, link, kutipan,
+  // spoiler, label, dll) dan kembalikan ke teks polos default.
+  // Gambar yang ikut terseleksi TIDAK dihapus, hanya dikeluarkan dari
+  // pembungkus formatnya (mis. spoiler) apa adanya.
+  const BLOCK_TAGS_CLEAR = ["P", "DIV", "BLOCKQUOTE", "LI", "UL", "OL", "H1", "H2", "H3", "H4", "H5", "H6"];
+  function flattenForClearFormat(sourceNode, outParent) {
+    Array.prototype.forEach.call(sourceNode.childNodes, function (child) {
+      if (child.nodeType === Node.TEXT_NODE) {
+        outParent.appendChild(document.createTextNode(child.textContent));
+        return;
+      }
+      if (child.nodeType !== Node.ELEMENT_NODE) return;
+      if (child.tagName === "IMG") {
+        outParent.appendChild(child.cloneNode(true));
+        return;
+      }
+      if (child.tagName === "BR") {
+        outParent.appendChild(document.createElement("br"));
+        return;
+      }
+      if (child.classList && child.classList.contains("spoiler-label")) {
+        // Label "SPOILER" sintetis (bukan konten asli) — buang saja.
+        return;
+      }
+      const isBlock = BLOCK_TAGS_CLEAR.indexOf(child.tagName) !== -1 ||
+        (child.classList && child.classList.contains("label-box"));
+      flattenForClearFormat(child, outParent);
+      if (isBlock) outParent.appendChild(document.createElement("br"));
+    });
+  }
+
+  document.getElementById(cfg.clearFormatBtnId).addEventListener("click", function () {
+    contentEl.focus();
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed || !contentEl.contains(sel.anchorNode)) {
+      showToast("Pilih teks yang ingin dihapus formatnya terlebih dahulu");
+      return;
+    }
+    const range = sel.getRangeAt(0);
+    if (!contentEl.contains(range.commonAncestorContainer)) return;
+
+    recordBeforeChange();
+    let extracted;
+    try {
+      extracted = range.extractContents();
+    } catch (err) {
+      undoStack.pop();
+      showToast("Gagal menghapus format pada seleksi ini");
+      return;
+    }
+    const frag = document.createDocumentFragment();
+    flattenForClearFormat(extracted, frag);
+    while (frag.lastChild && frag.lastChild.nodeName === "BR") {
+      frag.removeChild(frag.lastChild);
+    }
+    if (!frag.hasChildNodes()) {
+      undoStack.pop();
+      showToast("Gagal menghapus format pada seleksi ini");
+      return;
+    }
+    const lastNode = frag.lastChild;
+    range.insertNode(frag);
+    const newRange = document.createRange();
+    newRange.setStartAfter(lastNode);
+    newRange.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+    savedSelectionRange = newRange.cloneRange();
+  });
+
+  const api = { saveSelection, restoreSelection, contentEl, recordBeforeChange, resetHistory };
   return api;
 }
 
@@ -985,6 +1186,7 @@ document.getElementById("btnConfirmLink").addEventListener("click", function () 
   }
   const text = linkTextInput.value.trim() || url;
   activeRichEditor.restoreSelection();
+  activeRichEditor.recordBeforeChange();
   const sel = window.getSelection();
   const range = sel.getRangeAt(0);
   range.deleteContents();
@@ -1004,7 +1206,7 @@ document.getElementById("btnConfirmLink").addEventListener("click", function () 
 });
 
 // ---------- Instance editor: Isi Postingan ----------
-initRichTextEditor({
+const richPostEditor = initRichTextEditor({
   toolbarId: "editorToolbar",
   contentId: "editorContent",
   insertImageBtnId: "btnInsertImage",
@@ -1016,11 +1218,12 @@ initRichTextEditor({
   quoteBtnId: "btnQuote",
   caseToggleBtnId: "btnCaseToggle",
   spoilerBtnId: "btnSpoiler",
-  labelBtnId: "btnLabel"
+  labelBtnId: "btnLabel",
+  clearFormatBtnId: "btnClearFormat"
 });
 
 // ---------- Instance editor: Edit Halaman ----------
-initRichTextEditor({
+const richPageEditor = initRichTextEditor({
   toolbarId: "editorToolbarPage",
   contentId: "editorContentPage",
   insertImageBtnId: "btnInsertImagePage",
@@ -1032,7 +1235,8 @@ initRichTextEditor({
   quoteBtnId: "btnQuotePage",
   caseToggleBtnId: "btnCaseTogglePage",
   spoilerBtnId: "btnSpoilerPage",
-  labelBtnId: "btnLabelPage"
+  labelBtnId: "btnLabelPage",
+  clearFormatBtnId: "btnClearFormatPage"
 });
 
 // =========================================================
