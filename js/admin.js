@@ -1085,11 +1085,12 @@ function initRichTextEditor(cfg) {
   });
 
   // ---------- Clear All Formatting ----------
-  // Hapus SELURUH format yang diterapkan pada teks terpilih (warna,
-  // ukuran huruf, bold/italic/underline/strikethrough, link, kutipan,
-  // spoiler, label, dll) dan kembalikan ke teks polos default.
-  // Gambar yang ikut terseleksi TIDAK dihapus, hanya dikeluarkan dari
-  // pembungkus formatnya (mis. spoiler) apa adanya.
+  // Hapus SELURUH format pada SELURUH isi editor (warna, ukuran,
+  // bold/italic/underline/strikethrough, link, kutipan, spoiler, label,
+  // dll) begitu ikon ditekan — tanpa perlu memilih teks terlebih dahulu
+  // — dan kembalikan semua teks ke tampilan default. Gambar TIDAK
+  // dihapus, hanya dikeluarkan dari pembungkus formatnya (mis. spoiler)
+  // apa adanya.
   const BLOCK_TAGS_CLEAR = ["P", "DIV", "BLOCKQUOTE", "LI", "UL", "OL", "H1", "H2", "H3", "H4", "H5", "H6"];
   function flattenForClearFormat(sourceNode, outParent) {
     Array.prototype.forEach.call(sourceNode.childNodes, function (child) {
@@ -1119,41 +1120,20 @@ function initRichTextEditor(cfg) {
 
   document.getElementById(cfg.clearFormatBtnId).addEventListener("click", function () {
     contentEl.focus();
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0 || sel.isCollapsed || !contentEl.contains(sel.anchorNode)) {
-      showToast("Pilih teks yang ingin dihapus formatnya terlebih dahulu");
+    if (!contentEl.hasChildNodes()) {
+      showToast("Konten masih kosong, tidak ada format untuk dihapus");
       return;
     }
-    const range = sel.getRangeAt(0);
-    if (!contentEl.contains(range.commonAncestorContainer)) return;
-
     recordBeforeChange();
-    let extracted;
-    try {
-      extracted = range.extractContents();
-    } catch (err) {
-      undoStack.pop();
-      showToast("Gagal menghapus format pada seleksi ini");
-      return;
-    }
     const frag = document.createDocumentFragment();
-    flattenForClearFormat(extracted, frag);
+    flattenForClearFormat(contentEl, frag);
     while (frag.lastChild && frag.lastChild.nodeName === "BR") {
       frag.removeChild(frag.lastChild);
     }
-    if (!frag.hasChildNodes()) {
-      undoStack.pop();
-      showToast("Gagal menghapus format pada seleksi ini");
-      return;
-    }
-    const lastNode = frag.lastChild;
-    range.insertNode(frag);
-    const newRange = document.createRange();
-    newRange.setStartAfter(lastNode);
-    newRange.collapse(true);
-    sel.removeAllRanges();
-    sel.addRange(newRange);
-    savedSelectionRange = newRange.cloneRange();
+    contentEl.innerHTML = "";
+    contentEl.appendChild(frag);
+    placeCursorAtEnd();
+    showToast("Semua format pada isi teks telah dihapus");
   });
 
   const api = { saveSelection, restoreSelection, contentEl, recordBeforeChange, resetHistory };
