@@ -363,7 +363,12 @@ body.admin-body {
   overflow-y: auto;
   border: 1.5px solid var(--sky-200);
   border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-  padding: 14px;
+  /* Padding atas dibuat lebih besar dari sisi lain: memberi ruang
+     kosong di atas baris pertama supaya menu "Potong/Salin/Tempel"
+     bawaan Android/Chrome (elemen sistem, bukan bagian halaman ini,
+     jadi posisinya tidak bisa diatur lewat kode) tidak menimpa
+     tombol toolbar saat teks di baris pertama diseleksi. */
+  padding: 46px 14px 14px;
   font-size: .95rem;
   line-height: 1.7;
   outline: none;
