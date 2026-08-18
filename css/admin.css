@@ -461,25 +461,25 @@ body.admin-body {
 .publish-mode-section {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  margin-top: 20px;
+  margin-top: 16px;
 }
-.publish-mode-option {
+.publish-mode-section .publish-mode-option {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 9px 2px;
+  gap: 10px;
+  padding: 5px 2px;
+  margin: 0;
   cursor: pointer;
 }
 .publish-mode-option.hidden { display: none; }
 .publish-mode-option input[type="radio"] {
-  width: 22px;
-  height: 22px;
+  width: 19px;
+  height: 19px;
   accent-color: var(--sky-500);
   flex: 0 0 auto;
 }
 .publish-mode-option span {
-  font-size: .95rem;
+  font-size: .8rem;
   font-weight: 800;
   color: var(--sky-600);
 }
@@ -530,24 +530,25 @@ body.admin-body {
 .schedule-input-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
-.schedule-digit-box {
-  border: 2px solid var(--sky-300);
-  border-radius: 8px;
+.schedule-input-row .schedule-digit-box {
+  flex: 1 1 0 !important;
+  width: auto !important;
+  min-width: 0;
+  border: 2px solid var(--sky-300) !important;
+  border-radius: 8px !important;
   text-align: center;
-  font-size: 1.25rem;
+  font-size: 1.1rem !important;
   font-weight: 800;
   color: var(--ink);
-  padding: 10px 0;
+  padding: 10px 2px !important;
   background: var(--surface);
-  min-width: 0;
 }
-.schedule-digit-box:focus { border-color: var(--sky-500); }
-.schedule-dd, .schedule-mm, .schedule-hh, .schedule-min { width: 52px; flex: 0 0 auto; }
-.schedule-yyyy { width: 82px; flex: 0 0 auto; }
+.schedule-input-row .schedule-yyyy { flex: 1.7 1 0 !important; }
+.schedule-input-row .schedule-digit-box:focus { border-color: var(--sky-500) !important; }
 .schedule-sep {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 800;
   color: var(--sky-500);
   flex: 0 0 auto;
@@ -847,6 +848,10 @@ body.admin-body {
   pointer-events: none;
   transition: opacity .2s ease;
 }
+/* Modal konfirmasi generik dipakai juga sebagai konfirmasi di ATAS modal
+   lain (mis. saat menutup "Atur Postingan Terjadwal" dengan perubahan
+   belum diterapkan) — pastikan selalu tampil paling depan. */
+#confirmModalBackdrop { z-index: 200; }
 .modal-backdrop.show { opacity: 1; pointer-events: auto; }
 .modal-box {
   background: var(--surface);
