@@ -94,13 +94,17 @@ document.getElementById("recoveryForm").addEventListener("submit", function (e) 
   showToast("Kata sandi berhasil diubah");
 });
 
-document.getElementById("btnLogout").addEventListener("click", function () {
+/** Tampilkan window peringatan konfirmasi keluar dari Admin Panel. Dipakai
+ * baik oleh tombol "Keluar" maupun oleh tombol back HP saat berada di menu
+ * utama Admin Panel (lihat penanganan popstate di bawah). */
+function confirmLogout() {
   openConfirmModal(
     "Yakin ingin keluar dari Admin Panel?",
     doLogout,
     { title: "Keluar dari Admin Panel", confirmLabel: "Ya, Keluar" }
   );
-});
+}
+document.getElementById("btnLogout").addEventListener("click", confirmLogout);
 
 // ---------- Sub-view switching within adminShell ----------
 const SUB_VIEWS = [
@@ -113,6 +117,8 @@ const SUB_VIEWS = [
   "viewFiles",
   "viewFileEdit",
   "viewBackup",
+  "viewBackupPosts",
+  "viewBackupPages",
   "viewInfo",
   "viewRecycleBin",
   "viewRecycleBinList"
@@ -134,7 +140,9 @@ document.getElementById("menuHalaman").addEventListener("click", () => {
   showSub("viewPages");
 });
 document.getElementById("btnBackFromPages").addEventListener("click", () => showSub("viewMenu"));
-document.getElementById("btnBackFromPageEdit").addEventListener("click", () => showSub("viewPages"));
+document.getElementById("btnBackFromPageEdit").addEventListener("click", () => {
+  goBackFromPageEdit();
+});
 
 // ---------- Edit Halaman (Tutorial Main / Cara Download / Donasi / Tentang) ----------
 let currentEditingPageId = null;
@@ -149,6 +157,7 @@ document.querySelectorAll(".page-picker-btn").forEach((btn) => {
     editorContentPageEl.innerHTML = getPageContent(pageId).content;
     if (richPageEditor) richPageEditor.resetHistory();
     showSub("viewPageEdit");
+    capturePageFormSnapshot();
   });
 });
 
@@ -159,8 +168,45 @@ document.getElementById("btnSavePage").addEventListener("click", function () {
     showToast("Gagal menyimpan — penyimpanan penuh. Coba gambar yang lebih kecil.");
     return;
   }
+  capturePageFormSnapshot();
   showToast("Halaman disimpan");
 });
+
+document.getElementById("btnPreviewPage").addEventListener("click", function () {
+  const content = editorContentPageEl.innerHTML.trim() || "<p><em>(Isi halaman masih kosong)</em></p>";
+  previewModalBody.innerHTML = `
+    <div class="preview-badge">Pratinjau — belum disimpan</div>
+    <h1 class="post-detail-title">${escapeHtmlAdmin(document.getElementById("pageEditHeading").textContent)}</h1>
+    <div class="post-detail-content">${content}</div>
+  `;
+  initSpoilersAdmin(previewModalBody);
+  previewModalBackdrop.classList.add("show");
+});
+
+// ---------- Deteksi perubahan yang belum disimpan (Edit Halaman) ----------
+let pageFormSnapshot = null;
+function capturePageFormSnapshot() {
+  pageFormSnapshot = editorContentPageEl.innerHTML.trim();
+}
+function isPageFormDirty() {
+  if (pageFormSnapshot === null) return false;
+  return editorContentPageEl.innerHTML.trim() !== pageFormSnapshot;
+}
+function goBackFromPageEdit(onLeft) {
+  if (isPageFormDirty()) {
+    openConfirmModal(
+      "Halaman belum disimpan, yakin ingin kembali dan membatalkannya?",
+      function () {
+        showSub("viewPages");
+        if (onLeft) onLeft();
+      },
+      { title: "Batalkan Perubahan", confirmLabel: "Ya, Kembali" }
+    );
+  } else {
+    showSub("viewPages");
+    if (onLeft) onLeft();
+  }
+}
 
 document.getElementById("menuLihatLaporan").addEventListener("click", () => {
   reportSearchQuery = "";
@@ -190,11 +236,27 @@ document.getElementById("btnBackFromRecycleBinList").addEventListener("click", (
   renderRecycleBinCounts();
 });
 document.getElementById("menuBackupRestore").addEventListener("click", () => {
-  resetRestoreForm();
-  updateBackupPostCount();
+  renderBackupDatesInfo();
   showSub("viewBackup");
 });
 document.getElementById("btnBackFromBackup").addEventListener("click", () => showSub("viewMenu"));
+document.getElementById("btnOpenBackupPosts").addEventListener("click", () => {
+  resetRestoreForm();
+  updateBackupPostCount();
+  showSub("viewBackupPosts");
+});
+document.getElementById("btnOpenBackupPages").addEventListener("click", () => {
+  resetRestorePagesForm();
+  showSub("viewBackupPages");
+});
+document.getElementById("btnBackFromBackupPosts").addEventListener("click", () => {
+  renderBackupDatesInfo();
+  showSub("viewBackup");
+});
+document.getElementById("btnBackFromBackupPages").addEventListener("click", () => {
+  renderBackupDatesInfo();
+  showSub("viewBackup");
+});
 document.getElementById("btnBackFromPosts").addEventListener("click", () => showSub("viewMenu"));
 document.getElementById("btnBackFromReports").addEventListener("click", () => showSub("viewMenu"));
 document.getElementById("btnBackFromForm").addEventListener("click", () => {
@@ -233,15 +295,17 @@ document.getElementById("btnBackFromFileEdit").addEventListener("click", () => {
 // Tombol back HP (hardware/browser back) di dalam Admin Panel
 // Supaya menekan tombol back HP berperilaku SAMA seperti menekan
 // ikon "<" pada menu yang sedang terbuka — bukan langsung menutup
-// seluruh panel admin.
+// seluruh panel admin. Dan kalau sudah di menu utama, tombol back HP
+// berperilaku SAMA seperti menekan tombol "Keluar" (tampilkan window
+// peringatan dulu, jangan langsung menutup Admin Panel).
 //
-// Caranya: setiap kali kita "sudah aman" untuk keluar sepenuhnya dari
-// Admin Panel (yaitu saat berada di viewMenu), kita TIDAK menambah
-// history entry apa pun. Tapi selama masih berada di salah satu
-// sub-menu, kita selalu menjaga agar selalu ada 1 history entry
-// "jebakan" (trap) tersisa, sehingga 1x tombol back HP hanya akan
-// memicu event popstate (kita tangani sendiri seperti klik "<"),
-// bukan benar-benar menutup halaman.
+// Caranya: kita selalu menjaga agar selalu ada 1 history entry
+// "jebakan" (trap) tersisa selama masih login & berada di dalam
+// Admin Panel (termasuk saat di viewMenu), sehingga 1x tombol back HP
+// hanya akan memicu event popstate (kita tangani sendiri), bukan
+// benar-benar menutup halaman. Trap ini dipasang pertama kali saat
+// login (doLogin) maupun saat sesi lama dipulihkan setelah refresh
+// (lihat DOMContentLoaded).
 // =========================================================
 function pushBackTrap() {
   history.pushState({ fueeruAdminTrap: true }, "", location.href);
@@ -256,9 +320,18 @@ window.addEventListener("popstate", function () {
   if (!viewLogin.classList.contains("hidden") || adminShell.classList.contains("hidden")) return;
 
   const current = getCurrentSubView();
-  // Sudah di menu utama Admin Panel -> ini "akar" navigasi admin,
-  // biarkan tombol back berikutnya benar-benar keluar dari halaman.
-  if (!current || current === "viewMenu") return;
+  if (!current) return;
+
+  if (current === "viewMenu") {
+    // Sudah di menu utama Admin Panel -> perlakukan tombol back HP SAMA
+    // seperti menekan tombol "Keluar": tampilkan window peringatan dulu,
+    // jangan langsung menutup Admin Panel. Pasang lagi trap-nya supaya
+    // "pop" yang barusan terjadi tidak langsung meninggalkan halaman
+    // selagi modal konfirmasi masih terbuka / kalau dibatalkan.
+    pushBackTrap();
+    confirmLogout();
+    return;
+  }
 
   if (current === "viewForm") {
     if (isFormDirty()) {
@@ -298,7 +371,18 @@ window.addEventListener("popstate", function () {
   }
 
   if (current === "viewPageEdit") {
-    showSub("viewPages");
+    if (isPageFormDirty()) {
+      pushBackTrap();
+    }
+    goBackFromPageEdit(function () {
+      pushBackTrap(); // sudah pindah ke viewPages -> pasang trap lagi
+    });
+    return;
+  }
+
+  if (current === "viewBackupPosts" || current === "viewBackupPages") {
+    renderBackupDatesInfo();
+    showSub("viewBackup");
     pushBackTrap();
     return;
   }
@@ -547,6 +631,19 @@ genreInputField.addEventListener("keydown", function (e) {
   } else if (e.key === "Backspace" && genreInputField.value === "" && currentGenres.length) {
     currentGenres.pop();
     renderGenreChips();
+  }
+});
+// Fallback untuk keyboard virtual (Android/mobile) yang tidak selalu
+// mengirim event "keydown" Enter yang bisa di-preventDefault — beberapa
+// keyboard langsung memicu event "input" dengan inputType
+// "insertLineBreak" saat tombol Enter/Done ditekan, dan fokus otomatis
+// pindah ke field berikutnya (bug yang dilaporkan: pindah ke "Isi
+// Postingan"). Tangani juga inputType ini supaya tetap membuat genre
+// baru, bukan pindah fokus.
+genreInputField.addEventListener("beforeinput", function (e) {
+  if (e.inputType === "insertLineBreak") {
+    e.preventDefault();
+    addGenre(genreInputField.value);
   }
 });
 
@@ -2412,10 +2509,19 @@ function renderPagination(containerId, totalItems, pageSize, currentPage, onChan
 // =========================================================
 const restoreFileInput = document.getElementById("restoreFileInput");
 const restoreFileNameEl = document.getElementById("restoreFileName");
-const restoreFileLabel = document.querySelector(".backup-file-label");
+const restoreFileLabel = document.querySelector('label[for="restoreFileInput"]');
 const btnRestoreBackup = document.getElementById("btnRestoreBackup");
 const backupStatusEl = document.getElementById("backupStatus");
 let pendingRestoreData = null; // array post hasil parsing file yang dipilih
+
+/** Tampilkan tanggal backup terakhir (Postingan & Halaman) di halaman
+ * pemilihan Backup & Restore. */
+function renderBackupDatesInfo() {
+  const postsAt = getLastBackupAt("posts");
+  const pagesAt = getLastBackupAt("pages");
+  document.getElementById("lastBackupPostsDate").textContent = postsAt ? formatDate(postsAt) : "Belum Backup";
+  document.getElementById("lastBackupPagesDate").textContent = pagesAt ? formatDate(pagesAt) : "Belum Backup";
+}
 
 function updateBackupPostCount() {
   const n = loadPosts().length;
@@ -2460,7 +2566,7 @@ document.getElementById("btnDownloadBackup").addEventListener("click", function 
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
-  markBackupDone();
+  markBackupDone("posts");
   // Backup baru saja dilakukan -> hapus notifikasi pengingat backup yang lama (kalau ada)
   saveNotifications(loadNotifications().filter((n) => n.type !== "backup_reminder"));
   showToast("Backup postingan berhasil diunduh");
@@ -2538,6 +2644,135 @@ btnRestoreBackup.addEventListener("click", function () {
       resetRestoreForm();
       setBackupStatus(`Berhasil dipulihkan — total sekarang ${finalPosts.length} postingan.`, "success");
       showToast("Data postingan berhasil dipulihkan");
+    },
+    { title: "Konfirmasi Restore", confirmLabel: mode === "replace" ? "Ya, Timpa Semua" : "Ya, Gabungkan" }
+  );
+});
+
+// =========================================================
+// Backup & Restore (isi Halaman)
+// =========================================================
+const restoreFileInputPages = document.getElementById("restoreFileInputPages");
+const restoreFileNamePagesEl = document.getElementById("restoreFileNamePages");
+const restoreFileLabelPages = document.querySelector('label[for="restoreFileInputPages"]');
+const btnRestoreBackupPages = document.getElementById("btnRestoreBackupPages");
+const backupStatusPagesEl = document.getElementById("backupStatusPages");
+const PAGE_IDS = ["tutorial", "cara-download", "donasi", "tentang"];
+let pendingRestorePagesData = null; // object { pageId: { title, content } } hasil parsing file yang dipilih
+
+function resetRestorePagesForm() {
+  restoreFileInputPages.value = "";
+  restoreFileNamePagesEl.textContent = "Belum ada file dipilih";
+  restoreFileLabelPages.classList.remove("has-file");
+  btnRestoreBackupPages.disabled = true;
+  pendingRestorePagesData = null;
+  backupStatusPagesEl.textContent = "";
+  backupStatusPagesEl.className = "backup-status";
+  document.querySelector('input[name="restoreModePages"][value="merge"]').checked = true;
+}
+
+function setBackupPagesStatus(msg, type) {
+  backupStatusPagesEl.textContent = msg;
+  backupStatusPagesEl.className = "backup-status" + (type ? " " + type : "");
+}
+
+// ---------- Backup (download) ----------
+document.getElementById("btnDownloadBackupPages").addEventListener("click", function () {
+  const pages = loadPages();
+  const payload = {
+    app: "fueeru-game-backup",
+    type: "pages",
+    version: DATA_VERSION,
+    exportedAt: new Date().toISOString(),
+    pages: pages
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `fueeru-pages-backup-${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  markBackupDone("pages");
+  showToast("Backup halaman berhasil diunduh");
+});
+
+// ---------- Restore (pilih file) ----------
+restoreFileInputPages.addEventListener("change", function () {
+  const file = restoreFileInputPages.files && restoreFileInputPages.files[0];
+  pendingRestorePagesData = null;
+  btnRestoreBackupPages.disabled = true;
+  setBackupPagesStatus("", "");
+
+  if (!file) {
+    restoreFileNamePagesEl.textContent = "Belum ada file dipilih";
+    restoreFileLabelPages.classList.remove("has-file");
+    return;
+  }
+  restoreFileNamePagesEl.textContent = file.name;
+  restoreFileLabelPages.classList.add("has-file");
+
+  const reader = new FileReader();
+  reader.onload = function () {
+    try {
+      const parsed = JSON.parse(reader.result);
+      const pages = parsed && typeof parsed === "object" ? parsed.pages || parsed : null;
+      if (!pages || typeof pages !== "object" || Array.isArray(pages)) {
+        throw new Error("Format file tidak dikenali (tidak ditemukan data halaman).");
+      }
+      const validKeys = Object.keys(pages).filter(
+        (id) => PAGE_IDS.includes(id) && pages[id] && typeof pages[id].content === "string"
+      );
+      if (validKeys.length === 0) {
+        throw new Error("Isi file tidak sesuai format data halaman Fueeru Game.");
+      }
+      const cleaned = {};
+      validKeys.forEach((id) => {
+        cleaned[id] = { title: pages[id].title || DEFAULT_PAGES[id].title, content: pages[id].content };
+      });
+      pendingRestorePagesData = cleaned;
+      btnRestoreBackupPages.disabled = false;
+      setBackupPagesStatus(`File valid — berisi ${validKeys.length} halaman, siap dipulihkan.`, "success");
+    } catch (err) {
+      pendingRestorePagesData = null;
+      btnRestoreBackupPages.disabled = true;
+      setBackupPagesStatus("Gagal membaca file: " + err.message, "error");
+    }
+  };
+  reader.onerror = function () {
+    setBackupPagesStatus("Gagal membaca file. Coba lagi.", "error");
+  };
+  reader.readAsText(file);
+});
+
+// ---------- Restore (eksekusi) ----------
+btnRestoreBackupPages.addEventListener("click", function () {
+  if (!pendingRestorePagesData) return;
+  const mode = document.querySelector('input[name="restoreModePages"]:checked').value;
+  const incoming = pendingRestorePagesData;
+  const incomingCount = Object.keys(incoming).length;
+
+  const message =
+    mode === "replace"
+      ? `Seluruh isi Halaman yang ada sekarang akan DIGANTI dengan ${incomingCount} halaman dari file backup (halaman yang tidak ada di file akan kembali ke isi bawaan). Lanjutkan?`
+      : `${incomingCount} halaman dari file backup akan digabungkan dengan data yang ada (halaman dengan ID sama akan diperbarui). Lanjutkan?`;
+
+  openConfirmModal(
+    message,
+    function () {
+      let finalPages;
+      if (mode === "replace") {
+        finalPages = incoming;
+      } else {
+        finalPages = Object.assign({}, loadPages(), incoming);
+      }
+      savePages(finalPages);
+      resetRestorePagesForm();
+      setBackupPagesStatus(`Berhasil dipulihkan — ${incomingCount} halaman diperbarui.`, "success");
+      showToast("Isi Halaman berhasil dipulihkan");
     },
     { title: "Konfirmasi Restore", confirmLabel: mode === "replace" ? "Ya, Timpa Semua" : "Ya, Gabungkan" }
   );
@@ -3075,6 +3310,11 @@ document.addEventListener("DOMContentLoaded", function () {
     viewLogin.classList.add("hidden");
     adminShell.classList.remove("hidden");
     showSub("viewMenu");
+    // Sesi lama dipulihkan setelah refresh/reload halaman (bukan lewat
+    // doLogin) -> pasang juga trap tombol back HP di sini, supaya back
+    // tetap tertangani dengan benar walau Admin Panel dibuka ulang dari
+    // sesi yang sudah login sebelumnya.
+    pushBackTrap();
   } else {
     viewLogin.classList.remove("hidden");
     adminShell.classList.add("hidden");

@@ -383,6 +383,7 @@ function setAdminPassword(newPassword) {
 // =========================================================
 const NOTIF_KEY = "fueeru_notifications";
 const LAST_BACKUP_KEY = "fueeru_last_backup_at";
+const LAST_BACKUP_PAGES_KEY = "fueeru_last_backup_pages_at";
 
 function loadNotifications() {
   try {
@@ -415,11 +416,18 @@ function clearAllNotifications() {
   saveNotifications([]);
 }
 
-/** Catat waktu backup terakhir (dipanggil saat admin klik "Unduh Backup Postingan"). */
-function markBackupDone() {
+/** Catat waktu backup terakhir. kind: "posts" (default) | "pages". Dipanggil
+ * saat admin klik "Unduh Backup Postingan" / "Unduh Backup Halaman". */
+function markBackupDone(kind) {
   try {
-    localStorage.setItem(LAST_BACKUP_KEY, new Date().toISOString());
+    localStorage.setItem(kind === "pages" ? LAST_BACKUP_PAGES_KEY : LAST_BACKUP_KEY, new Date().toISOString());
   } catch (e) {}
+}
+
+/** Ambil waktu backup terakhir (ISO string) untuk kind: "posts" | "pages",
+ * atau null kalau belum pernah backup. */
+function getLastBackupAt(kind) {
+  return localStorage.getItem(kind === "pages" ? LAST_BACKUP_PAGES_KEY : LAST_BACKUP_KEY);
 }
 
 /** Kalau sudah lebih dari seminggu sejak backup terakhir (atau belum pernah
