@@ -107,9 +107,16 @@ function getPostById(id) {
 }
 
 /** Postingan yang statusnya published (dipakai di seluruh halaman publik —
- * postingan berstatus draft/belum dipublish tidak ditampilkan di publik). */
+ * postingan berstatus draft/belum dipublish tidak ditampilkan di publik).
+ * Postingan dengan jadwal (scheduledAt) di masa depan juga belum ditampilkan
+ * sampai waktu yang disetel tiba. */
 function getPublishedPosts() {
-  return loadPosts().filter((p) => p.published !== false);
+  const now = Date.now();
+  return loadPosts().filter((p) => {
+    if (p.published === false) return false;
+    if (p.scheduledAt && new Date(p.scheduledAt).getTime() > now) return false;
+    return true;
+  });
 }
 
 /** Postingan terkait: jenis sama & minimal 1 genre yang sama dengan `post`,

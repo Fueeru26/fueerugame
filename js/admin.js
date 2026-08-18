@@ -11,6 +11,8 @@ const EMERGENCY_PASSWORD = "GINTAMA12345";
 
 let editingId = null; // null = mode tambah, string = mode edit
 let currentGenres = []; // genre yang sedang dipilih di form
+let publishMode = "baru"; // "baru" | "sebelumnya" | "terjadwal"
+let scheduledAt = null; // ISO datetime string hasil "Atur Postingan Terjadwal", atau null
 
 // ---------- Top-level views ----------
 const viewLogin = document.getElementById("viewLogin");
@@ -413,7 +415,11 @@ function renderPostsList() {
       <div class="api-body">
         <div class="api-title">${escapeHtmlAdmin(p.title)}</div>
         <div class="api-meta">${escapeHtmlAdmin(p.jenis)} • ${
-        p.published === false ? '<span class="draft-label">Draft</span>' : escapeHtmlAdmin(formatDate(p.date))
+        p.published === false
+          ? '<span class="draft-label">Draft</span>'
+          : p.scheduledAt && new Date(p.scheduledAt).getTime() > Date.now()
+          ? '<span class="scheduled-label">Terjadwal</span>'
+          : escapeHtmlAdmin(formatDate(p.date))
       }</div>
       </div>
       <div class="api-actions">
@@ -561,6 +567,14 @@ function resetForm() {
   editorContent.innerHTML = "";
   if (richPostEditor) richPostEditor.resetHistory();
   document.getElementById("formHeading").textContent = "Tambah Postingan";
+  // Opsi "Publish dengan waktu sebelumnya" hanya ada di Edit Postingan.
+  document.getElementById("publishModePrevWrap").classList.add("hidden");
+  publishMode = "baru";
+  scheduledAt = null;
+  const radioBaru = document.querySelector('input[name="publishMode"][value="baru"]');
+  if (radioBaru) radioBaru.checked = true;
+  clearPublishFormMsg();
+  updateScheduleButtonState();
 }
 
 function openAddForm() {
@@ -586,6 +600,16 @@ function openEditForm(id) {
   uploadPreview.src = resolveAdminAsset(post.thumbnail);
   uploadPreview.style.display = "block";
   uploadLabel.textContent = "Klik untuk mengganti gambar header";
+  document.getElementById("publishModePrevWrap").classList.remove("hidden");
+  // Kalau postingan ini masih punya jadwal yang belum tiba waktunya,
+  // tampilkan opsi & waktunya di form supaya tidak hilang begitu saja.
+  if (post.scheduledAt && new Date(post.scheduledAt).getTime() > Date.now()) {
+    publishMode = "terjadwal";
+    scheduledAt = post.scheduledAt;
+    const radioTerjadwal = document.querySelector('input[name="publishMode"][value="terjadwal"]');
+    if (radioTerjadwal) radioTerjadwal.checked = true;
+  }
+  updateScheduleButtonState();
   showSub("viewForm");
   captureFormSnapshot();
 }
@@ -600,7 +624,9 @@ function getFormSnapshotData() {
     jenis: fieldJenis.value,
     genres: currentGenres.slice(),
     content: editorContent.innerHTML.trim(),
-    thumbnail: currentThumbnailData || ""
+    thumbnail: currentThumbnailData || "",
+    publishMode: publishMode,
+    scheduledAt: scheduledAt || ""
   };
 }
 function captureFormSnapshot() {
@@ -1281,6 +1307,9 @@ function readPostFormFields() {
  * berlaku apa adanya setiap kali ditekan, tidak peduli status
  * sebelumnya, supaya "Simpan" selalu berarti draft dan "Publish" selalu
  * berarti live.
+ * Saat publish=true, publishMode ("baru" / "sebelumnya" / "terjadwal")
+ * menentukan tanggal & jadwal yang dipakai — lihat opsi di bawah tombol
+ * Preview/Simpan.
  * Return: "ok" | "invalid" (judul kosong) | "storage-full" (localStorage
  * penuh, biasanya karena gambar terlalu besar — lihat compressImageFile). */
 function savePostForm(publish) {
@@ -1290,10 +1319,30 @@ function savePostForm(publish) {
   const posts = loadPosts();
   let newPostId = null;
 
+  const useSchedule = publish && publishMode === "terjadwal" && !!scheduledAt;
+
   if (editingId) {
     const idx = posts.findIndex((p) => p.id === editingId);
     if (idx !== -1) {
-      const wasPublished = posts[idx].published !== false;
+      let dateToUse = posts[idx].date;
+      let scheduledAtToUse = posts[idx].scheduledAt || null;
+
+      if (publish) {
+        if (useSchedule) {
+          dateToUse = scheduledAt.slice(0, 10);
+          scheduledAtToUse = scheduledAt;
+        } else if (publishMode === "sebelumnya") {
+          // Publish tapi tanggal/waktunya tetap mengikuti sebelum diedit.
+          dateToUse = posts[idx].date;
+          scheduledAtToUse = null;
+        } else {
+          // "baru" (default) -> jadi postingan terbaru, waktu sekarang.
+          dateToUse = new Date().toISOString().slice(0, 10);
+          scheduledAtToUse = null;
+        }
+      }
+      // publish === false (Simpan/draft) -> tanggal & jadwal tidak diubah.
+
       posts[idx] = {
         ...posts[idx],
         title,
@@ -1302,20 +1351,22 @@ function savePostForm(publish) {
         content,
         thumbnail: currentThumbnailData || posts[idx].thumbnail,
         published: publish,
-        // Kalau baru pertama kali dipublish sekarang, catat tanggal publish-nya.
-        date: publish && !wasPublished ? new Date().toISOString().slice(0, 10) : posts[idx].date
+        date: dateToUse,
+        scheduledAt: scheduledAtToUse
       };
     }
   } else {
+    const dateToUse = useSchedule ? scheduledAt.slice(0, 10) : new Date().toISOString().slice(0, 10);
     const newPost = {
       id: "post-" + Date.now(),
       title,
       jenis,
       genres,
-      date: new Date().toISOString().slice(0, 10),
+      date: dateToUse,
       thumbnail: currentThumbnailData || "webpictures/postplaceholder.webp",
       content,
-      published: publish
+      published: publish,
+      scheduledAt: useSchedule ? scheduledAt : null
     };
     posts.unshift(newPost);
     newPostId = newPost.id;
@@ -1330,12 +1381,14 @@ function savePostForm(publish) {
     // membuat duplikat baru.
     editingId = newPostId;
     document.getElementById("formHeading").textContent = "Edit Postingan";
+    document.getElementById("publishModePrevWrap").classList.remove("hidden");
   }
   captureFormSnapshot(); // baseline baru — belum ada perubahan sejak disimpan
   return "ok";
 }
 
 document.getElementById("btnSaveDraft").addEventListener("click", function () {
+  clearPublishFormMsg();
   const result = savePostForm(false);
   if (result === "invalid") return;
   if (result === "storage-full") {
@@ -1348,6 +1401,11 @@ document.getElementById("btnSaveDraft").addEventListener("click", function () {
 
 document.getElementById("postForm").addEventListener("submit", function (e) {
   e.preventDefault();
+  clearPublishFormMsg();
+  if (publishMode === "terjadwal" && !scheduledAt) {
+    showPublishFormMsg("Postingan terjadwal belum disetel, gagal mempublish postingan");
+    return;
+  }
   const wasEditing = !!editingId;
   const result = savePostForm(true);
   if (result === "invalid") return;
@@ -1358,6 +1416,208 @@ document.getElementById("postForm").addEventListener("submit", function (e) {
   showSub("viewPosts");
   renderPostsList();
   showToast(wasEditing ? "Postingan diperbarui" : "Postingan dipublikasikan");
+});
+
+// ---------- Opsi Publish: baru / waktu sebelumnya / terjadwal ----------
+function showPublishFormMsg(msg) {
+  const el = document.getElementById("publishFormMsg");
+  el.textContent = msg;
+  el.className = "backup-status error";
+}
+function clearPublishFormMsg() {
+  const el = document.getElementById("publishFormMsg");
+  el.textContent = "";
+  el.className = "backup-status";
+}
+
+function renderScheduleAppliedInfo() {
+  const info = document.getElementById("scheduleAppliedInfo");
+  if (publishMode === "terjadwal" && scheduledAt) {
+    const d = new Date(scheduledAt);
+    const label =
+      d.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) +
+      ", " +
+      d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+    info.textContent = "Terjadwal pada: " + label;
+    info.style.display = "block";
+  } else {
+    info.textContent = "";
+    info.style.display = "none";
+  }
+}
+
+function updateScheduleButtonState() {
+  const btn = document.getElementById("btnOpenSchedule");
+  if (publishMode === "terjadwal") {
+    btn.classList.remove("is-disabled");
+  } else {
+    btn.classList.add("is-disabled");
+  }
+  renderScheduleAppliedInfo();
+}
+
+document.querySelectorAll('input[name="publishMode"]').forEach((radio) => {
+  radio.addEventListener("change", function () {
+    if (!this.checked) return;
+    publishMode = this.value;
+    // Kalau pindah dari mode terjadwal ke mode lain, jadwal yang sudah
+    // diterapkan sebelumnya dianggap batal (perlu diatur ulang kalau
+    // balik ke mode terjadwal lagi).
+    if (publishMode !== "terjadwal") {
+      scheduledAt = null;
+    }
+    clearPublishFormMsg();
+    updateScheduleButtonState();
+  });
+});
+
+document.getElementById("btnOpenSchedule").addEventListener("click", function () {
+  if (publishMode !== "terjadwal") {
+    showToast("Pilih opsi Atur postingan terjadwal untuk mengatur postingan terjadwal");
+    return;
+  }
+  openScheduleModal();
+});
+
+// ---------- Modal: Atur Postingan Terjadwal ----------
+const SCHEDULE_DIGIT_IDS = ["scheduleDD", "scheduleMM", "scheduleYYYY", "scheduleHH", "scheduleMin"];
+let scheduleModalSnapshot = null;
+
+function getScheduleFieldsData() {
+  const data = {};
+  SCHEDULE_DIGIT_IDS.forEach((id) => {
+    data[id] = document.getElementById(id).value;
+  });
+  return data;
+}
+function setScheduleFieldsFromDate(d) {
+  document.getElementById("scheduleDD").value = String(d.getDate()).padStart(2, "0");
+  document.getElementById("scheduleMM").value = String(d.getMonth() + 1).padStart(2, "0");
+  document.getElementById("scheduleYYYY").value = String(d.getFullYear());
+  document.getElementById("scheduleHH").value = String(d.getHours()).padStart(2, "0");
+  document.getElementById("scheduleMin").value = String(d.getMinutes()).padStart(2, "0");
+}
+function clearScheduleFields() {
+  SCHEDULE_DIGIT_IDS.forEach((id) => (document.getElementById(id).value = ""));
+}
+function setScheduleStatus(msg, type) {
+  const el = document.getElementById("scheduleStatusMsg");
+  el.textContent = msg || "";
+  el.className = "backup-status" + (type ? " " + type : "");
+}
+function isScheduleDirty() {
+  if (scheduleModalSnapshot === null) return false;
+  return JSON.stringify(getScheduleFieldsData()) !== scheduleModalSnapshot;
+}
+
+function openScheduleModal() {
+  if (scheduledAt) {
+    setScheduleFieldsFromDate(new Date(scheduledAt));
+  } else {
+    clearScheduleFields();
+  }
+  setScheduleStatus("");
+  scheduleModalSnapshot = JSON.stringify(getScheduleFieldsData());
+  document.getElementById("scheduleModalBackdrop").classList.add("show");
+  document.getElementById("scheduleDD").focus();
+}
+function forceCloseScheduleModal() {
+  document.getElementById("scheduleModalBackdrop").classList.remove("show");
+  scheduleModalSnapshot = null;
+}
+function requestCloseScheduleModal() {
+  if (isScheduleDirty()) {
+    openConfirmModal(
+      "Perubahan belum diterapkan, yakin ingin menutup jendela?",
+      forceCloseScheduleModal,
+      { title: "Tutup Jendela", confirmLabel: "Ya, Tutup" }
+    );
+  } else {
+    forceCloseScheduleModal();
+  }
+}
+
+function setupScheduleDigitInput(id, maxLen, nextId) {
+  const el = document.getElementById(id);
+  el.addEventListener("input", function () {
+    this.value = this.value.replace(/\D/g, "").slice(0, maxLen);
+    if (this.value.length === maxLen && nextId) {
+      const next = document.getElementById(nextId);
+      next.focus();
+      next.select();
+    }
+  });
+  el.addEventListener("focus", function () {
+    this.select();
+  });
+}
+setupScheduleDigitInput("scheduleDD", 2, "scheduleMM");
+setupScheduleDigitInput("scheduleMM", 2, "scheduleYYYY");
+setupScheduleDigitInput("scheduleYYYY", 4, "scheduleHH");
+setupScheduleDigitInput("scheduleHH", 2, "scheduleMin");
+setupScheduleDigitInput("scheduleMin", 2, null);
+
+document.getElementById("btnCloseSchedule").addEventListener("click", requestCloseScheduleModal);
+document.getElementById("scheduleModalBackdrop").addEventListener("click", function (e) {
+  if (e.target === this) requestCloseScheduleModal();
+});
+
+document.getElementById("btnApplySchedule").addEventListener("click", function () {
+  const f = getScheduleFieldsData();
+  const dd = parseInt(f.scheduleDD, 10);
+  const mm = parseInt(f.scheduleMM, 10);
+  const yyyy = parseInt(f.scheduleYYYY, 10);
+  const hh = parseInt(f.scheduleHH, 10);
+  const min = parseInt(f.scheduleMin, 10);
+
+  const basicRangeOk =
+    f.scheduleYYYY.length === 4 &&
+    !isNaN(dd) && !isNaN(mm) && !isNaN(yyyy) && !isNaN(hh) && !isNaN(min) &&
+    mm >= 1 && mm <= 12 &&
+    dd >= 1 && dd <= 31 &&
+    hh >= 0 && hh <= 23 &&
+    min >= 0 && min <= 59;
+
+  let candidate = null;
+  if (basicRangeOk) {
+    const d = new Date(yyyy, mm - 1, dd, hh, min, 0, 0);
+    // new Date() "menormalkan" tanggal yang tidak valid (mis. 31 April
+    // jadi 1 Mei) alih-alih menolaknya — cek ulang komponennya supaya
+    // tanggal seperti itu tetap terdeteksi salah.
+    if (
+      d.getFullYear() === yyyy &&
+      d.getMonth() === mm - 1 &&
+      d.getDate() === dd &&
+      d.getHours() === hh &&
+      d.getMinutes() === min
+    ) {
+      candidate = d;
+    }
+  }
+
+  if (!candidate) {
+    setScheduleStatus("Format waktu yang disetel salah, gagal menerapkan jadwal", "error");
+    return;
+  }
+
+  const now = new Date();
+  if (candidate.getTime() <= now.getTime()) {
+    setScheduleStatus("Format waktu telah lampau, gagal menerapkan jadwal", "error");
+    return;
+  }
+
+  const maxDate = new Date(now);
+  maxDate.setFullYear(maxDate.getFullYear() + 10);
+  if (candidate.getTime() > maxDate.getTime()) {
+    setScheduleStatus("Format waktu melebihi 10 tahun, gagal menerapkan jadwal", "error");
+    return;
+  }
+
+  scheduledAt = candidate.toISOString();
+  forceCloseScheduleModal();
+  clearPublishFormMsg();
+  updateScheduleButtonState();
+  showToast("Berhasil menerapkan jadwal");
 });
 
 // =========================================================

@@ -277,6 +277,27 @@
           <button type="button" class="btn-cancel" id="btnPreviewForm">Preview</button>
           <button type="button" class="btn-cancel" id="btnSaveDraft">Simpan</button>
         </div>
+
+        <div class="publish-mode-section" id="publishModeSection">
+          <label class="publish-mode-option">
+            <input type="radio" name="publishMode" value="baru" checked>
+            <span>Publish sebagai postingan baru</span>
+          </label>
+          <label class="publish-mode-option hidden" id="publishModePrevWrap">
+            <input type="radio" name="publishMode" value="sebelumnya">
+            <span>Publish dengan waktu sebelumnya</span>
+          </label>
+          <label class="publish-mode-option">
+            <input type="radio" name="publishMode" value="terjadwal">
+            <span>Publish dengan waktu terjadwal</span>
+          </label>
+        </div>
+
+        <button type="button" class="btn-schedule-setup is-disabled" id="btnOpenSchedule">Atur postingan terjadwal</button>
+        <div class="schedule-applied-info" id="scheduleAppliedInfo"></div>
+
+        <p class="backup-status" id="publishFormMsg"></p>
+
         <button type="submit" class="btn-primary btn-publish" id="btnPublishForm">Publish</button>
       </form>
     </div>
@@ -805,6 +826,36 @@
     <div class="modal-actions">
       <button type="button" class="btn-cancel" id="btnCancelRename" style="flex:1;">Batal</button>
       <button type="button" class="btn-primary" id="btnConfirmRename" style="flex:1;">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: Atur Postingan Terjadwal ===== -->
+<div class="modal-backdrop" id="scheduleModalBackdrop">
+  <div class="modal-box schedule-modal-box">
+    <h3>Atur Postingan Terjadwal</h3>
+    <div class="schedule-input-card">
+      <div class="schedule-field-label">Tanggal (DD/MM/YYYY)</div>
+      <div class="schedule-input-row">
+        <input type="text" inputmode="numeric" maxlength="2" class="schedule-digit-box schedule-dd" id="scheduleDD" placeholder="00" autocomplete="off">
+        <span class="schedule-sep">/</span>
+        <input type="text" inputmode="numeric" maxlength="2" class="schedule-digit-box schedule-mm" id="scheduleMM" placeholder="00" autocomplete="off">
+        <span class="schedule-sep">/</span>
+        <input type="text" inputmode="numeric" maxlength="4" class="schedule-digit-box schedule-yyyy" id="scheduleYYYY" placeholder="0000" autocomplete="off">
+      </div>
+      <div class="schedule-field-label" style="margin-top:20px;">Waktu (HH/MM)</div>
+      <div class="schedule-input-row">
+        <input type="text" inputmode="numeric" maxlength="2" class="schedule-digit-box schedule-hh" id="scheduleHH" placeholder="00" autocomplete="off">
+        <span class="schedule-sep">:</span>
+        <input type="text" inputmode="numeric" maxlength="2" class="schedule-digit-box schedule-min" id="scheduleMin" placeholder="00" autocomplete="off">
+      </div>
+    </div>
+    <p class="schedule-hint"><strong>Format Tanggal Valid:</strong><br>01-31 / 01-12 / Maks 10 tahun</p>
+    <p class="schedule-hint"><strong>Format Waktu Valid:</strong><br>00-23 / 00-59</p>
+    <p class="backup-status" id="scheduleStatusMsg"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="btnCloseSchedule" style="flex:1;">Tutup</button>
+      <button type="button" class="btn-primary" id="btnApplySchedule" style="flex:1;">Terapkan</button>
     </div>
   </div>
 </div>

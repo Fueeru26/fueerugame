@@ -217,6 +217,7 @@ body.admin-body {
 }
 .admin-post-item .api-meta { font-size: .76rem; color: var(--ink-soft); margin-top: 2px; }
 .admin-post-item .api-meta .draft-label { color: var(--sky-700); font-weight: 800; }
+.admin-post-item .api-meta .scheduled-label { color: #e2933a; font-weight: 800; }
 .api-actions { display: flex; gap: 6px; flex: 0 0 auto; }
 .api-actions button {
   padding: 8px 12px;
@@ -455,6 +456,109 @@ body.admin-body {
   padding: 14px;
   font-size: 1rem;
 }
+
+/* ---------------- Opsi Publish (baru / sebelumnya / terjadwal) ---------------- */
+.publish-mode-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 20px;
+}
+.publish-mode-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 2px;
+  cursor: pointer;
+}
+.publish-mode-option.hidden { display: none; }
+.publish-mode-option input[type="radio"] {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--sky-500);
+  flex: 0 0 auto;
+}
+.publish-mode-option span {
+  font-size: .95rem;
+  font-weight: 800;
+  color: var(--sky-600);
+}
+
+.btn-schedule-setup {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--sky-200);
+  background: var(--sky-50);
+  color: var(--sky-600);
+  font-weight: 800;
+  text-align: center;
+}
+.btn-schedule-setup:hover { background: var(--sky-100); }
+.btn-schedule-setup.is-disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+.btn-schedule-setup.is-disabled:hover { background: var(--sky-50); }
+
+.schedule-applied-info {
+  display: none;
+  margin-top: 8px;
+  font-size: .82rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+#publishFormMsg { margin-top: 10px; text-align: center; }
+
+/* ---------------- Modal: Atur Postingan Terjadwal ---------------- */
+.schedule-input-card {
+  border: 1.5px solid var(--sky-200);
+  border-radius: var(--radius-sm);
+  padding: 20px 14px;
+  margin: 4px 0 16px;
+}
+.schedule-field-label {
+  font-weight: 800;
+  color: var(--sky-600);
+  font-size: .9rem;
+  margin-bottom: 10px;
+}
+.schedule-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.schedule-digit-box {
+  border: 2px solid var(--sky-300);
+  border-radius: 8px;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--ink);
+  padding: 10px 0;
+  background: var(--surface);
+  min-width: 0;
+}
+.schedule-digit-box:focus { border-color: var(--sky-500); }
+.schedule-dd, .schedule-mm, .schedule-hh, .schedule-min { width: 52px; flex: 0 0 auto; }
+.schedule-yyyy { width: 82px; flex: 0 0 auto; }
+.schedule-sep {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--sky-500);
+  flex: 0 0 auto;
+}
+.schedule-hint {
+  font-size: .82rem;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  margin: 0 0 10px;
+}
+.schedule-hint strong { color: var(--sky-700); }
 
 .toast {
   position: fixed;
