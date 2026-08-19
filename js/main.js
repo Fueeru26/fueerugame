@@ -200,6 +200,8 @@ function postRowHtml(p, opts) {
         <div class="meta-row">
           <span>${escapeHtml(formatDate(p.date))}</span>
           <span class="pill">${escapeHtml(p.jenis)}</span>
+          ${(p.platform || []).map((t) => `<span class="pill">${escapeHtml(t)}</span>`).join("")}
+          ${p.bahasa ? `<span class="pill">${escapeHtml(p.bahasa)}</span>` : ""}
         </div>
         ${showGenres && genres.length ? `<div class="genre-chip-row">${genres.map((g) => `<span class="genre-chip">${escapeHtml(g)}</span>`).join("")}</div>` : ""}
       </div>

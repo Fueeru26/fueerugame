@@ -4,7 +4,7 @@
 <script>(function(){try{var t=localStorage.getItem('fueeru_theme');if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jenis & Genre — Fueeru Game</title>
+<title>Kategori — Fueeru Game</title>
 
 <link rel="icon" type="image/png" href="../webpictures/logo.webp">
 <link rel="manifest" href="../manifest.json">
@@ -40,7 +40,7 @@
   </div>
   <ul class="sidebar-nav">
     <li><a href="list.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Daftar Game</a></li>
-    <li><a href="category.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Jenis &amp; Genre</a></li>
+    <li><a href="category.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Kategori</a></li>
     <li><a href="lapor.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L14.71 3.86a2 2 0 00-3.42 0z"/></svg>Lapor Masalah</a></li>
     <li><a href="tutorial.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>Tutorial Main</a></li>
     <li><a href="cara-download.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Cara Download</a></li>
@@ -92,17 +92,33 @@
 <script src="../js/main.js"></script>
 <script>
   const params = new URLSearchParams(window.location.search);
+  const platformParam = params.get("platform");
+  const bahasaParam = params.get("bahasa");
   const jenisParam = params.get("jenis");
   const genreParam = params.get("genre");
   const catContent = document.getElementById("catContent");
   const allPosts = getPublishedPosts();
 
   function renderOverview() {
-    document.title = "Jenis & Genre — Fueeru Game";
+    document.title = "Kategori — Fueeru Game";
     const genres = getAllGenres();
 
     catContent.innerHTML = `
-      <div class="section-head"><h2>Jenis</h2></div>
+      <div class="section-head"><h2>Platform</h2></div>
+      <div class="jenis-grid">
+        ${PLATFORM_TAGS.map((t) => `
+          <a class="category-card" href="category.html?platform=${encodeURIComponent(t)}">${escapeHtml(t)}</a>
+        `).join("")}
+      </div>
+
+      <div class="section-head" style="margin-top:36px;"><h2>Bahasa</h2></div>
+      <div class="jenis-grid">
+        ${BAHASA_LIST.map((b) => `
+          <a class="category-card" href="category.html?bahasa=${encodeURIComponent(b)}">${escapeHtml(b)}</a>
+        `).join("")}
+      </div>
+
+      <div class="section-head" style="margin-top:36px;"><h2>Jenis</h2></div>
       <div class="jenis-grid">
         ${JENIS_LIST.map((j) => `
           <a class="category-card" href="category.html?jenis=${encodeURIComponent(j)}">${escapeHtml(j)}</a>
@@ -144,7 +160,11 @@
     }
   }
 
-  if (jenisParam) {
+  if (platformParam) {
+    renderFilteredList("Platform: " + platformParam, (p) => (p.platform || []).some((t) => t.toLowerCase() === platformParam.toLowerCase()));
+  } else if (bahasaParam) {
+    renderFilteredList("Bahasa: " + bahasaParam, (p) => (p.bahasa || "").toLowerCase() === bahasaParam.toLowerCase());
+  } else if (jenisParam) {
     renderFilteredList("Jenis: " + jenisParam, (p) => (p.jenis || "").toLowerCase() === jenisParam.toLowerCase());
   } else if (genreParam) {
     renderFilteredList("Genre: " + genreParam, (p) => (p.genres || []).some((g) => g.toLowerCase() === genreParam.toLowerCase()));

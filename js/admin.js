@@ -546,12 +546,20 @@ function deletePost(id) {
 // =========================================================
 const fieldTitle = document.getElementById("fieldTitle");
 const fieldImage = document.getElementById("fieldImage");
+const fieldPlatform = document.getElementById("fieldPlatform");
+const fieldBahasa = document.getElementById("fieldBahasa");
 const fieldJenis = document.getElementById("fieldJenis");
 const editorContent = document.getElementById("editorContent");
 const uploadPreview = document.getElementById("uploadPreview");
 const uploadLabel = document.getElementById("uploadLabel");
 let currentThumbnailData = "";
 
+function populatePlatformSelect() {
+  fieldPlatform.innerHTML = PLATFORM_OPTIONS.map((o) => `<option value="${o}">${o}</option>`).join("");
+}
+function populateBahasaSelect() {
+  fieldBahasa.innerHTML = BAHASA_LIST.map((b) => `<option value="${b}">${b}</option>`).join("");
+}
 function populateJenisSelect() {
   fieldJenis.innerHTML = JENIS_LIST.map((j) => `<option value="${j}">${j}</option>`).join("");
 }
@@ -656,6 +664,10 @@ function resetForm() {
   uploadPreview.style.display = "none";
   uploadPreview.src = "";
   uploadLabel.textContent = "Klik untuk upload gambar header";
+  populatePlatformSelect();
+  fieldPlatform.value = PLATFORM_OPTIONS[0];
+  populateBahasaSelect();
+  fieldBahasa.value = BAHASA_LIST[0];
   populateJenisSelect();
   fieldJenis.value = JENIS_LIST[0];
   currentGenres = [];
@@ -688,6 +700,10 @@ function openEditForm(id) {
   editingId = id;
   document.getElementById("formHeading").textContent = "Edit Postingan";
   fieldTitle.value = post.title;
+  populatePlatformSelect();
+  fieldPlatform.value = platformTagsToOption(post.platform);
+  populateBahasaSelect();
+  fieldBahasa.value = post.bahasa || BAHASA_LIST[0];
   populateJenisSelect();
   fieldJenis.value = post.jenis;
   currentGenres = (post.genres || []).slice();
@@ -718,6 +734,8 @@ let formSnapshot = null;
 function getFormSnapshotData() {
   return {
     title: fieldTitle.value.trim(),
+    platform: fieldPlatform.value,
+    bahasa: fieldBahasa.value,
     jenis: fieldJenis.value,
     genres: currentGenres.slice(),
     content: editorContent.innerHTML.trim(),
@@ -1358,6 +1376,8 @@ previewModalBackdrop.addEventListener("click", function (e) {
 
 document.getElementById("btnPreviewForm").addEventListener("click", function () {
   const title = fieldTitle.value.trim() || "(Judul belum diisi)";
+  const platformTags = platformOptionToTags(fieldPlatform.value);
+  const bahasa = fieldBahasa.value;
   const jenis = fieldJenis.value;
   const genres = currentGenres.slice();
   const content = editorContent.innerHTML.trim() || "<p><em>(Isi postingan masih kosong)</em></p>";
@@ -1374,6 +1394,8 @@ document.getElementById("btnPreviewForm").addEventListener("click", function () 
     <div class="post-detail-meta">
       <span><strong>Tanggal:</strong> ${escapeHtmlAdmin(formatReportDate(new Date().toISOString()))}</span>
       <span class="pill">${escapeHtmlAdmin(jenis)}</span>
+      ${platformTags.map((t) => `<span class="pill">${escapeHtmlAdmin(t)}</span>`).join("")}
+      <span class="pill">${escapeHtmlAdmin(bahasa)}</span>
     </div>
     ${genres.length ? `<div class="genre-chip-row" style="margin-top:12px;">${genres.map((g) => `<span class="genre-chip">${escapeHtmlAdmin(g)}</span>`).join("")}</div>` : ""}
   `;
@@ -1394,6 +1416,8 @@ function readPostFormFields() {
   return {
     title,
     content: editorContent.innerHTML.trim(),
+    platform: platformOptionToTags(fieldPlatform.value),
+    bahasa: fieldBahasa.value,
     jenis: fieldJenis.value,
     genres: currentGenres.slice()
   };
@@ -1412,7 +1436,7 @@ function readPostFormFields() {
 function savePostForm(publish) {
   const fields = readPostFormFields();
   if (!fields) return "invalid";
-  const { title, content, jenis, genres } = fields;
+  const { title, content, platform, bahasa, jenis, genres } = fields;
   const posts = loadPosts();
   let newPostId = null;
 
@@ -1443,6 +1467,8 @@ function savePostForm(publish) {
       posts[idx] = {
         ...posts[idx],
         title,
+        platform,
+        bahasa,
         jenis,
         genres,
         content,
@@ -1457,6 +1483,8 @@ function savePostForm(publish) {
     const newPost = {
       id: "post-" + Date.now(),
       title,
+      platform,
+      bahasa,
       jenis,
       genres,
       date: dateToUse,
@@ -2515,13 +2543,13 @@ const backupStatusEl = document.getElementById("backupStatus");
 let pendingRestoreData = null; // array post hasil parsing file yang dipilih
 
 /** Tampilkan tanggal backup terakhir (Postingan & Halaman) di halaman
- * pemilihan Backup & Restore. */
-function renderBackupDatesInfo() {
-  const postsAt = getLastBackupAt("posts");
-  const pagesAt = getLastBackupAt("pages");
-  document.getElementById("lastBackupPostsDate").textContent = postsAt ? formatDate(postsAt) : "Belum Backup";
-  document.getElementById("lastBackupPagesDate").textContent = pagesAt ? formatDate(pagesAt) : "Belum Backup";
-}
+ * pemilihan Backup & Restore.
+ * Catatan: entri "Tanggal Terakhir Melakukan Backup" sudah dihapus dari
+ * tampilan (admin.html), jadi fungsi ini sengaja dikosongkan (bukan
+ * dihapus) supaya pemanggilnya di bawah tidak perlu diubah satu-satu.
+ * getLastBackupAt/setLastBackupAt & notifikasi pengingat backup mingguan
+ * TETAP jalan seperti biasa — hanya tampilan tanggalnya yang dihilangkan. */
+function renderBackupDatesInfo() {}
 
 function updateBackupPostCount() {
   const n = loadPosts().length;
@@ -3304,6 +3332,8 @@ window.addEventListener("appinstalled", function () {
 
 // ---------- Init ----------
 document.addEventListener("DOMContentLoaded", function () {
+  populatePlatformSelect();
+  populateBahasaSelect();
   populateJenisSelect();
   renderGenreChips();
   if (isLoggedIn()) {

@@ -652,7 +652,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 .game-index-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   padding: 13px 16px;
   border-bottom: 1px solid var(--card-border-color);
@@ -683,9 +683,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   font-weight: 600;
   font-size: .95rem;
   color: var(--ink);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: break-word;
+  line-height: 1.35;
+  padding-top: 3px;
 }
 .game-index-row:hover .gi-title { color: var(--sky-700); }
 

@@ -8,12 +8,41 @@
 const STORAGE_KEY = "fueeru_posts";
 const REPORTS_KEY = "fueeru_reports";
 const DATA_VERSION_KEY = "fueeru_data_version";
-const DATA_VERSION = "3"; // dinaikkan saat skema data (jenis/genres) berubah
+const DATA_VERSION = "4"; // dinaikkan saat skema data (jenis/genres/platform/bahasa) berubah
 
 /* Jenis game bersifat tetap (2 opsi). Genre bersifat dinamis —
    diturunkan otomatis dari genre yang dipakai postingan yang ada,
    sehingga genre yang tak lagi dipakai post manapun otomatis hilang. */
 const JENIS_LIST = ["RPGM", "VN"];
+
+/* Platform: opsi di form Admin Panel ada 3 (termasuk "Keduanya"), tapi
+   tag yang benar-benar tersimpan di postingan & dipakai untuk filter
+   Kategori cuma 2 ("Android"/"PC") — "Keduanya" berarti postingan
+   dapat kedua tag sekaligus. Lihat platformOptionToTags/platformTagsToOption. */
+const PLATFORM_OPTIONS = ["Android", "PC", "Keduanya"];
+const PLATFORM_TAGS = ["Android", "PC"];
+
+/* Bahasa bersifat tetap (2 opsi), cara kerjanya sama seperti Jenis Game
+   (1 postingan = 1 nilai). */
+const BAHASA_LIST = ["Bahasa Indonesia", "Indonesia & English"];
+
+/** Ubah pilihan Platform di form Admin ("Android"/"PC"/"Keduanya") jadi
+ * array tag platform yang disimpan di postingan. */
+function platformOptionToTags(option) {
+  if (option === "Keduanya") return PLATFORM_TAGS.slice();
+  return PLATFORM_TAGS.includes(option) ? [option] : [PLATFORM_TAGS[0]];
+}
+
+/** Kebalikan platformOptionToTags — dipakai saat membuka form Edit supaya
+ * dropdown Platform menampilkan pilihan yang sesuai dengan tag tersimpan. */
+function platformTagsToOption(tags) {
+  tags = tags || [];
+  const hasAndroid = tags.indexOf("Android") !== -1;
+  const hasPC = tags.indexOf("PC") !== -1;
+  if (hasAndroid && hasPC) return "Keduanya";
+  if (hasPC) return "PC";
+  return "Android";
+}
 
 const LOREM =
   "Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
@@ -25,11 +54,16 @@ function seedPost(n, jenis, genres, daysAgo) {
   const d = new Date("2026-08-10T00:00:00");
   d.setDate(d.getDate() - daysAgo);
   const num = String(n).padStart(3, "0");
+  // Variasi platform & bahasa untuk data contoh (supaya filter Kategori ada isinya).
+  const platform = n % 5 === 0 ? PLATFORM_TAGS.slice() : n % 2 === 0 ? ["PC"] : ["Android"];
+  const bahasa = n % 3 === 0 ? BAHASA_LIST[1] : BAHASA_LIST[0];
   return {
     id: "post-" + num,
     title: "Post" + num,
     jenis: jenis,
     genres: genres,
+    platform: platform,
+    bahasa: bahasa,
     date: d.toISOString().slice(0, 10),
     thumbnail: "webpictures/postplaceholder.webp",
     content: "<p>" + LOREM + "</p><p>" + LOREM2 + "</p>"
@@ -62,7 +96,8 @@ const DEFAULT_POSTS = [
 /** Pastikan data di localStorage sesuai skema versi terbaru.
  * Jika versi lama/tidak ada (misal dari sesi sebelum update ini),
  * data postingan lama akan direset ke placeholder baru supaya
- * tidak crash karena field jenis/genres belum ada. Laporan tetap disimpan. */
+ * tidak crash karena field jenis/genres/platform/bahasa belum ada.
+ * Laporan tetap disimpan. */
 function ensureDataVersion() {
   try {
     const v = localStorage.getItem(DATA_VERSION_KEY);
@@ -145,6 +180,16 @@ function getAllGenres() {
 /** Hitung jumlah post per genre. */
 function countPostsByGenre(genre) {
   return loadPosts().filter((p) => (p.genres || []).some((g) => g.toLowerCase() === genre.toLowerCase())).length;
+}
+
+/** Hitung jumlah post untuk 1 tag platform ("Android"/"PC"). */
+function countPostsByPlatform(tag) {
+  return loadPosts().filter((p) => (p.platform || []).indexOf(tag) !== -1).length;
+}
+
+/** Hitung jumlah post untuk 1 nilai bahasa. */
+function countPostsByBahasa(bahasa) {
+  return loadPosts().filter((p) => p.bahasa === bahasa).length;
 }
 
 /** Buat preview teks singkat dari HTML isi post. */
