@@ -7,10 +7,9 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
-/* Font custom (FredokaOne) — dipakai khusus untuk teks "Random Game",
-   "New Update Game", dan judul postingan (lihat #randomHeading,
-   #updateHeading, .prow-title, .gc-title, .post-detail-title di bawah).
-   Menu sidebar, isi postingan, dan Admin Panel TIDAK memakai font ini. */
+/* Font custom (FredokaOne) — tidak lagi dipakai di halaman publik (heading
+   & judul postingan sekarang memakai Poppins untuk tampilan lebih formal/
+   profesional), disisakan di sini kalau-kalau ingin dipakai lagi nanti. */
 @font-face {
   font-family: 'FueeruDisplay';
   src: url('../font/FredokaOne-Regular.otf') format('opentype'),
@@ -221,6 +220,17 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   margin-bottom: 12px;
   border-bottom: 1px solid rgba(255,255,255,0.18);
 }
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-width: 0;
+  color: #fff;
+  text-decoration: none;
+  transition: opacity .2s ease;
+}
+.sidebar-brand:hover, .sidebar-brand:active { opacity: .82; }
 .sidebar-head img {
   width: 52px;
   height: 52px;
@@ -228,16 +238,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   object-fit: cover;
   background: #ffffff;
   border: 2px solid rgba(255,255,255,0.6);
+  flex: 0 0 auto;
 }
 .sidebar-head .brand-name {
   font-family: 'Poppins', sans-serif;
   font-weight: 800;
   font-size: 1.15rem;
   letter-spacing: .3px;
-}
-.sidebar-head .brand-tag {
-  font-size: .72rem;
-  opacity: .75;
+  line-height: 1;
 }
 .sidebar-close {
   margin-left: auto;
@@ -414,7 +422,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .section-head {
   position: relative;
   text-align: center;
-  margin: 34px 0 22px;
+  margin: 22px 0 14px;
 }
 .section-head h2 {
   display: inline-block;
@@ -428,7 +436,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 #randomHeading,
 #updateHeading {
-  font-family: 'FueeruDisplay', 'Poppins', sans-serif;
+  font-family: 'Poppins', 'Inter', sans-serif;
+  letter-spacing: .1px;
 }
 .section-head::before {
   content: "";
@@ -445,24 +454,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   height: 34px;
   display: block;
   margin: 6px 0;
-}
-
-/* ---------------- Hero (index top) ---------------- */
-.hero-bubbles {
-  position: relative;
-  overflow: hidden;
-  padding-top: 6px;
-}
-.hero-bubbles .bubble {
-  position: absolute;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.9), rgba(143,214,251,0.35) 60%, rgba(143,214,251,0) 75%);
-  animation: floatY 7s ease-in-out infinite;
-  pointer-events: none;
-}
-@keyframes floatY {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-14px); }
 }
 
 /* ---------------- Random Game carousel ---------------- */
@@ -517,8 +508,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   min-height: 0;
 }
 .game-card .gc-title {
-  font-family: 'FueeruDisplay', 'Poppins', sans-serif;
-  font-weight: 700;
+  font-family: 'Poppins', 'Inter', sans-serif;
+  font-weight: 600;
   font-size: .8rem;
   line-height: 1.28;
   text-align: center;
@@ -582,8 +573,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 .post-row .prow-body { min-width: 0; flex: 1; }
 .post-row .prow-title {
-  font-family: 'FueeruDisplay', 'Poppins', sans-serif;
-  font-weight: 700;
+  font-family: 'Poppins', 'Inter', sans-serif;
+  font-weight: 600;
   font-size: 1.02rem;
   color: var(--sky-700);
   margin-bottom: 4px;
@@ -642,6 +633,61 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .pagination button:hover:not(:disabled) { background: var(--sky-100); }
 .pagination button.active { background: var(--sky-500); border-color: var(--sky-500); color: #fff; }
 .pagination button:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ---------------- Daftar Game (list.html) — daftar judul A-Z ---------------- */
+.index-meta {
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: .86rem;
+  margin: -6px 0 18px;
+}
+.game-index-list {
+  display: flex;
+  flex-direction: column;
+  border: 1.5px solid var(--card-border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+.game-index-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--card-border-color);
+  transition: background .18s ease, padding-left .18s ease;
+}
+.game-index-list a.game-index-row:last-child { border-bottom: none; }
+.game-index-row:hover, .game-index-row:active {
+  background: var(--sky-50);
+  padding-left: 20px;
+}
+.game-index-row .gi-letter {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sky-100);
+  color: var(--sky-700);
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: .8rem;
+}
+.game-index-row .gi-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 600;
+  font-size: .95rem;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.game-index-row:hover .gi-title { color: var(--sky-700); }
 
 /* ---------------- Footer ---------------- */
 .site-footer {
@@ -783,7 +829,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 
 /* ---------------- Post detail page ---------------- */
 .post-detail-title {
-  font-family: 'FueeruDisplay', 'Poppins', sans-serif;
+  font-family: 'Poppins', 'Inter', sans-serif;
   font-size: 1.6rem;
   font-weight: 800;
   color: var(--sky-700);

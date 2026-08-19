@@ -4,8 +4,8 @@
 <script>(function(){try{var t=localStorage.getItem('fueeru_theme');if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jenis & Genre — Fueeru Game</title>
-
+<title>Daftar Game — Fueeru Game</title>
+<meta name="description" content="Daftar lengkap semua game di Fueeru Game, diurut berdasarkan abjad A sampai Z.">
 <link rel="icon" type="image/png" href="../webpictures/logo.webp">
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#2fa8e0">
@@ -79,7 +79,11 @@
 </div>
 
 <main class="container">
-  <div id="catContent"></div>
+  <div class="section-head"><h2>Daftar Game</h2></div>
+  <p class="index-meta" id="indexMeta"></p>
+
+  <div class="game-index-list" id="gameIndexList"></div>
+  <div class="pagination" id="indexPagination"></div>
 </main>
 
 <footer class="site-footer">
@@ -91,66 +95,51 @@
 <script src="../js/data.js"></script>
 <script src="../js/main.js"></script>
 <script>
-  const params = new URLSearchParams(window.location.search);
-  const jenisParam = params.get("jenis");
-  const genreParam = params.get("genre");
-  const catContent = document.getElementById("catContent");
-  const allPosts = getPublishedPosts();
+  const PAGE_SIZE = 50;
+  let currentPage = 1;
 
-  function renderOverview() {
-    document.title = "Jenis & Genre — Fueeru Game";
-    const genres = getAllGenres();
+  // Semua postingan published, diurut alfabetis A-Z berdasarkan judul.
+  // Dibaca ulang dari getPublishedPosts() setiap kali halaman ini dibuka,
+  // jadi daftar otomatis mengikuti postingan terbaru dari Admin Panel.
+  const sortedPosts = getPublishedPosts().sort((a, b) =>
+    a.title.toLowerCase().localeCompare(b.title.toLowerCase())
+  );
 
-    catContent.innerHTML = `
-      <div class="section-head"><h2>Jenis</h2></div>
-      <div class="jenis-grid">
-        ${JENIS_LIST.map((j) => `
-          <a class="category-card" href="category.html?jenis=${encodeURIComponent(j)}">${escapeHtml(j)}</a>
-        `).join("")}
-      </div>
-
-      <div class="section-head" style="margin-top:36px;"><h2>Genre</h2></div>
-      <div class="genre-tag-list" id="genreTagList"></div>
-    `;
-
-    const genreListEl = document.getElementById("genreTagList");
-    if (genres.length === 0) {
-      genreListEl.innerHTML = `<p style="color:var(--ink-soft);font-size:.9rem;">Belum ada genre. Genre akan muncul otomatis begitu ada postingan yang memakainya.</p>`;
-    } else {
-      genreListEl.innerHTML = genres
-        .map((g) => `<a class="genre-tag" href="category.html?genre=${encodeURIComponent(g)}">${escapeHtml(g)} <span class="count">(${countPostsByGenre(g)})</span></a>`)
-        .join("");
-    }
+  function indexRowHtml(p) {
+    const letter = (p.title || "?").trim().charAt(0).toUpperCase() || "?";
+    return `
+      <a class="game-index-row" href="post.html?id=${encodeURIComponent(p.id)}">
+        <span class="gi-letter">${escapeHtml(letter)}</span>
+        <span class="gi-title">${escapeHtml(p.title)}</span>
+        <span class="pill">${escapeHtml(p.jenis)}</span>
+      </a>`;
   }
 
-  function renderFilteredList(heading, filterFn) {
-    document.title = heading + " — Fueeru Game";
-    const filtered = allPosts.filter(filterFn).sort((a, b) => new Date(b.date) - new Date(a.date));
+  function renderIndexPage(page) {
+    currentPage = page;
+    const total = sortedPosts.length;
+    const start = (page - 1) * PAGE_SIZE;
+    const pagePosts = sortedPosts.slice(start, start + PAGE_SIZE);
+    const listEl = document.getElementById("gameIndexList");
+    const metaEl = document.getElementById("indexMeta");
 
-    catContent.innerHTML = `
-      <div class="section-head"><h2>${escapeHtml(heading)}</h2></div>
-      <div class="post-list" id="catPostList"></div>`;
-
-    const listEl = document.getElementById("catPostList");
-    if (filtered.length === 0) {
+    if (total === 0) {
+      metaEl.textContent = "";
       listEl.innerHTML = `
         <div class="empty-state">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
           <h3>Belum ada postingan</h3>
-          <p>Belum ada game yang cocok. Coba pilihan lain.</p>
+          <p>Silakan tambahkan postingan lewat Admin Panel.</p>
         </div>`;
     } else {
-      listEl.innerHTML = filtered.map((p) => postRowHtml(p)).join("");
+      metaEl.textContent =
+        `Menampilkan ${start + 1}–${Math.min(start + PAGE_SIZE, total)} dari ${total} game`;
+      listEl.innerHTML = pagePosts.map(indexRowHtml).join("");
     }
+    renderPagination("indexPagination", total, PAGE_SIZE, currentPage, renderIndexPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
-
-  if (jenisParam) {
-    renderFilteredList("Jenis: " + jenisParam, (p) => (p.jenis || "").toLowerCase() === jenisParam.toLowerCase());
-  } else if (genreParam) {
-    renderFilteredList("Genre: " + genreParam, (p) => (p.genres || []).some((g) => g.toLowerCase() === genreParam.toLowerCase()));
-  } else {
-    renderOverview();
-  }
+  renderIndexPage(1);
 </script>
 
 </body>

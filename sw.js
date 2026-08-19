@@ -10,7 +10,7 @@
    belakang layar.
    ========================================================= */
 
-const CACHE_NAME = "fueeru-game-cache-v1";
+const CACHE_NAME = "fueeru-game-cache-v2";
 
 const PRECACHE_URLS = [
   "./",
@@ -28,7 +28,8 @@ const PRECACHE_URLS = [
   "web/donasi.html",
   "web/lapor.html",
   "web/search.html",
-  "web/tentang.html"
+  "web/tentang.html",
+  "web/list.html"
 ];
 
 self.addEventListener("install", (event) => {
