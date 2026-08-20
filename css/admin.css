@@ -95,7 +95,9 @@ body.admin-body {
   margin-bottom: 4px;
 }
 .admin-login-card p.sub { color: var(--ink-soft); font-size: .86rem; margin-bottom: 22px; }
-.admin-login-card input[type="password"] {
+.admin-login-card input[type="password"],
+.admin-login-card input[type="email"],
+.admin-login-card input[type="text"] {
   width: 100%;
   padding: 13px 16px;
   border-radius: var(--radius-sm);
@@ -105,7 +107,10 @@ body.admin-body {
   font-family: inherit;
   outline: none;
 }
-.admin-login-card input[type="password"]:focus { border-color: var(--sky-500); }
+.admin-login-card input[type="password"]:focus,
+.admin-login-card input[type="email"]:focus,
+.admin-login-card input[type="text"]:focus { border-color: var(--sky-500); }
+.admin-error.info { color: var(--sky-600); }
 .remember-me-label {
   display: flex;
   align-items: center;

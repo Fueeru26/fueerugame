@@ -138,16 +138,16 @@
       <p class="sub">Masukkan salah satu email admin yang terdaftar untuk menerima kode verifikasi.</p>
       <input type="email" id="otpEmailInput" placeholder="Email admin" autocomplete="off" required>
       <button type="button" id="btnRequestOtp" class="btn-primary" style="margin-top:12px;">Kirim Kode ke Email</button>
-      <div class="admin-error" id="otpRequestMsg"></div>
+      <div class="admin-error info" id="otpRequestMsg"></div>
     </div>
 
     <!-- Langkah 2: masukkan kode + password baru -->
     <form id="recoveryForm" class="hidden">
       <p class="sub">Masukkan kode yang dikirim ke email, dan kata sandi baru.</p>
       <input type="text" id="otpCodeInput" placeholder="Kode OTP (6 digit)" autocomplete="off" inputmode="numeric" maxlength="6" required>
-      <input type="password" id="newPasswordRecoveryInput" placeholder="Kata sandi baru" autocomplete="off" required style="margin-top:12px;">
-      <button type="submit" class="btn-primary" style="margin-top:16px;">Verifikasi dan Ubah Kata Sandi</button>
-      <div class="admin-error" id="recoveryError"></div>
+      <input type="password" id="newPasswordRecoveryInput" placeholder="Kata sandi baru" autocomplete="off" required>
+      <button type="submit" class="btn-primary" style="margin-top:4px;">Verifikasi dan Ubah Kata Sandi</button>
+      <div class="admin-error info" id="recoveryError"></div>
       <a href="#" id="btnResendOtp" class="forgot-password-link" style="display:block;text-align:center;margin-top:10px;">Kirim ulang kode</a>
     </form>
 
@@ -924,6 +924,17 @@
     <p class="modal-text">Kamu belum login, silahkan login terlebih dahulu</p>
     <div class="modal-actions">
       <button type="button" class="btn-primary" id="btnCloseLoginWarning" style="flex:1;">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: Notifikasi Lupa Kata Sandi (error / sukses) ===== -->
+<div class="modal-backdrop" id="otpNotifModalBackdrop">
+  <div class="modal-box">
+    <h3 id="otpNotifModalTitle">Error</h3>
+    <p class="modal-text" id="otpNotifModalMessage"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn-primary" id="btnCloseOtpNotif" style="flex:1;">Tutup</button>
     </div>
   </div>
 </div>

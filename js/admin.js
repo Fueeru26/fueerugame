@@ -63,6 +63,21 @@ document.getElementById("loginForm").addEventListener("submit", async function (
   }
 });
 
+// ---------- Modal: Notifikasi Lupa Kata Sandi (Error / Terkirim) ----------
+const otpNotifModalBackdrop = document.getElementById("otpNotifModalBackdrop");
+function openOtpNotif(title, message) {
+  document.getElementById("otpNotifModalTitle").textContent = title;
+  document.getElementById("otpNotifModalMessage").textContent = message;
+  otpNotifModalBackdrop.classList.add("show");
+}
+function closeOtpNotif() {
+  otpNotifModalBackdrop.classList.remove("show");
+}
+document.getElementById("btnCloseOtpNotif").addEventListener("click", closeOtpNotif);
+otpNotifModalBackdrop.addEventListener("click", function (e) {
+  if (e.target === otpNotifModalBackdrop) closeOtpNotif();
+});
+
 // ---------- Recovery Password (OTP via email) ----------
 document.getElementById("btnForgotPassword").addEventListener("click", function (e) {
   e.preventDefault();
@@ -84,18 +99,19 @@ document.getElementById("btnBackToLogin").addEventListener("click", function (e)
 async function sendOtp(msgEl) {
   const email = document.getElementById("otpEmailInput").value.trim();
   if (!email) {
-    msgEl.textContent = "Masukkan email admin terlebih dahulu.";
+    openOtpNotif("Error", "Masukkan email admin terlebih dahulu");
     return;
   }
-  msgEl.textContent = "Mengirim kode…";
+  msgEl.textContent = "Mengirim…";
   try {
     await requestPasswordResetOtp(email);
     msgEl.textContent = "";
     document.getElementById("otpStep1").classList.add("hidden");
     document.getElementById("recoveryForm").classList.remove("hidden");
-    document.getElementById("recoveryError").textContent = "Kode terkirim ke " + email + ". Cek inbox (atau folder spam).";
+    openOtpNotif("Terkirim", "Kode terkirim ke " + email + ". Cek inbox (atau folder spam).");
   } catch (e) {
-    msgEl.textContent = e.message || "Gagal mengirim kode. Coba lagi.";
+    msgEl.textContent = "";
+    openOtpNotif("Error", e.message || "Gagal mengirim kode. Coba lagi.");
   }
 }
 
@@ -114,7 +130,7 @@ document.getElementById("recoveryForm").addEventListener("submit", async functio
   const errorEl = document.getElementById("recoveryError");
 
   if (newVal.trim().length < 4) {
-    errorEl.textContent = "Kata sandi baru minimal 4 karakter.";
+    openOtpNotif("Error", "Kata sandi baru minimal 4 karakter.");
     return;
   }
   errorEl.textContent = "Memproses…";
@@ -126,7 +142,8 @@ document.getElementById("recoveryForm").addEventListener("submit", async functio
     doLogin();
     showToast("Kata sandi berhasil diubah");
   } catch (e) {
-    errorEl.textContent = e.message || "Kode OTP salah atau sudah kedaluwarsa.";
+    errorEl.textContent = "";
+    openOtpNotif("Error", e.message || "Kode OTP salah atau sudah kedaluwarsa.");
   }
 });
 
