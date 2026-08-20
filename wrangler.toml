@@ -1,0 +1,13 @@
+name = "fueerugame"
+main = "worker/index.js"
+compatibility_date = "2026-08-20"
+
+[assets]
+directory = "."
+binding = "ASSETS"
+not_found_handling = "404-page"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "fueeru-db"
+database_id = "d0bce375-7d6f-4623-94e5-8bfe05fc752f"

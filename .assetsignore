@@ -1,0 +1,7 @@
+schema/
+worker/
+functions/
+wrangler.toml
+.assetsignore
+.git/
+.gitattributes
