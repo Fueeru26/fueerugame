@@ -104,7 +104,38 @@ function confirmLogout() {
     { title: "Keluar dari Admin Panel", confirmLabel: "Ya, Keluar" }
   );
 }
-document.getElementById("btnLogout").addEventListener("click", confirmLogout);
+/** Pesan yang tampil saat mengklik navigasi bar kiri (tampilan desktop)
+ * padahal belum login. */
+function requireLoginAlert() {
+  alert("Kamu belum login, silahkan login terlebih dahulu");
+}
+
+document.getElementById("btnLogout").addEventListener("click", function () {
+  if (!isLoggedIn()) {
+    requireLoginAlert();
+    return;
+  }
+  confirmLogout();
+});
+
+// ---------- Navigasi bar kiri (tampilan desktop) ----------
+// Item menu di sidebar kiri hanya aktif kalau sudah login; kalau belum,
+// tampilkan pesan peringatan. "Tambah ke Layar Utama" & "Kembali ke
+// Website" tetap bisa dipakai kapan saja.
+document.querySelectorAll("#adminSidebarDesktop .admin-menu-card").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    if (!isLoggedIn()) {
+      requireLoginAlert();
+      return;
+    }
+    const target = document.getElementById(btn.getAttribute("data-target"));
+    if (target) target.click();
+  });
+});
+document.getElementById("sidebarInstallPWA").addEventListener("click", function () {
+  const original = document.getElementById("btnInstallAdminPWA");
+  if (original) original.click();
+});
 
 // ---------- Sub-view switching within adminShell ----------
 const SUB_VIEWS = [

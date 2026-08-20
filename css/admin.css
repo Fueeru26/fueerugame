@@ -1666,3 +1666,72 @@ body.admin-body {
   margin: 12px 0;
 }
 .editor-content .label-box { background: var(--sky-50); }
+
+/* =========================================================
+   Tampilan Desktop — navigasi bar kiri
+   ========================================================= */
+.admin-sidebar-desktop { display: none; }
+.admin-menu-welcome-desktop { display: none; }
+
+@media (min-width: 980px) {
+  .admin-topbar { padding: 18px 28px; }
+
+  .admin-desktop-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 28px 60px;
+  }
+
+  .admin-sidebar-desktop {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 300px;
+    flex: 0 0 300px;
+    margin-right: 34px;
+  }
+  .admin-sidebar-desktop .admin-menu-card { width: 100%; }
+  .admin-sidebar-desktop .btn-back-to-site { margin-top: 0; }
+
+  .admin-content-col {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .admin-content-col .admin-login-wrap {
+    min-height: 60vh;
+    padding: 20px 0;
+  }
+  .admin-content-col .admin-wrap {
+    max-width: 640px;
+    margin: 0;
+    padding: 6px 0 50px;
+  }
+
+  /* Menu utama: sidebar kiri sudah jadi navigasi, jadi tampilkan pesan
+     sambutan saja dan sembunyikan grid menu mobile. */
+  .admin-menu-mobile-only { display: none; }
+  .admin-menu-welcome-desktop {
+    display: block;
+    text-align: center;
+    padding: 50px 20px;
+  }
+  .admin-menu-welcome-desktop img {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    box-shadow: var(--shadow-card);
+  }
+  .admin-menu-welcome-desktop h1 {
+    font-size: 1.3rem;
+    color: var(--sky-700);
+    margin-bottom: 8px;
+  }
+  .admin-menu-welcome-desktop .sub {
+    color: var(--ink-soft);
+    font-size: .92rem;
+  }
+}

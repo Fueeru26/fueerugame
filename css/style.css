@@ -1081,3 +1081,228 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   .category-grid { grid-template-columns: repeat(4, 1fr); }
   .brand-link img { height: 78px; }
 }
+
+/* =========================================================
+   Tampilan Desktop
+   ========================================================= */
+
+/* ---------------- Navbar: toggle mode & search (desktop) ---------------- */
+.navbar-theme-toggle {
+  display: none;
+  align-items: center;
+  gap: 3px;
+  background: var(--sky-100);
+  border-radius: 999px;
+  padding: 4px;
+  flex: 0 0 auto;
+}
+.navbar-theme-toggle .theme-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--sky-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .2s ease, color .2s ease;
+}
+.navbar-theme-toggle .theme-btn svg { width: 18px; height: 18px; }
+.navbar-theme-toggle .theme-btn.active[data-theme="light"] { background: var(--amber); color: #3a2400; }
+.navbar-theme-toggle .theme-btn.active[data-theme="dark"] { background: var(--navy-900); color: #fff; }
+
+.navbar-search {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  background: var(--sky-50);
+  border: 1.5px solid var(--sky-200);
+  border-radius: 999px;
+  padding: 5px 5px 5px 18px;
+  flex: 0 1 380px;
+  min-width: 0;
+}
+.navbar-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: .95rem;
+  font-family: inherit;
+  color: var(--ink);
+  padding: 8px 0;
+}
+.navbar-search input::placeholder { color: #9db6cb; }
+
+/* ---------------- Menu bar kedua (navigasi horizontal desktop) ---------------- */
+.menubar {
+  display: none;
+  border-bottom: 1px solid var(--sky-150);
+  background: var(--surface-alt);
+}
+.menubar-inner {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  padding: 12px 18px;
+  flex-wrap: wrap;
+}
+.menubar-inner a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 700;
+  font-size: .92rem;
+  color: var(--sky-700);
+  white-space: nowrap;
+  transition: color .2s ease;
+}
+.menubar-inner a svg { width: 17px; height: 17px; opacity: .9; }
+.menubar-inner a:hover, .menubar-inner a.active { color: var(--sky-500); }
+
+/* ---------------- Footer: tombol Tambah ke Layar Utama ---------------- */
+.install-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.btn-install-footer {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 999px;
+  border: 1.5px solid var(--sky-300);
+  background: var(--surface);
+  color: var(--sky-700);
+  font-weight: 700;
+  font-size: .92rem;
+  transition: background .2s ease, transform .2s ease;
+}
+.btn-install-footer:hover { background: var(--sky-100); transform: translateY(-2px); }
+.btn-install-footer svg { width: 18px; height: 18px; }
+
+/* ---------------- Layout dua kolom + navigasi bar kanan ---------------- */
+.layout-with-aside { display: block; }
+.main-col { min-width: 0; }
+.right-aside { display: none; }
+.aside-block { margin-bottom: 28px; }
+.aside-title {
+  font-family: 'Poppins', 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--sky-700);
+  margin: 0 0 12px;
+}
+.aside-populer { display: flex; flex-direction: column; gap: 8px; }
+.aside-populer-item {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  transition: background .2s ease;
+}
+.aside-populer-item:hover { background: var(--sky-50); }
+.aside-populer-item .thumb {
+  width: 62px;
+  height: 62px;
+  flex: 0 0 auto;
+  border-radius: 10px;
+  object-fit: cover;
+  background: var(--sky-100);
+  border: 1px solid var(--card-border-color);
+}
+.aside-populer-item .ap-body { min-width: 0; }
+.aside-populer-item .ap-title {
+  font-weight: 700;
+  font-size: .85rem;
+  color: var(--ink);
+  line-height: 1.3;
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.aside-populer-item .ap-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: .72rem;
+  color: var(--ink-soft);
+}
+.aside-populer-item .ap-meta .pill { padding: 2px 8px; font-size: .68rem; }
+
+.aside-kategori { display: flex; flex-direction: column; gap: 8px; }
+.aside-kategori a {
+  display: block;
+  text-align: center;
+  padding: 11px 14px;
+  border-radius: 999px;
+  background: var(--sky-100);
+  color: var(--sky-700);
+  font-weight: 700;
+  font-size: .86rem;
+  transition: background .2s ease;
+}
+.aside-kategori a:hover { background: var(--sky-200); }
+
+.aside-genre {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.aside-genre a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 9px 8px;
+  border-radius: 999px;
+  background: var(--sky-100);
+  color: var(--sky-700);
+  font-weight: 700;
+  font-size: .8rem;
+  text-align: center;
+}
+.aside-genre a:hover { background: var(--sky-200); }
+.aside-genre a .count { color: var(--sky-500); font-weight: 600; }
+
+/* ---------------- Recent Update: grid 3 kolom x 5 baris (index) ---------------- */
+.post-grid .post-row { transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease; }
+
+@media (min-width: 980px) {
+  #btnOpenSidebar, #btnOpenSearch { display: none; }
+  .navbar-theme-toggle { display: flex; }
+  .navbar-search { display: flex; }
+  .navbar { padding: 12px 24px; }
+  .menubar { display: block; }
+
+  .layout-with-aside {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 34px;
+    align-items: start;
+  }
+  .right-aside { display: flex; flex-direction: column; }
+
+  .post-list.post-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+  .post-grid .post-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .post-grid .post-row:hover, .post-grid .post-row:active { transform: translateY(-5px); }
+  .post-grid .post-row .thumb {
+    width: 100%;
+    height: 152px;
+  }
+  .post-grid .post-row .prow-body { width: 100%; }
+}

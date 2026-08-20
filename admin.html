@@ -14,6 +14,100 @@
 </head>
 <body class="admin-body">
 
+<!-- ===== Topbar: selalu tampil, baik sebelum maupun sesudah login ===== -->
+<div class="admin-topbar">
+  <div class="brand-mini"><img src="webpictures/logo.webp" alt="">Fueeru Game</div>
+  <div class="admin-topbar-actions">
+    <button class="admin-notif-btn" id="btnNotifications" aria-label="Notifikasi">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      <span class="notif-badge hidden" id="notifBadge"></span>
+    </button>
+    <button class="admin-logout" id="btnLogout">Keluar</button>
+  </div>
+</div>
+
+<!-- ===== Layout desktop: navigasi bar kiri + konten kanan =====
+     Di tampilan mobile, sidebar ini disembunyikan (menu tetap berupa
+     grid kartu di dalam viewMenu seperti sebelumnya). -->
+<div class="admin-desktop-layout">
+
+  <!-- ===== Navigasi bar kiri (tampilan desktop) ===== -->
+  <nav class="admin-sidebar-desktop" id="adminSidebarDesktop">
+    <button type="button" class="admin-menu-card" data-target="menuAturPostingan">
+      <span class="amc-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4z"/></svg>
+      </span>
+      <span>
+        <div class="amc-title">Postingan</div>
+        <div class="amc-sub">Tambah, edit, dan hapus postingan game</div>
+      </span>
+    </button>
+    <button type="button" class="admin-menu-card" data-target="menuHalaman">
+      <span class="amc-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+      </span>
+      <span>
+        <div class="amc-title">Halaman</div>
+        <div class="amc-sub">Edit isi Tutorial Main, Cara Download, Donasi &amp; Tentang</div>
+      </span>
+    </button>
+    <button type="button" class="admin-menu-card" data-target="menuLihatLaporan">
+      <span class="amc-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L14.71 3.86a2 2 0 00-3.42 0z"/></svg>
+      </span>
+      <span>
+        <div class="amc-title">Lihat Laporan</div>
+        <div class="amc-sub">Laporan yang masuk dari pengguna</div>
+      </span>
+    </button>
+    <button type="button" class="admin-menu-card" data-target="menuInformasiWeb">
+      <span class="amc-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      </span>
+      <span>
+        <div class="amc-title">Informasi Web</div>
+        <div class="amc-sub">Statistik pengunjung, postingan, &amp; kata sandi admin</div>
+      </span>
+    </button>
+    <button type="button" class="admin-menu-card" data-target="menuManajemenFile">
+      <span class="amc-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+      </span>
+      <span>
+        <div class="amc-title">Manajemen File</div>
+        <div class="amc-sub">Lihat &amp; kelola folder / file website</div>
+      </span>
+    </button>
+    <button type="button" class="admin-menu-card" data-target="menuRecycleBin">
+      <span class="amc-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+      </span>
+      <span>
+        <div class="amc-title">Recycle Bin</div>
+        <div class="amc-sub">Postingan &amp; laporan yang dihapus (30 hari)</div>
+      </span>
+    </button>
+    <button type="button" class="admin-menu-card" data-target="menuBackupRestore">
+      <span class="amc-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8H3v13h18V8z"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+      </span>
+      <span>
+        <div class="amc-title">Backup &amp; Restore</div>
+        <div class="amc-sub">Unduh cadangan &amp; pulihkan data postingan/halaman</div>
+      </span>
+    </button>
+    <button type="button" id="sidebarInstallPWA" class="btn-back-to-site">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="9.5" y1="10.5" x2="14.5" y2="10.5"/><line x1="12" y1="8" x2="12" y2="13"/></svg>
+      Tambah ke Layar Utama
+    </button>
+    <a href="index.html" class="btn-back-to-site">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+      Kembali ke Website
+    </a>
+  </nav>
+
+  <div class="admin-content-col">
+
 <!-- ===== VIEW: Login gate ===== -->
 <section id="viewLogin" class="admin-login-wrap">
   <div class="admin-login-card">
@@ -51,21 +145,21 @@
 
 <!-- ===== Admin shell (setelah login) ===== -->
 <div id="adminShell" class="hidden">
-  <div class="admin-topbar">
-    <div class="brand-mini"><img src="webpictures/logo.webp" alt="">Fueeru Game</div>
-    <div class="admin-topbar-actions">
-      <button class="admin-notif-btn" id="btnNotifications" aria-label="Notifikasi">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-        <span class="notif-badge hidden" id="notifBadge"></span>
-      </button>
-      <button class="admin-logout" id="btnLogout">Keluar</button>
-    </div>
-  </div>
 
   <div class="admin-wrap">
 
     <!-- ===== VIEW: Menu utama ===== -->
     <div id="viewMenu" class="admin-panel-card">
+      <!-- Tampilan desktop: menu sudah ada di navigasi bar kiri, jadi
+           di sini cukup pesan sambutan (lihat referensi desain). -->
+      <div class="admin-menu-welcome-desktop">
+        <img src="webpictures/logo.webp" alt="Logo Fueeru Game">
+        <h1>Admin Panel</h1>
+        <p class="sub">Kamu sudah login, silahkan pilih Menu navigasi bar di kiri</p>
+      </div>
+
+      <!-- Tampilan mobile: grid menu seperti biasa -->
+      <div class="admin-menu-mobile-only">
       <h1>Admin Panel</h1>
       <div class="admin-menu-grid">
         <button type="button" class="admin-menu-card" id="menuAturPostingan">
@@ -140,6 +234,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
         Kembali ke Website
       </a>
+      </div><!-- /.admin-menu-mobile-only -->
     </div>
 
     <!-- ===== VIEW: Atur Postingan (list) ===== -->
@@ -712,6 +807,9 @@
 
   </div>
 </div>
+
+  </div><!-- /.admin-content-col -->
+</div><!-- /.admin-desktop-layout -->
 
 <!-- ===== Modal: Notifikasi ===== -->
 <div class="modal-backdrop" id="notifModalBackdrop">

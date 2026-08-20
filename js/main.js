@@ -72,13 +72,26 @@ function initChrome() {
   if (closeBtn) closeBtn.addEventListener("click", closeSidebar);
   if (overlay) overlay.addEventListener("click", closeSidebar);
 
-  // ---------------- Search overlay ----------------
+  // ---------------- Search overlay (mobile) ----------------
   const searchPanel = document.getElementById("searchPanel");
   const searchBackdrop = document.getElementById("searchBackdrop");
   const openSearchBtn = document.getElementById("btnOpenSearch");
   const closeSearchBtn = document.getElementById("btnCloseSearch");
   const searchForm = document.getElementById("searchForm");
   const searchInput = document.getElementById("searchInput");
+
+  // ---------------- Search bar (navbar desktop) ----------------
+  // Kotak pencarian yang selalu terlihat di navbar tampilan desktop
+  // (tidak lewat overlay seperti di mobile).
+  const searchFormTop = document.getElementById("searchFormTop");
+  if (searchFormTop) {
+    searchFormTop.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const input = document.getElementById("searchInputTop");
+      const q = ((input && input.value) || "").trim();
+      window.location.href = siteBase() + "search.html" + (q ? "?q=" + encodeURIComponent(q) : "");
+    });
+  }
 
   function isSearchOpen() {
     return searchPanel && searchPanel.classList.contains("open");
@@ -120,9 +133,9 @@ function initChrome() {
     }
   });
 
-  // Mark active nav link
+  // Mark active nav link (sidebar mobile + menubar desktop)
   const current = window.location.pathname.split("/").pop() || "index.html";
-  document.querySelectorAll(".sidebar-nav a").forEach((a) => {
+  document.querySelectorAll(".sidebar-nav a, .menubar-inner a").forEach((a) => {
     const href = a.getAttribute("href");
     if (href === current) a.classList.add("active");
   });
@@ -264,12 +277,13 @@ function initPWAInstallMenu() {
   if (!btn) return;
 
   // Kalau situs sedang dibuka dalam mode "sudah terinstall" (standalone),
-  // menu ini tidak relevan lagi -> sembunyikan.
+  // tombol ini tidak relevan lagi -> sembunyikan.
   const isStandalone =
     window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
   if (isStandalone) {
-    const li = btn.closest("li");
-    if (li) li.style.display = "none";
+    const wrap = btn.closest(".install-wrap") || btn.closest("li");
+    if (wrap) wrap.style.display = "none";
+    else btn.style.display = "none";
     return;
   }
 
@@ -293,6 +307,59 @@ function initPWAInstallMenu() {
   });
 }
 
+/* ---------------- Navigasi bar kanan (tampilan desktop) ----------------
+   Dipakai di semua halaman publik kecuali index & 404: berisi widget
+   "Game Populer" (5 postingan), "Kategori" (platform/bahasa/jenis), dan
+   "Rekomendasi Genre" (10 genre terbanyak, grid 2 kolom). */
+function renderRightAside() {
+  const aside = document.getElementById("rightAside");
+  if (!aside) return;
+
+  const populerEl = document.getElementById("asidePopuler");
+  if (populerEl) {
+    const populer = getPopularPosts(5);
+    populerEl.innerHTML = populer.length
+      ? populer
+          .map(
+            (p) => `
+        <a class="aside-populer-item" href="${siteBase()}post.html?id=${encodeURIComponent(p.id)}">
+          <img class="thumb" src="${resolveAsset(p.thumbnail)}" alt="Thumbnail ${escapeHtml(p.title)}" loading="lazy" ${thumbFallbackAttr()}>
+          <div class="ap-body">
+            <div class="ap-title">${escapeHtml(p.title)}</div>
+            <div class="ap-meta"><span>${escapeHtml(formatDate(p.date))}</span><span class="pill">${escapeHtml(p.jenis)}</span></div>
+          </div>
+        </a>`
+          )
+          .join("")
+      : `<p style="color:var(--ink-soft);font-size:.85rem;">Belum ada postingan.</p>`;
+  }
+
+  const kategoriEl = document.getElementById("asideKategori");
+  if (kategoriEl) {
+    const tags = [
+      ...PLATFORM_TAGS.map((t) => ({ label: t, href: "category.html?platform=" + encodeURIComponent(t) })),
+      ...BAHASA_LIST.map((b) => ({ label: b, href: "category.html?bahasa=" + encodeURIComponent(b) })),
+      ...JENIS_LIST.map((j) => ({ label: j, href: "category.html?jenis=" + encodeURIComponent(j) })),
+    ];
+    kategoriEl.innerHTML = tags
+      .map((t) => `<a href="${siteBase()}${t.href}">${escapeHtml(t.label)}</a>`)
+      .join("");
+  }
+
+  const genreEl = document.getElementById("asideGenre");
+  if (genreEl) {
+    const genres = getTopGenres(10);
+    genreEl.innerHTML = genres.length
+      ? genres
+          .map(
+            (g) =>
+              `<a href="${siteBase()}category.html?genre=${encodeURIComponent(g.genre)}">${escapeHtml(g.genre)} <span class="count">(${g.count})</span></a>`
+          )
+          .join("")
+      : `<p style="color:var(--ink-soft);font-size:.85rem;grid-column:1/-1;">Belum ada genre.</p>`;
+  }
+}
+
 /* ---------------- PWA: registrasi Service Worker ----------------
    Meng-cache aset statis supaya situs lebih cepat dibuka kedua kali
    dan tetap bisa diakses (versi cache) walau sedang offline. */
@@ -310,3 +377,4 @@ registerServiceWorker();
 
 document.addEventListener("DOMContentLoaded", initChrome);
 document.addEventListener("DOMContentLoaded", initPWAInstallMenu);
+document.addEventListener("DOMContentLoaded", renderRightAside);

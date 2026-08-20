@@ -182,6 +182,34 @@ function countPostsByGenre(genre) {
   return loadPosts().filter((p) => (p.genres || []).some((g) => g.toLowerCase() === genre.toLowerCase())).length;
 }
 
+/** Postingan paling populer berdasarkan jumlah views (dipakai di sidebar
+ * "Game Populer" tampilan desktop). Kalau belum ada data views sama sekali,
+ * otomatis jatuh ke urutan terbaru dulu supaya sidebar tidak kosong. */
+function getPopularPosts(max) {
+  const posts = getPublishedPosts();
+  const withViews = posts.map((p) => ({
+    post: p,
+    views: typeof getViewsForPost === "function" ? getViewsForPost(p.id) : 0,
+  }));
+  withViews.sort((a, b) => b.views - a.views || new Date(b.post.date) - new Date(a.post.date));
+  return withViews.slice(0, max || 5).map((x) => x.post);
+}
+
+/** Genre acak (dipakai di sidebar "Rekomendasi Genre" tampilan desktop),
+ * maksimal `max` genre. Diacak ulang tiap kali dipanggil (mis. tiap
+ * refresh halaman) supaya tidak menampilkan genre yang itu-itu saja
+ * kalau total genre sudah lebih dari `max`. */
+function getTopGenres(max) {
+  const genres = getAllGenres();
+  const withCount = genres.map((g) => ({ genre: g, count: countPostsByGenre(g) }));
+  // Fisher-Yates shuffle
+  for (let i = withCount.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [withCount[i], withCount[j]] = [withCount[j], withCount[i]];
+  }
+  return withCount.slice(0, max || 10);
+}
+
 /** Hitung jumlah post untuk 1 tag platform ("Android"/"PC"). */
 function countPostsByPlatform(tag) {
   return loadPosts().filter((p) => (p.platform || []).indexOf(tag) !== -1).length;
