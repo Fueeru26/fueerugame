@@ -145,13 +145,14 @@
 <script src="../js/data.js"></script>
 <script src="../js/main.js"></script>
 <script>
+(async function () {
   const PAGE_SIZE = 50;
   let currentPage = 1;
 
   // Semua postingan published, diurut alfabetis A-Z berdasarkan judul.
   // Dibaca ulang dari getPublishedPosts() setiap kali halaman ini dibuka,
   // jadi daftar otomatis mengikuti postingan terbaru dari Admin Panel.
-  const sortedPosts = getPublishedPosts().sort((a, b) =>
+  const sortedPosts = (await getPublishedPosts()).sort((a, b) =>
     a.title.toLowerCase().localeCompare(b.title.toLowerCase())
   );
 
@@ -189,6 +190,7 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
   renderIndexPage(1);
+})();
 </script>
 
 </body>

@@ -212,7 +212,7 @@
   }
   refreshRateLimitState();
 
-  document.getElementById("laporForm").addEventListener("submit", function (e) {
+  document.getElementById("laporForm").addEventListener("submit", async function (e) {
     e.preventDefault();
     const judul = document.getElementById("fieldJudul").value.trim();
     const nama = document.getElementById("fieldNama").value.trim();
@@ -234,14 +234,19 @@
       return;
     }
 
-    addReport(judul, nama, isi, attachmentData, media);
-    recordReportSubmission();
-
-    alertSuccess.classList.add("show");
-    alertSuccess.scrollIntoView({ behavior: "smooth", block: "center" });
-    document.getElementById("laporForm").reset();
-    fileNameTag.textContent = "";
-    attachmentData = null;
+    if (submitBtn) submitBtn.disabled = true;
+    try {
+      await addReport(judul, nama, isi, attachmentData, media);
+      recordReportSubmission();
+      alertSuccess.classList.add("show");
+      alertSuccess.scrollIntoView({ behavior: "smooth", block: "center" });
+      document.getElementById("laporForm").reset();
+      fileNameTag.textContent = "";
+      attachmentData = null;
+    } catch (err) {
+      alertError.classList.add("show");
+      alertError.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
     refreshRateLimitState();
   });
 </script>

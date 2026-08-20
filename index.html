@@ -141,10 +141,11 @@
 <script src="js/data.js?v=20260821"></script>
 <script src="js/main.js?v=20260821"></script>
 <script>
+(async function () {
   const PAGE_SIZE = 15; // 5 baris x 3 kolom di tampilan desktop
   let currentPage = 1;
 
-  const allPosts = getPublishedPosts();
+  const allPosts = await getPublishedPosts();
 
   // Random Game: sampai 10 post acak
   const randomPosts = shuffleArray(allPosts).slice(0, 10);
@@ -167,6 +168,7 @@
     renderPagination("updatePagination", sortedPosts.length, PAGE_SIZE, currentPage, renderUpdatePage);
   }
   renderUpdatePage(1);
+})();
 </script>
 
 </body>

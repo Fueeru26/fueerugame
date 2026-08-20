@@ -151,6 +151,7 @@
 <script src="../js/data.js"></script>
 <script src="../js/main.js"></script>
 <script>
+(async function () {
   const params = new URLSearchParams(window.location.search);
   const q = (params.get("q") || "").trim();
   document.getElementById("pageSearchInput").value = q;
@@ -162,7 +163,7 @@
     window.location.href = "search.html" + (val ? "?q=" + encodeURIComponent(val) : "");
   });
 
-  const allPosts = getPublishedPosts();
+  const allPosts = await getPublishedPosts();
   const resultList = document.getElementById("resultList");
   const heading = document.getElementById("searchHeading");
 
@@ -192,6 +193,7 @@
       resultList.innerHTML = results.map((p) => postRowHtml(p)).join("");
     }
   }
+})();
 </script>
 
 </body>

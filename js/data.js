@@ -1,40 +1,27 @@
 /* =========================================================
-   Fueeru Game — Data Layer
-   Posts disimpan di localStorage (key: fueeru_posts).
-   Laporan (dari page Laporkan) disimpan di localStorage (key: fueeru_reports).
-   Tidak ada backend/server — semuanya berjalan di sisi browser.
+   Fueeru Game — Data Layer (versi server)
+   Postingan, Halaman statis, Laporan, Recycle Bin, dan Password Admin
+   sekarang disimpan di Cloudflare D1 lewat API (/api/...), BUKAN lagi
+   localStorage — jadi semua perubahan langsung terlihat di semua
+   device/browser/pengunjung.
+
+   Statistik kunjungan (views) dan Notifikasi Admin Panel TETAP di
+   localStorage (murni informasi lokal per-device, tidak krusial untuk
+   ditampilkan ke publik).
    ========================================================= */
 
-const STORAGE_KEY = "fueeru_posts";
-const REPORTS_KEY = "fueeru_reports";
-const DATA_VERSION_KEY = "fueeru_data_version";
-const DATA_VERSION = "4"; // dinaikkan saat skema data (jenis/genres/platform/bahasa) berubah
+const ADMIN_PW_SESSION_KEY = "fueeru_admin_session_password";
 
-/* Jenis game bersifat tetap (2 opsi). Genre bersifat dinamis —
-   diturunkan otomatis dari genre yang dipakai postingan yang ada,
-   sehingga genre yang tak lagi dipakai post manapun otomatis hilang. */
+/* Jenis game bersifat tetap (2 opsi). */
 const JENIS_LIST = ["RPGM", "VN"];
-
-/* Platform: opsi di form Admin Panel ada 3 (termasuk "Keduanya"), tapi
-   tag yang benar-benar tersimpan di postingan & dipakai untuk filter
-   Kategori cuma 2 ("Android"/"PC") — "Keduanya" berarti postingan
-   dapat kedua tag sekaligus. Lihat platformOptionToTags/platformTagsToOption. */
 const PLATFORM_OPTIONS = ["Android", "PC", "Keduanya"];
 const PLATFORM_TAGS = ["Android", "PC"];
-
-/* Bahasa bersifat tetap (2 opsi), cara kerjanya sama seperti Jenis Game
-   (1 postingan = 1 nilai). */
 const BAHASA_LIST = ["Bahasa Indonesia", "Indonesia & English"];
 
-/** Ubah pilihan Platform di form Admin ("Android"/"PC"/"Keduanya") jadi
- * array tag platform yang disimpan di postingan. */
 function platformOptionToTags(option) {
   if (option === "Keduanya") return PLATFORM_TAGS.slice();
   return PLATFORM_TAGS.includes(option) ? [option] : [PLATFORM_TAGS[0]];
 }
-
-/** Kebalikan platformOptionToTags — dipakai saat membuka form Edit supaya
- * dropdown Platform menampilkan pilihan yang sesuai dengan tag tersimpan. */
 function platformTagsToOption(tags) {
   tags = tags || [];
   const hasAndroid = tags.indexOf("Android") !== -1;
@@ -44,122 +31,93 @@ function platformTagsToOption(tags) {
   return "Android";
 }
 
-const LOREM =
-  "Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
+/* ---------------- API helper ---------------- */
 
-const LOREM2 =
-  "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
-
-function seedPost(n, jenis, genres, daysAgo) {
-  const d = new Date("2026-08-10T00:00:00");
-  d.setDate(d.getDate() - daysAgo);
-  const num = String(n).padStart(3, "0");
-  // Variasi platform & bahasa untuk data contoh (supaya filter Kategori ada isinya).
-  const platform = n % 5 === 0 ? PLATFORM_TAGS.slice() : n % 2 === 0 ? ["PC"] : ["Android"];
-  const bahasa = n % 3 === 0 ? BAHASA_LIST[1] : BAHASA_LIST[0];
-  return {
-    id: "post-" + num,
-    title: "Post" + num,
-    jenis: jenis,
-    genres: genres,
-    platform: platform,
-    bahasa: bahasa,
-    date: d.toISOString().slice(0, 10),
-    thumbnail: "webpictures/postplaceholder.webp",
-    content: "<p>" + LOREM + "</p><p>" + LOREM2 + "</p>"
-  };
-}
-
-const DEFAULT_POSTS = [
-  seedPost(1, "VN", ["RPG", "Action", "Petualangan"], 0),
-  seedPost(2, "RPGM", ["Strategi"], 2),
-  seedPost(3, "VN", ["RPG"], 4),
-  seedPost(4, "RPGM", ["Horror", "RPG", "Puzzle"], 6),
-  seedPost(5, "VN", ["Action"], 8),
-  seedPost(6, "RPGM", ["Strategi"], 10),
-  seedPost(7, "VN", ["Horror"], 12),
-  seedPost(8, "RPGM", ["Action", "Horror", "Strategi"], 14),
-  seedPost(9, "VN", ["Horror", "Puzzle", "Strategi"], 16),
-  seedPost(10, "RPGM", ["Fantasi", "Petualangan"], 18),
-  seedPost(11, "VN", ["Simulasi"], 20),
-  seedPost(12, "RPGM", ["Puzzle", "Balapan", "Petualangan"], 22),
-  seedPost(13, "VN", ["Strategi"], 24),
-  seedPost(14, "RPGM", ["RPG", "Fantasi"], 26),
-  seedPost(15, "VN", ["RPG", "Balapan"], 28),
-  seedPost(16, "RPGM", ["Fantasi", "Petualangan"], 30),
-  seedPost(17, "VN", ["Olahraga"], 32),
-  seedPost(18, "RPGM", ["RPG", "Puzzle", "Fantasi"], 34),
-  seedPost(19, "VN", ["Petualangan", "Balapan", "Strategi"], 36),
-  seedPost(20, "RPGM", ["RPG", "Action", "Strategi"], 38)
-];
-
-/** Pastikan data di localStorage sesuai skema versi terbaru.
- * Jika versi lama/tidak ada (misal dari sesi sebelum update ini),
- * data postingan lama akan direset ke placeholder baru supaya
- * tidak crash karena field jenis/genres/platform/bahasa belum ada.
- * Laporan tetap disimpan. */
-function ensureDataVersion() {
+function getAdminSessionPassword() {
   try {
-    const v = localStorage.getItem(DATA_VERSION_KEY);
-    if (v !== DATA_VERSION) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_POSTS));
-      localStorage.setItem(DATA_VERSION_KEY, DATA_VERSION);
-    }
+    return localStorage.getItem(ADMIN_PW_SESSION_KEY) || "";
   } catch (e) {
-    /* localStorage tidak tersedia, abaikan */
+    return "";
   }
 }
-ensureDataVersion();
-
-/** Ambil semua post dari localStorage (inisialisasi jika belum ada). */
-function loadPosts() {
+function setAdminSessionPassword(pw) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed;
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_POSTS));
-    return DEFAULT_POSTS.slice();
+    localStorage.setItem(ADMIN_PW_SESSION_KEY, pw);
+  } catch (e) {}
+}
+function clearAdminSessionPassword() {
+  try {
+    localStorage.removeItem(ADMIN_PW_SESSION_KEY);
+  } catch (e) {}
+}
+
+/** Panggil endpoint API. auth=true akan menyertakan password admin (dari sesi
+ * login) di header X-Admin-Password untuk endpoint yang butuh otorisasi. */
+async function apiCall(method, path, body, auth) {
+  const headers = { "content-type": "application/json" };
+  if (auth) headers["x-admin-password"] = getAdminSessionPassword();
+  const res = await fetch(path, {
+    method,
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined
+  });
+  let data = null;
+  try {
+    data = await res.json();
+  } catch (e) {}
+  if (!res.ok) {
+    const err = new Error((data && data.error) || "Terjadi kesalahan server (" + res.status + ")");
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
+/* ---------------- Posts (server) ---------------- */
+
+/** [ADMIN] Semua postingan termasuk draft/terjadwal. Butuh login admin. */
+async function loadPosts() {
+  return apiCall("GET", "/api/posts?all=1", undefined, true);
+}
+
+/** [PUBLIK] Hanya postingan published & sudah lewat jadwal. */
+async function getPublishedPosts() {
+  return apiCall("GET", "/api/posts", undefined, false);
+}
+
+/** [PUBLIK] 1 postingan berdasarkan id. */
+async function getPostById(id) {
+  try {
+    return await apiCall("GET", "/api/posts/" + encodeURIComponent(id), undefined, false);
   } catch (e) {
-    return DEFAULT_POSTS.slice();
+    return null;
   }
 }
 
-/** Simpan seluruh array post ke localStorage. */
-function savePosts(posts) {
+/** [ADMIN] Simpan postingan baru (tanpa id) atau update (dengan id yang sudah ada). */
+async function createPost(post) {
+  return apiCall("POST", "/api/posts", post, true);
+}
+async function updatePost(id, post) {
+  return apiCall("PUT", "/api/posts/" + encodeURIComponent(id), post, true);
+}
+
+/** [ADMIN] Pindahkan 1 postingan ke Recycle Bin. */
+async function trashPost(id) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+    await apiCall("DELETE", "/api/posts/" + encodeURIComponent(id), undefined, true);
     return true;
   } catch (e) {
     return false;
   }
 }
 
-/** Cari 1 post berdasarkan id. */
-function getPostById(id) {
-  return loadPosts().find((p) => p.id === id) || null;
-}
-
-/** Postingan yang statusnya published (dipakai di seluruh halaman publik —
- * postingan berstatus draft/belum dipublish tidak ditampilkan di publik).
- * Postingan dengan jadwal (scheduledAt) di masa depan juga belum ditampilkan
- * sampai waktu yang disetel tiba. */
-function getPublishedPosts() {
-  const now = Date.now();
-  return loadPosts().filter((p) => {
-    if (p.published === false) return false;
-    if (p.scheduledAt && new Date(p.scheduledAt).getTime() > now) return false;
-    return true;
-  });
-}
-
-/** Postingan terkait: jenis sama & minimal 1 genre yang sama dengan `post`,
- * tidak termasuk `post` itu sendiri, diacak, maksimal `max` item. */
-function getRelatedPosts(post, max) {
+/** [PUBLIK] Postingan terkait: jenis sama & minimal 1 genre yang sama. */
+async function getRelatedPosts(post, max) {
   if (!post) return [];
   const postGenres = (post.genres || []).map((g) => g.toLowerCase());
-  const candidates = getPublishedPosts().filter((p) => {
+  const all = await getPublishedPosts();
+  const candidates = all.filter((p) => {
     if (p.id === post.id) return false;
     if (p.jenis !== post.jenis) return false;
     const pGenres = (p.genres || []).map((g) => g.toLowerCase());
@@ -168,56 +126,56 @@ function getRelatedPosts(post, max) {
   return shuffleArray(candidates).slice(0, max || 6);
 }
 
-/** Semua genre unik yang sedang dipakai oleh minimal 1 postingan,
- * diurutkan alfabetis. Genre yang tak dipakai post manapun otomatis
- * tidak akan muncul di sini (tak perlu dihapus manual). */
-function getAllGenres() {
+/** [PUBLIK] Semua genre unik yang dipakai postingan published, alfabetis. */
+async function getAllGenres() {
+  const posts = await getPublishedPosts();
   const set = new Set();
-  loadPosts().forEach((p) => (p.genres || []).forEach((g) => set.add(g)));
+  posts.forEach((p) => (p.genres || []).forEach((g) => set.add(g)));
   return Array.from(set).sort((a, b) => a.localeCompare(b, "id"));
 }
 
-/** Hitung jumlah post per genre. */
-function countPostsByGenre(genre) {
-  return loadPosts().filter((p) => (p.genres || []).some((g) => g.toLowerCase() === genre.toLowerCase())).length;
+/** [ADMIN] Semua genre unik dari SELURUH postingan (termasuk draft), dipakai
+ * untuk saran genre di form Admin supaya draft pun ikut tersaran. */
+async function getAllGenresAdmin() {
+  const posts = await loadPosts();
+  const set = new Set();
+  posts.forEach((p) => (p.genres || []).forEach((g) => set.add(g)));
+  return Array.from(set).sort((a, b) => a.localeCompare(b, "id"));
 }
 
-/** Postingan paling populer berdasarkan jumlah views (dipakai di sidebar
- * "Game Populer" tampilan desktop). Kalau belum ada data views sama sekali,
- * otomatis jatuh ke urutan terbaru dulu supaya sidebar tidak kosong. */
-function getPopularPosts(max) {
-  const posts = getPublishedPosts();
+async function countPostsByGenre(genre) {
+  const posts = await getPublishedPosts();
+  return posts.filter((p) => (p.genres || []).some((g) => g.toLowerCase() === genre.toLowerCase())).length;
+}
+async function countPostsByPlatform(tag) {
+  const posts = await getPublishedPosts();
+  return posts.filter((p) => (p.platform || []).indexOf(tag) !== -1).length;
+}
+async function countPostsByBahasa(bahasa) {
+  const posts = await getPublishedPosts();
+  return posts.filter((p) => p.bahasa === bahasa).length;
+}
+
+/** [PUBLIK] Postingan paling populer berdasarkan views (localStorage device ini). */
+async function getPopularPosts(max) {
+  const posts = await getPublishedPosts();
   const withViews = posts.map((p) => ({
     post: p,
-    views: typeof getViewsForPost === "function" ? getViewsForPost(p.id) : 0,
+    views: typeof getViewsForPost === "function" ? getViewsForPost(p.id) : 0
   }));
   withViews.sort((a, b) => b.views - a.views || new Date(b.post.date) - new Date(a.post.date));
   return withViews.slice(0, max || 5).map((x) => x.post);
 }
 
-/** Genre acak (dipakai di sidebar "Rekomendasi Genre" tampilan desktop),
- * maksimal `max` genre. Diacak ulang tiap kali dipanggil (mis. tiap
- * refresh halaman) supaya tidak menampilkan genre yang itu-itu saja
- * kalau total genre sudah lebih dari `max`. */
-function getTopGenres(max) {
-  const genres = getAllGenres();
-  const withCount = genres.map((g) => ({ genre: g, count: countPostsByGenre(g) }));
-  // Fisher-Yates shuffle
+async function getTopGenres(max) {
+  const genres = await getAllGenres();
+  const withCount = [];
+  for (const g of genres) withCount.push({ genre: g, count: await countPostsByGenre(g) });
   for (let i = withCount.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [withCount[i], withCount[j]] = [withCount[j], withCount[i]];
   }
   return withCount.slice(0, max || 10);
-}
-
-/** Hitung jumlah post untuk 1 tag platform ("Android"/"PC"). */
-function countPostsByPlatform(tag) {
-  return loadPosts().filter((p) => (p.platform || []).indexOf(tag) !== -1).length;
-}
-
-/** Hitung jumlah post untuk 1 nilai bahasa. */
-function countPostsByBahasa(bahasa) {
-  return loadPosts().filter((p) => p.bahasa === bahasa).length;
 }
 
 /** Buat preview teks singkat dari HTML isi post. */
@@ -252,60 +210,45 @@ function shuffleArray(arr) {
 
 /* ---------------- Laporan (page Laporkan) ---------------- */
 
-/** Ambil semua laporan dari localStorage. */
-function loadReports() {
-  try {
-    const raw = localStorage.getItem(REPORTS_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed;
-    }
-    return [];
-  } catch (e) {
-    return [];
-  }
+/** [ADMIN] Semua laporan. */
+async function loadReports() {
+  return apiCall("GET", "/api/reports", undefined, true);
 }
 
-/** Simpan seluruh array laporan ke localStorage. */
-function saveReports(reports) {
+/** [PUBLIK] Kirim 1 laporan baru. attachment = {name, dataUrl} | null */
+async function addReport(title, name, content, attachment, contactMedia) {
+  await apiCall(
+    "POST",
+    "/api/reports",
+    { title, name: name || "", contactMedia: contactMedia || "", content, attachment: attachment || null },
+    false
+  );
+}
+
+/** [ADMIN] Ubah status 1 laporan: "belum" | "sedang" | "selesai" */
+async function setReportStatus(id, status) {
+  await apiCall("PUT", "/api/reports/" + encodeURIComponent(id), { status }, true);
+}
+
+/** [ADMIN] Pindahkan 1 laporan ke Recycle Bin. */
+async function trashReport(id) {
   try {
-    localStorage.setItem(REPORTS_KEY, JSON.stringify(reports));
+    await apiCall("DELETE", "/api/reports/" + encodeURIComponent(id), undefined, true);
     return true;
   } catch (e) {
     return false;
   }
 }
 
-/** Tambah 1 laporan baru. attachment = {name, dataUrl} | null */
-function addReport(title, name, content, attachment, contactMedia) {
-  const reports = loadReports();
-  reports.unshift({
-    id: "report-" + Date.now(),
-    title: title,
-    name: name || "",
-    contactMedia: contactMedia || "",
-    content: content,
-    attachment: attachment || null,
-    date: new Date().toISOString(),
-    status: "belum" // belum | sedang | selesai
-  });
-  saveReports(reports);
-  if (typeof addNotification === "function") {
-    addNotification("report", "Ada laporan masuk dengan judul " + title);
-  }
-}
-
 // =========================================================
-// Statistik Web (Informasi Web di Admin Panel)
-// Semua statistik ini murni dihitung dari histori yang tersimpan
-// di localStorage BROWSER INI SAJA (situs tidak punya backend/server,
-// jadi tidak ada penghitungan pengunjung lintas-perangkat/pengguna).
+// Statistik Web (Informasi Web di Admin Panel) — TETAP LOKAL
+// Views/kunjungan murni dihitung dari histori localStorage BROWSER INI
+// SAJA. Kalau ingin statistik lintas-perangkat, perlu tabel tambahan
+// di server (belum diimplementasikan di versi ini).
 // =========================================================
-const VISITS_KEY = "fueeru_visits"; // array of ISO datetime string
-const POST_VIEWS_KEY = "fueeru_post_views"; // { [postId]: [ISO datetime, ...] }
-const ADMIN_PASSWORD_KEY = "fueeru_admin_password";
-const ADMIN_PASSWORD_DEFAULT = "admin123";
-const LOG_CAP = 8000; // batas jumlah entri log per key, biar localStorage tak membengkak
+const VISITS_KEY = "fueeru_visits";
+const POST_VIEWS_KEY = "fueeru_post_views";
+const LOG_CAP = 8000;
 
 function _loadLog(key) {
   try {
@@ -319,19 +262,15 @@ function _saveLog(key, arr) {
   try {
     if (arr.length > LOG_CAP) arr.splice(0, arr.length - LOG_CAP);
     localStorage.setItem(key, JSON.stringify(arr));
-  } catch (e) {
-    /* localStorage penuh — abaikan, statistik tetap jalan dari data yang sudah ada */
-  }
+  } catch (e) {}
 }
 
-/** Catat 1 kunjungan halaman publik. Dipanggil oleh main.js di setiap halaman publik. */
 function logVisit() {
   const arr = _loadLog(VISITS_KEY);
   arr.push(new Date().toISOString());
   _saveLog(VISITS_KEY, arr);
 }
 
-/** Catat 1 views untuk 1 postingan. Dipanggil oleh post.html saat postingan dibuka. */
 function logPostView(postId) {
   let raw;
   try {
@@ -344,12 +283,9 @@ function logPostView(postId) {
   if (raw[postId].length > LOG_CAP) raw[postId].splice(0, raw[postId].length - LOG_CAP);
   try {
     localStorage.setItem(POST_VIEWS_KEY, JSON.stringify(raw));
-  } catch (e) {
-    /* abaikan jika localStorage penuh */
-  }
+  } catch (e) {}
 }
 
-/** Ambil seluruh log views per-postingan sebagai object { postId: [iso,...] } */
 function loadPostViewsLog() {
   try {
     const parsed = JSON.parse(localStorage.getItem(POST_VIEWS_KEY) || "{}");
@@ -359,17 +295,15 @@ function loadPostViewsLog() {
   }
 }
 
-/** Awal minggu (Senin, 00:00) dari sebuah tanggal. */
 function startOfWeek(d) {
   const date = new Date(d);
-  const day = date.getDay(); // 0=Minggu ... 6=Sabtu
+  const day = date.getDay();
   const diff = (day === 0 ? -6 : 1) - day;
   date.setDate(date.getDate() + diff);
   date.setHours(0, 0, 0, 0);
   return date;
 }
 
-/** Hitung berapa banyak timestamp ISO dalam array yang jatuh di rentang [start, end). */
 function _countInRange(isoArr, start, end) {
   let n = 0;
   for (let i = 0; i < isoArr.length; i++) {
@@ -379,7 +313,6 @@ function _countInRange(isoArr, start, end) {
   return n;
 }
 
-/** Statistik kunjungan: total, minggu ini, minggu lalu. */
 function getVisitStats() {
   const arr = _loadLog(VISITS_KEY);
   const now = new Date();
@@ -393,10 +326,11 @@ function getVisitStats() {
   };
 }
 
-/** Statistik views postingan (gabungan semua postingan yang masih ada). */
-function getPostViewStats() {
+/** [ADMIN] Statistik views postingan (gabungan semua postingan yang masih ada). */
+async function getPostViewStats() {
   const log = loadPostViewsLog();
-  const validIds = new Set(loadPosts().map((p) => p.id));
+  const posts = await loadPosts();
+  const validIds = new Set(posts.map((p) => p.id));
   const now = new Date();
   const thisWeekStart = startOfWeek(now);
   const thisWeekEnd = new Date(thisWeekStart.getTime() + 7 * 86400000);
@@ -414,13 +348,11 @@ function getPostViewStats() {
   return { total, thisWeek, lastWeek };
 }
 
-/** Jumlah views untuk 1 postingan tertentu. */
 function getViewsForPost(postId) {
   const log = loadPostViewsLog();
   return Array.isArray(log[postId]) ? log[postId].length : 0;
 }
 
-/** Perkiraan total ukuran data situs yang tersimpan di localStorage (byte). */
 function getStorageSizeEstimate() {
   let total = 0;
   try {
@@ -430,21 +362,75 @@ function getStorageSizeEstimate() {
       total += (k ? k.length : 0) + v.length;
     }
   } catch (e) {}
-  return total * 2; // perkiraan kasar: 2 byte per karakter (UTF-16)
+  return total * 2;
 }
 
-/** Kata sandi admin saat ini (localStorage jika pernah diganti, atau default). */
-function getAdminPassword() {
-  try {
-    return localStorage.getItem(ADMIN_PASSWORD_KEY) || ADMIN_PASSWORD_DEFAULT;
-  } catch (e) {
-    return ADMIN_PASSWORD_DEFAULT;
+/** [ADMIN] Restore dari file backup. mode "merge" = upsert per id, mode
+ * "replace" = upsert lalu hapus permanen postingan lama yang tidak ada
+ * di file backup. */
+async function bulkSavePosts(incomingPosts, replaceAll) {
+  const existing = await loadPosts();
+  const existingIds = new Set(existing.map((p) => p.id));
+  for (const p of incomingPosts) {
+    if (p.id && existingIds.has(p.id)) {
+      await updatePost(p.id, p);
+    } else {
+      await createPost(p);
+    }
+  }
+  if (replaceAll) {
+    const incomingIds = new Set(incomingPosts.map((p) => p.id));
+    for (const p of existing) {
+      if (!incomingIds.has(p.id)) {
+        await trashPost(p.id);
+        await permanentlyDeleteFromTrash("posts", p.id);
+      }
+    }
   }
 }
-/** Ganti kata sandi admin (disimpan apa adanya, tanpa hashing — situs tanpa backend). */
-function setAdminPassword(newPassword) {
+
+/** [ADMIN] Restore backup Halaman: pages = { tutorial: "<html>", ... } */
+async function bulkSavePages(pages) {
+  for (const id of Object.keys(pages)) {
+    await savePageContent(id, pages[id]);
+  }
+}
+
+/** [ADMIN] Ambil semua 4 halaman sekaligus sebagai { id: {title, content} }. */
+async function loadAllPages() {
+  const ids = ["tutorial", "cara-download", "donasi", "tentang"];
+  const out = {};
+  for (const id of ids) out[id] = await getPageContent(id);
+  return out;
+}
+
+/* ---------------- Password admin (server) ---------------- */
+
+/** [PUBLIK] Cek password saat login. Return true/false. */
+async function checkAdminPassword(password) {
   try {
-    localStorage.setItem(ADMIN_PASSWORD_KEY, newPassword);
+    await apiCall("POST", "/api/auth", { password }, false);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+/** [ADMIN] Ganti password (butuh sudah login / tahu password lama, dikirim via sesi). */
+async function setAdminPassword(newPassword) {
+  try {
+    await apiCall("PUT", "/api/auth", { newPassword }, true);
+    setAdminSessionPassword(newPassword);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+/** [PUBLIK] Reset password lewat kata sandi darurat (lupa password). */
+async function recoverAdminPassword(emergencyPassword, newPassword) {
+  try {
+    await apiCall("PATCH", "/api/auth", { emergencyPassword, newPassword }, false);
     return true;
   } catch (e) {
     return false;
@@ -452,7 +438,7 @@ function setAdminPassword(newPassword) {
 }
 
 // =========================================================
-// Notifikasi Admin Panel
+// Notifikasi Admin Panel — TETAP LOKAL (per-device)
 // =========================================================
 const NOTIF_KEY = "fueeru_notifications";
 const LAST_BACKUP_KEY = "fueeru_last_backup_at";
@@ -474,7 +460,6 @@ function saveNotifications(list) {
     return false;
   }
 }
-/** Tambah 1 notifikasi baru. type: 'report' | 'backup_reminder' */
 function addNotification(type, text) {
   const list = loadNotifications();
   list.unshift({
@@ -489,24 +474,14 @@ function clearAllNotifications() {
   saveNotifications([]);
 }
 
-/** Catat waktu backup terakhir. kind: "posts" (default) | "pages". Dipanggil
- * saat admin klik "Unduh Backup Postingan" / "Unduh Backup Halaman". */
 function markBackupDone(kind) {
   try {
     localStorage.setItem(kind === "pages" ? LAST_BACKUP_PAGES_KEY : LAST_BACKUP_KEY, new Date().toISOString());
   } catch (e) {}
 }
-
-/** Ambil waktu backup terakhir (ISO string) untuk kind: "posts" | "pages",
- * atau null kalau belum pernah backup. */
 function getLastBackupAt(kind) {
   return localStorage.getItem(kind === "pages" ? LAST_BACKUP_PAGES_KEY : LAST_BACKUP_KEY);
 }
-
-/** Kalau sudah lebih dari seminggu sejak backup terakhir (atau belum pernah
- * backup sama sekali), dan belum ada notifikasi pengingat yang sama yang
- * masih tersimpan, tambahkan 1 notifikasi pengingat backup. Aman dipanggil
- * berkali-kali — tidak akan menumpuk notifikasi duplikat. */
 function checkBackupReminder() {
   const lastBackup = localStorage.getItem(LAST_BACKUP_KEY);
   const daysSince = lastBackup ? (Date.now() - new Date(lastBackup).getTime()) / 86400000 : Infinity;
@@ -520,140 +495,37 @@ function checkBackupReminder() {
 }
 
 // =========================================================
-// Recycle Bin (postingan & laporan yang dihapus)
-// Item yang dihapus tidak langsung hilang — ditampung dulu di sini
-// selama 30 hari (field `deletedAt`) sebelum dihapus permanen otomatis.
+// Recycle Bin (postingan & laporan yang dihapus) — server, D1
 // =========================================================
-const TRASH_POSTS_KEY = "fueeru_trash_posts";
-const TRASH_REPORTS_KEY = "fueeru_trash_reports";
-const TRASH_RETENTION_DAYS = 30;
-
-function loadTrashPosts() {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(TRASH_POSTS_KEY) || "[]");
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
-    return [];
-  }
+async function loadTrashPosts() {
+  return apiCall("GET", "/api/trash/posts", undefined, true);
 }
-function saveTrashPosts(list) {
+async function loadTrashReports() {
+  return apiCall("GET", "/api/trash/reports", undefined, true);
+}
+async function restoreFromTrash(type, id) {
   try {
-    localStorage.setItem(TRASH_POSTS_KEY, JSON.stringify(list));
+    await apiCall("POST", "/api/trash/" + type + "/" + encodeURIComponent(id), {}, true);
     return true;
   } catch (e) {
     return false;
   }
 }
-function loadTrashReports() {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(TRASH_REPORTS_KEY) || "[]");
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
-    return [];
-  }
+async function restoreAllFromTrash(type, ids) {
+  for (const id of ids) await restoreFromTrash(type, id);
 }
-function saveTrashReports(list) {
-  try {
-    localStorage.setItem(TRASH_REPORTS_KEY, JSON.stringify(list));
-    return true;
-  } catch (e) {
-    return false;
-  }
+async function permanentlyDeleteFromTrash(type, id) {
+  await apiCall("DELETE", "/api/trash/" + type + "/" + encodeURIComponent(id), undefined, true);
 }
-
-/** Pindahkan 1 postingan ke Recycle Bin (dipanggil saat "Hapus" ditekan). */
-function trashPost(id) {
-  const posts = loadPosts();
-  const idx = posts.findIndex((p) => p.id === id);
-  if (idx === -1) return false;
-  const item = posts[idx];
-  posts.splice(idx, 1);
-  savePosts(posts);
-  const trash = loadTrashPosts();
-  trash.unshift({ ...item, deletedAt: new Date().toISOString() });
-  saveTrashPosts(trash);
-  return true;
+async function permanentlyDeleteAllFromTrash(type, ids) {
+  for (const id of ids) await permanentlyDeleteFromTrash(type, id);
 }
-/** Pindahkan 1 laporan ke Recycle Bin. */
-function trashReport(id) {
-  const reports = loadReports();
-  const idx = reports.findIndex((r) => r.id === id);
-  if (idx === -1) return false;
-  const item = reports[idx];
-  reports.splice(idx, 1);
-  saveReports(reports);
-  const trash = loadTrashReports();
-  trash.unshift({ ...item, deletedAt: new Date().toISOString() });
-  saveTrashReports(trash);
-  return true;
-}
-
-/** Pulihkan 1 item dari Recycle Bin kembali ke daftar aktif.
- * type: "posts" | "reports" */
-function restoreFromTrash(type, id) {
-  if (type === "posts") {
-    const trash = loadTrashPosts();
-    const idx = trash.findIndex((p) => p.id === id);
-    if (idx === -1) return false;
-    const item = { ...trash[idx] };
-    delete item.deletedAt;
-    trash.splice(idx, 1);
-    saveTrashPosts(trash);
-    const posts = loadPosts();
-    posts.unshift(item);
-    savePosts(posts);
-    return true;
-  } else {
-    const trash = loadTrashReports();
-    const idx = trash.findIndex((r) => r.id === id);
-    if (idx === -1) return false;
-    const item = { ...trash[idx] };
-    delete item.deletedAt;
-    trash.splice(idx, 1);
-    saveTrashReports(trash);
-    const reports = loadReports();
-    reports.unshift(item);
-    saveReports(reports);
-    return true;
-  }
-}
-/** Pulihkan SEMUA item dalam daftar `ids` dari Recycle Bin. */
-function restoreAllFromTrash(type, ids) {
-  ids.forEach((id) => restoreFromTrash(type, id));
-}
-
-/** Hapus 1 item secara permanen dari Recycle Bin (tidak bisa dibatalkan). */
-function permanentlyDeleteFromTrash(type, id) {
-  if (type === "posts") {
-    saveTrashPosts(loadTrashPosts().filter((p) => p.id !== id));
-  } else {
-    saveTrashReports(loadTrashReports().filter((r) => r.id !== id));
-  }
-}
-function permanentlyDeleteAllFromTrash(type, ids) {
-  const idSet = new Set(ids);
-  if (type === "posts") {
-    saveTrashPosts(loadTrashPosts().filter((p) => !idSet.has(p.id)));
-  } else {
-    saveTrashReports(loadTrashReports().filter((r) => !idSet.has(r.id)));
-  }
-}
-
-/** Hapus permanen otomatis item Recycle Bin yang sudah lebih dari 30 hari.
- * Aman dipanggil berkali-kali (misalnya setiap kali admin login). */
-function purgeOldTrash() {
-  const cutoff = Date.now() - TRASH_RETENTION_DAYS * 86400000;
-  const posts = loadTrashPosts().filter((p) => new Date(p.deletedAt).getTime() >= cutoff);
-  saveTrashPosts(posts);
-  const reports = loadTrashReports().filter((r) => new Date(r.deletedAt).getTime() >= cutoff);
-  saveTrashReports(reports);
-}
+/** Purge otomatis (>30 hari) sekarang cukup dilakukan manual dari Recycle
+ * Bin; fungsi ini sengaja no-op supaya pemanggilan lama tidak error. */
+function purgeOldTrash() {}
 
 // =========================================================
-// Rate limit pengiriman laporan (maks. 3 laporan / hari / perangkat)
-// Deteksi "perangkat" di sini murni berbasis localStorage browser ini
-// saja (situs tanpa backend, jadi tidak ada cara memverifikasi
-// perangkat fisik sungguhan) — cukup untuk mencegah spam kasual.
+// Rate limit pengiriman laporan (maks. 3 laporan / hari / perangkat) — LOKAL
 // =========================================================
 const REPORT_RATE_KEY = "fueeru_report_rate";
 const REPORT_RATE_LIMIT = 3;
@@ -662,7 +534,6 @@ function _todayStr() {
   const d = new Date();
   return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
 }
-/** Berapa laporan yang sudah dikirim dari perangkat ini hari ini. */
 function getReportCountToday() {
   try {
     const raw = JSON.parse(localStorage.getItem(REPORT_RATE_KEY) || "null");
@@ -672,11 +543,9 @@ function getReportCountToday() {
     return 0;
   }
 }
-/** True kalau perangkat ini masih boleh mengirim laporan baru hari ini. */
 function canSubmitReport() {
   return getReportCountToday() < REPORT_RATE_LIMIT;
 }
-/** Catat 1 laporan baru terkirim dari perangkat ini (untuk rate limit). */
 function recordReportSubmission() {
   try {
     const count = getReportCountToday() + 1;
@@ -685,48 +554,37 @@ function recordReportSubmission() {
 }
 
 // =========================================================
-// Halaman statis yang bisa diedit lewat Admin Panel (menu "Halaman"):
-// Tutorial Main, Cara Download, Donasi, Tentang.
+// Halaman statis yang bisa diedit lewat Admin Panel (server, D1)
 // =========================================================
-const PAGES_KEY = "fueeru_pages";
-const DEFAULT_PAGE_CONTENT =
-  "<p>Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>" +
-  "<p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>";
-
-const DEFAULT_PAGES = {
-  tutorial: { title: "Tutorial Main", content: DEFAULT_PAGE_CONTENT },
-  "cara-download": { title: "Cara Download", content: DEFAULT_PAGE_CONTENT },
-  donasi: { title: "Donasi", content: DEFAULT_PAGE_CONTENT },
-  tentang: { title: "Tentang", content: DEFAULT_PAGE_CONTENT }
+const DEFAULT_PAGE_TITLES = {
+  tutorial: "Tutorial Main",
+  "cara-download": "Cara Download",
+  donasi: "Donasi",
+  tentang: "Tentang"
 };
 
-function loadPages() {
+/** [PUBLIK] Ambil { title, content } untuk 1 halaman. */
+async function getPageContent(pageId) {
   try {
-    const raw = JSON.parse(localStorage.getItem(PAGES_KEY) || "null");
-    if (raw && typeof raw === "object") {
-      // Gabungkan dengan default supaya halaman baru (kalau ada) tetap punya isi awal.
-      return Object.assign({}, DEFAULT_PAGES, raw);
-    }
-  } catch (e) {}
-  return Object.assign({}, DEFAULT_PAGES);
-}
-function savePages(pages) {
-  try {
-    localStorage.setItem(PAGES_KEY, JSON.stringify(pages));
-    return true;
+    const data = await apiCall("GET", "/api/pages/" + encodeURIComponent(pageId), undefined, false);
+    if (!data.title) data.title = DEFAULT_PAGE_TITLES[pageId] || pageId;
+    return data;
   } catch (e) {
-    return false;
+    return { title: DEFAULT_PAGE_TITLES[pageId] || pageId, content: "" };
   }
 }
-/** Ambil { title, content } untuk 1 halaman (tutorial | cara-download | donasi | tentang). */
-function getPageContent(pageId) {
-  const pages = loadPages();
-  return pages[pageId] || DEFAULT_PAGES[pageId] || { title: "", content: "" };
-}
-/** Simpan isi 1 halaman. Return "ok" | "storage-full". */
-function savePageContent(pageId, content) {
-  const pages = loadPages();
-  if (!pages[pageId]) pages[pageId] = { title: DEFAULT_PAGES[pageId] ? DEFAULT_PAGES[pageId].title : pageId };
-  pages[pageId].content = content;
-  return savePages(pages) ? "ok" : "storage-full";
+
+/** [ADMIN] Simpan isi 1 halaman. Return "ok" | "error". */
+async function savePageContent(pageId, content) {
+  try {
+    await apiCall(
+      "PUT",
+      "/api/pages/" + encodeURIComponent(pageId),
+      { title: DEFAULT_PAGE_TITLES[pageId] || pageId, content },
+      true
+    );
+    return "ok";
+  } catch (e) {
+    return "error";
+  }
 }

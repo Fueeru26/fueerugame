@@ -40,6 +40,7 @@ function doLogin(remember) {
 function doLogout() {
   sessionStorage.removeItem(SESSION_KEY);
   localStorage.removeItem(REMEMBER_KEY);
+  clearAdminSessionPassword();
   document.getElementById("passwordInput").value = "";
   document.getElementById("rememberMeInput").checked = false;
   document.getElementById("loginError").textContent = "";
@@ -47,12 +48,15 @@ function doLogout() {
   viewLogin.classList.remove("hidden");
 }
 
-document.getElementById("loginForm").addEventListener("submit", function (e) {
+document.getElementById("loginForm").addEventListener("submit", async function (e) {
   e.preventDefault();
   const val = document.getElementById("passwordInput").value;
   const errorEl = document.getElementById("loginError");
   const remember = document.getElementById("rememberMeInput").checked;
-  if (val === getAdminPassword()) {
+  errorEl.textContent = "Memeriksa…";
+  const ok = await checkAdminPassword(val);
+  if (ok) {
+    setAdminSessionPassword(val);
     errorEl.textContent = "";
     doLogin(remember);
   } else {
@@ -73,21 +77,23 @@ document.getElementById("btnBackToLogin").addEventListener("click", function (e)
   viewRecovery.classList.add("hidden");
   viewLogin.classList.remove("hidden");
 });
-document.getElementById("recoveryForm").addEventListener("submit", function (e) {
+document.getElementById("recoveryForm").addEventListener("submit", async function (e) {
   e.preventDefault();
   const emergencyVal = document.getElementById("emergencyPasswordInput").value;
   const newVal = document.getElementById("newPasswordRecoveryInput").value;
   const errorEl = document.getElementById("recoveryError");
 
-  if (emergencyVal !== EMERGENCY_PASSWORD) {
-    errorEl.textContent = "Kata sandi darurat salah.";
-    return;
-  }
   if (newVal.trim().length < 4) {
     errorEl.textContent = "Kata sandi baru minimal 4 karakter.";
     return;
   }
-  setAdminPassword(newVal.trim());
+  errorEl.textContent = "Memproses…";
+  const ok = await recoverAdminPassword(emergencyVal, newVal.trim());
+  if (!ok) {
+    errorEl.textContent = "Kata sandi darurat salah.";
+    return;
+  }
+  setAdminSessionPassword(newVal.trim());
   errorEl.textContent = "";
   viewRecovery.classList.add("hidden");
   doLogin();
@@ -197,23 +203,24 @@ let currentEditingPageId = null;
 const editorContentPageEl = document.getElementById("editorContentPage");
 
 document.querySelectorAll(".page-picker-btn").forEach((btn) => {
-  btn.addEventListener("click", () => {
+  btn.addEventListener("click", async () => {
     const pageId = btn.getAttribute("data-page-id");
     const pageLabel = btn.querySelector("span").textContent;
     currentEditingPageId = pageId;
     document.getElementById("pageEditHeading").textContent = pageLabel;
-    editorContentPageEl.innerHTML = getPageContent(pageId).content;
+    const pc = await getPageContent(pageId);
+    editorContentPageEl.innerHTML = pc.content;
     if (richPageEditor) richPageEditor.resetHistory();
     showSub("viewPageEdit");
     capturePageFormSnapshot();
   });
 });
 
-document.getElementById("btnSavePage").addEventListener("click", function () {
+document.getElementById("btnSavePage").addEventListener("click", async function () {
   if (!currentEditingPageId) return;
-  const result = savePageContent(currentEditingPageId, editorContentPageEl.innerHTML.trim());
-  if (result === "storage-full") {
-    showToast("Gagal menyimpan — penyimpanan penuh. Coba gambar yang lebih kecil.");
+  const result = await savePageContent(currentEditingPageId, editorContentPageEl.innerHTML.trim());
+  if (result === "error") {
+    showToast("Gagal menyimpan — coba lagi.");
     return;
   }
   capturePageFormSnapshot();
@@ -263,9 +270,9 @@ document.getElementById("menuLihatLaporan").addEventListener("click", () => {
   showSub("viewReports");
   renderReportsList();
 });
-document.getElementById("menuInformasiWeb").addEventListener("click", () => {
-  renderInfoView();
+document.getElementById("menuInformasiWeb").addEventListener("click", async () => {
   showSub("viewInfo");
+  await renderInfoView();
 });
 document.getElementById("btnBackFromInfo").addEventListener("click", () => showSub("viewMenu"));
 document.getElementById("menuManajemenFile").addEventListener("click", () => {
@@ -517,8 +524,8 @@ document.getElementById("postSearchInput").addEventListener("input", function ()
   renderPostsList();
 });
 
-function renderPostsList() {
-  let posts = loadPosts().slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+async function renderPostsList() {
+  let posts = (await loadPosts()).slice().sort((a, b) => new Date(b.date) - new Date(a.date));
   if (postSearchQuery) {
     posts = posts.filter((p) => p.title.toLowerCase().includes(postSearchQuery));
   }
@@ -575,13 +582,13 @@ function renderPostsList() {
   });
 }
 
-function deletePost(id) {
-  const post = getPostById(id);
+async function deletePost(id) {
+  const post = await getPostById(id);
   if (!post) return;
   openConfirmModal(
     `Hapus postingan "${post.title}"? Postingan akan dipindahkan ke Recycle Bin dan bisa dipulihkan dalam 30 hari.`,
-    function () {
-      trashPost(id);
+    async function () {
+      await trashPost(id);
       renderPostsList();
       showToast("Postingan dipindahkan ke Recycle Bin");
     },
@@ -749,13 +756,13 @@ function addGenre(name) {
   renderGenreChips();
 }
 
-function showGenreSuggestions() {
+async function showGenreSuggestions() {
   const val = genreInputField.value.trim().toLowerCase();
   if (!val) {
     hideGenreSuggestions();
     return;
   }
-  const allGenres = getAllGenres();
+  const allGenres = await getAllGenresAdmin();
   const matches = allGenres.filter(
     (g) => g.toLowerCase().includes(val) && !currentGenres.some((cg) => cg.toLowerCase() === g.toLowerCase())
   );
@@ -847,8 +854,8 @@ function openAddForm() {
   captureFormSnapshot();
 }
 
-function openEditForm(id) {
-  const post = getPostById(id);
+async function openEditForm(id) {
+  const post = await getPostById(id);
   if (!post) return;
   resetForm();
   editingId = id;
@@ -1531,7 +1538,7 @@ previewModalBackdrop.addEventListener("click", function (e) {
   if (e.target === previewModalBackdrop) closePreviewModal();
 });
 
-document.getElementById("btnPreviewForm").addEventListener("click", function () {
+document.getElementById("btnPreviewForm").addEventListener("click", async function () {
   const title = fieldTitle.value.trim() || "(Judul belum diisi)";
   const platformTags = platformOptionToTags(fieldPlatform.value);
   const bahasa = fieldBahasa.value;
@@ -1540,7 +1547,7 @@ document.getElementById("btnPreviewForm").addEventListener("click", function () 
   const content = editorContent.innerHTML.trim() || "<p><em>(Isi postingan masih kosong)</em></p>";
   const thumbnail =
     currentThumbnailData ||
-    (editingId ? (getPostById(editingId) || {}).thumbnail : null) ||
+    (editingId ? ((await getPostById(editingId)) || {}).thumbnail : null) ||
     "webpictures/postplaceholder.webp";
 
   previewModalBody.innerHTML = `
@@ -1590,98 +1597,91 @@ function readPostFormFields() {
  * Preview/Simpan.
  * Return: "ok" | "invalid" (judul kosong) | "storage-full" (localStorage
  * penuh, biasanya karena gambar terlalu besar — lihat compressImageFile). */
-function savePostForm(publish) {
+async function savePostForm(publish) {
   const fields = readPostFormFields();
   if (!fields) return "invalid";
   const { title, content, platform, bahasa, jenis, genres } = fields;
-  const posts = loadPosts();
   let newPostId = null;
 
   const useSchedule = publish && publishMode === "terjadwal" && !!scheduledAt;
 
-  if (editingId) {
-    const idx = posts.findIndex((p) => p.id === editingId);
-    if (idx !== -1) {
-      let dateToUse = posts[idx].date;
-      let scheduledAtToUse = posts[idx].scheduledAt || null;
+  try {
+    if (editingId) {
+      const existing = await getPostById(editingId);
+      if (existing) {
+        let dateToUse = existing.date;
+        let scheduledAtToUse = existing.scheduledAt || null;
 
-      if (publish) {
-        if (useSchedule) {
-          dateToUse = scheduledAt.slice(0, 10);
-          scheduledAtToUse = scheduledAt;
-        } else if (publishMode === "sebelumnya") {
-          // Publish tapi tanggal/waktunya tetap mengikuti sebelum diedit.
-          dateToUse = posts[idx].date;
-          scheduledAtToUse = null;
-        } else {
-          // "baru" (default) -> jadi postingan terbaru, waktu sekarang.
-          dateToUse = new Date().toISOString().slice(0, 10);
-          scheduledAtToUse = null;
+        if (publish) {
+          if (useSchedule) {
+            dateToUse = scheduledAt.slice(0, 10);
+            scheduledAtToUse = scheduledAt;
+          } else if (publishMode === "sebelumnya") {
+            dateToUse = existing.date;
+            scheduledAtToUse = null;
+          } else {
+            dateToUse = new Date().toISOString().slice(0, 10);
+            scheduledAtToUse = null;
+          }
         }
-      }
-      // publish === false (Simpan/draft) -> tanggal & jadwal tidak diubah.
 
-      posts[idx] = {
-        ...posts[idx],
+        await updatePost(editingId, {
+          ...existing,
+          title,
+          platform,
+          bahasa,
+          jenis,
+          genres,
+          content,
+          thumbnail: currentThumbnailData || existing.thumbnail,
+          published: publish,
+          date: dateToUse,
+          scheduledAt: scheduledAtToUse
+        });
+      }
+    } else {
+      const dateToUse = useSchedule ? scheduledAt.slice(0, 10) : new Date().toISOString().slice(0, 10);
+      const newPost = {
         title,
         platform,
         bahasa,
         jenis,
         genres,
-        content,
-        thumbnail: currentThumbnailData || posts[idx].thumbnail,
-        published: publish,
         date: dateToUse,
-        scheduledAt: scheduledAtToUse
+        thumbnail: currentThumbnailData || "webpictures/postplaceholder.webp",
+        content,
+        published: publish,
+        scheduledAt: useSchedule ? scheduledAt : null
       };
+      const res = await createPost(newPost);
+      newPostId = res.id;
     }
-  } else {
-    const dateToUse = useSchedule ? scheduledAt.slice(0, 10) : new Date().toISOString().slice(0, 10);
-    const newPost = {
-      id: "post-" + Date.now(),
-      title,
-      platform,
-      bahasa,
-      jenis,
-      genres,
-      date: dateToUse,
-      thumbnail: currentThumbnailData || "webpictures/postplaceholder.webp",
-      content,
-      published: publish,
-      scheduledAt: useSchedule ? scheduledAt : null
-    };
-    posts.unshift(newPost);
-    newPostId = newPost.id;
+  } catch (e) {
+    return "storage-full";
   }
 
-  const ok = savePosts(posts);
-  if (!ok) return "storage-full";
-
   if (newPostId) {
-    // Baru berhasil disimpan sebagai postingan baru -> supaya klik
-    // Simpan/Publish berikutnya mengedit postingan yang sama, bukan
-    // membuat duplikat baru.
     editingId = newPostId;
     document.getElementById("formHeading").textContent = "Edit Postingan";
     document.getElementById("publishModePrevWrap").classList.remove("hidden");
   }
-  captureFormSnapshot(); // baseline baru — belum ada perubahan sejak disimpan
+  captureFormSnapshot();
   return "ok";
 }
 
-document.getElementById("btnSaveDraft").addEventListener("click", function () {
+document.getElementById("btnSaveDraft").addEventListener("click", async function () {
   clearPublishFormMsg();
-  const result = savePostForm(false);
+  const result = await savePostForm(false);
   if (result === "invalid") return;
   if (result === "storage-full") {
-    showToast("Gagal menyimpan — penyimpanan penuh. Coba gambar yang lebih kecil.");
+    showToast("Gagal menyimpan — coba lagi.");
     return;
   }
   showToast("Postingan Disimpan");
   // Sengaja TIDAK pindah ke Menu Atur Postingan — tetap di form.
 });
 
-document.getElementById("postForm").addEventListener("submit", function (e) {
+document.getElementById("postForm").addEventListener("submit", async function (e) {
   e.preventDefault();
   clearPublishFormMsg();
   if (publishMode === "terjadwal" && !scheduledAt) {
@@ -1689,10 +1689,10 @@ document.getElementById("postForm").addEventListener("submit", function (e) {
     return;
   }
   const wasEditing = !!editingId;
-  const result = savePostForm(true);
+  const result = await savePostForm(true);
   if (result === "invalid") return;
   if (result === "storage-full") {
-    showToast("Gagal menyimpan — penyimpanan penuh. Coba gambar yang lebih kecil.");
+    showToast("Gagal menyimpan — coba lagi.");
     return;
   }
   showSub("viewPosts");
@@ -1936,8 +1936,8 @@ function reportStatusIconSvg(status) {
   return `<span class="report-status-icon belum" title="${REPORT_STATUS_LABELS.belum}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>`;
 }
 
-function renderReportsList() {
-  let reports = loadReports();
+async function renderReportsList() {
+  let reports = await loadReports();
   if (reportSearchQuery) {
     reports = reports.filter(
       (r) =>
@@ -1996,8 +1996,8 @@ function renderReportsList() {
 const viewReportModalBackdrop = document.getElementById("viewReportModalBackdrop");
 const viewReportModalBody = document.getElementById("viewReportModalBody");
 
-function openViewReportModal(id) {
-  const reports = loadReports();
+async function openViewReportModal(id) {
+  const reports = await loadReports();
   const r = reports.find((rep) => rep.id === id);
   if (!r) return;
 
@@ -2036,15 +2036,11 @@ function openViewReportModal(id) {
 }
 
 let currentViewingReportId = null;
-document.getElementById("btnUpdateReportStatus").addEventListener("click", function () {
+document.getElementById("btnUpdateReportStatus").addEventListener("click", async function () {
   if (!currentViewingReportId) return;
   const selected = document.querySelector('input[name="reportStatus"]:checked');
   if (!selected) return;
-  const reports = loadReports();
-  const idx = reports.findIndex((r) => r.id === currentViewingReportId);
-  if (idx === -1) return;
-  reports[idx].status = selected.value;
-  saveReports(reports);
+  await setReportStatus(currentViewingReportId, selected.value);
   viewReportModalBackdrop.classList.remove("show");
   renderReportsList();
   showToast("Status laporan diperbarui");
@@ -2060,8 +2056,8 @@ viewReportModalBackdrop.addEventListener("click", function (e) {
 function deleteReport(id) {
   openConfirmModal(
     "Hapus laporan ini? Laporan akan dipindahkan ke Recycle Bin dan bisa dipulihkan dalam 30 hari.",
-    function () {
-      trashReport(id);
+    async function () {
+      await trashReport(id);
       renderReportsList();
       showToast("Laporan dipindahkan ke Recycle Bin");
     },
@@ -2069,13 +2065,13 @@ function deleteReport(id) {
   );
 }
 
-document.getElementById("btnDeleteAllReports").addEventListener("click", function () {
-  const reports = loadReports();
+document.getElementById("btnDeleteAllReports").addEventListener("click", async function () {
+  const reports = await loadReports();
   if (reports.length === 0) return;
   openConfirmModal(
     "Yakin ingin hapus semua laporan? Laporan akan dipindahkan ke Recycle Bin dan bisa dipulihkan dalam 30 hari.",
-    function () {
-      reports.forEach((r) => trashReport(r.id));
+    async function () {
+      for (const r of reports) await trashReport(r.id);
       reportsPage = 1;
       renderReportsList();
       showToast("Semua laporan dipindahkan ke Recycle Bin");
@@ -2708,8 +2704,8 @@ let pendingRestoreData = null; // array post hasil parsing file yang dipilih
  * TETAP jalan seperti biasa — hanya tampilan tanggalnya yang dihilangkan. */
 function renderBackupDatesInfo() {}
 
-function updateBackupPostCount() {
-  const n = loadPosts().length;
+async function updateBackupPostCount() {
+  const n = (await loadPosts()).length;
   document.getElementById("backupPostCount").textContent =
     n === 0 ? "Belum ada postingan tersimpan." : `Saat ini ada ${n} postingan tersimpan.`;
 }
@@ -2731,8 +2727,8 @@ function setBackupStatus(msg, type) {
 }
 
 // ---------- Backup (download) ----------
-document.getElementById("btnDownloadBackup").addEventListener("click", function () {
-  const posts = loadPosts();
+document.getElementById("btnDownloadBackup").addEventListener("click", async function () {
+  const posts = await loadPosts();
   const payload = {
     app: "fueeru-game-backup",
     type: "posts",
@@ -2802,32 +2798,26 @@ restoreFileInput.addEventListener("change", function () {
 });
 
 // ---------- Restore (eksekusi) ----------
-btnRestoreBackup.addEventListener("click", function () {
+btnRestoreBackup.addEventListener("click", async function () {
   if (!pendingRestoreData) return;
   const mode = document.querySelector('input[name="restoreMode"]:checked').value;
   const incoming = pendingRestoreData;
 
+  const currentCount = (await loadPosts()).length;
   const message =
     mode === "replace"
-      ? `Semua postingan yang ada sekarang (${loadPosts().length}) akan DIHAPUS dan diganti dengan ${incoming.length} postingan dari file backup. Lanjutkan?`
+      ? `Semua postingan yang ada sekarang (${currentCount}) akan DIHAPUS dan diganti dengan ${incoming.length} postingan dari file backup. Lanjutkan?`
       : `${incoming.length} postingan dari file backup akan digabungkan dengan data yang ada (postingan dengan ID sama akan diperbarui). Lanjutkan?`;
 
   openConfirmModal(
     message,
-    function () {
-      let finalPosts;
-      if (mode === "replace") {
-        finalPosts = incoming.slice();
-      } else {
-        const existing = loadPosts();
-        const map = new Map(existing.map((p) => [p.id, p]));
-        incoming.forEach((p) => map.set(p.id, p));
-        finalPosts = Array.from(map.values());
-      }
-      savePosts(finalPosts);
+    async function () {
+      setBackupStatus("Memulihkan…", "");
+      await bulkSavePosts(incoming, mode === "replace");
+      const finalCount = (await loadPosts()).length;
       updateBackupPostCount();
       resetRestoreForm();
-      setBackupStatus(`Berhasil dipulihkan — total sekarang ${finalPosts.length} postingan.`, "success");
+      setBackupStatus(`Berhasil dipulihkan — total sekarang ${finalCount} postingan.`, "success");
       showToast("Data postingan berhasil dipulihkan");
     },
     { title: "Konfirmasi Restore", confirmLabel: mode === "replace" ? "Ya, Timpa Semua" : "Ya, Gabungkan" }
@@ -2862,8 +2852,8 @@ function setBackupPagesStatus(msg, type) {
 }
 
 // ---------- Backup (download) ----------
-document.getElementById("btnDownloadBackupPages").addEventListener("click", function () {
-  const pages = loadPages();
+document.getElementById("btnDownloadBackupPages").addEventListener("click", async function () {
+  const pages = await loadAllPages();
   const payload = {
     app: "fueeru-game-backup",
     type: "pages",
@@ -2916,7 +2906,7 @@ restoreFileInputPages.addEventListener("change", function () {
       }
       const cleaned = {};
       validKeys.forEach((id) => {
-        cleaned[id] = { title: pages[id].title || DEFAULT_PAGES[id].title, content: pages[id].content };
+        cleaned[id] = { title: pages[id].title || DEFAULT_PAGE_TITLES[id], content: pages[id].content };
       });
       pendingRestorePagesData = cleaned;
       btnRestoreBackupPages.disabled = false;
@@ -2934,7 +2924,7 @@ restoreFileInputPages.addEventListener("change", function () {
 });
 
 // ---------- Restore (eksekusi) ----------
-btnRestoreBackupPages.addEventListener("click", function () {
+btnRestoreBackupPages.addEventListener("click", async function () {
   if (!pendingRestorePagesData) return;
   const mode = document.querySelector('input[name="restoreModePages"]:checked').value;
   const incoming = pendingRestorePagesData;
@@ -2947,14 +2937,19 @@ btnRestoreBackupPages.addEventListener("click", function () {
 
   openConfirmModal(
     message,
-    function () {
-      let finalPages;
+    async function () {
+      setBackupPagesStatus("Memulihkan…", "");
       if (mode === "replace") {
-        finalPages = incoming;
+        const resetPages = {};
+        PAGE_IDS.forEach((id) => {
+          resetPages[id] = incoming[id] ? incoming[id].content : "";
+        });
+        await bulkSavePages(resetPages);
       } else {
-        finalPages = Object.assign({}, loadPages(), incoming);
+        const toSave = {};
+        Object.keys(incoming).forEach((id) => (toSave[id] = incoming[id].content));
+        await bulkSavePages(toSave);
       }
-      savePages(finalPages);
       resetRestorePagesForm();
       setBackupPagesStatus(`Berhasil dipulihkan — ${incomingCount} halaman diperbarui.`, "success");
       showToast("Isi Halaman berhasil dipulihkan");
@@ -2972,11 +2967,11 @@ function formatBytes(bytes) {
   return (bytes / (1024 * 1024)).toFixed(2) + " MB";
 }
 
-function renderInfoView() {
+async function renderInfoView() {
   const visitStats = getVisitStats();
-  const posts = loadPosts();
-  const reports = loadReports();
-  const viewStats = getPostViewStats();
+  const posts = await loadPosts();
+  const reports = await loadReports();
+  const viewStats = await getPostViewStats();
 
   document.getElementById("infoTotalVisits").textContent = visitStats.total;
   document.getElementById("infoVisitsThisWeek").textContent = visitStats.thisWeek;
@@ -2992,13 +2987,13 @@ function renderInfoView() {
   document.getElementById("infoViewsThisWeek").textContent = viewStats.thisWeek;
   document.getElementById("infoViewsLastWeek").textContent = viewStats.lastWeek;
 
-  document.getElementById("infoCurrentPassword").textContent = getAdminPassword();
+  document.getElementById("infoCurrentPassword").textContent = "••••••••";
   document.getElementById("newPasswordInput").value = "";
   document.getElementById("passwordStatus").textContent = "";
   document.getElementById("passwordStatus").className = "backup-status";
 }
 
-document.getElementById("btnSavePassword").addEventListener("click", function () {
+document.getElementById("btnSavePassword").addEventListener("click", async function () {
   const input = document.getElementById("newPasswordInput");
   const statusEl = document.getElementById("passwordStatus");
   const val = input.value.trim();
@@ -3007,8 +3002,14 @@ document.getElementById("btnSavePassword").addEventListener("click", function ()
     statusEl.className = "backup-status error";
     return;
   }
-  setAdminPassword(val);
-  document.getElementById("infoCurrentPassword").textContent = val;
+  statusEl.textContent = "Menyimpan…";
+  const ok = await setAdminPassword(val);
+  if (!ok) {
+    statusEl.textContent = "Gagal menyimpan kata sandi. Coba lagi.";
+    statusEl.className = "backup-status error";
+    return;
+  }
+  document.getElementById("infoCurrentPassword").textContent = "••••••••";
   input.value = "";
   statusEl.textContent = "Kata sandi admin berhasil diganti.";
   statusEl.className = "backup-status success";
@@ -3121,9 +3122,9 @@ document.getElementById("postViewsSort").addEventListener("change", function () 
   renderPostViewsModal();
 });
 
-function renderPostViewsModal() {
+async function renderPostViewsModal() {
   const sortMode = document.getElementById("postViewsSort").value;
-  let posts = loadPosts().map((p) => ({ ...p, _views: getViewsForPost(p.id) }));
+  let posts = (await loadPosts()).map((p) => ({ ...p, _views: getViewsForPost(p.id) }));
 
   posts.sort((a, b) => {
     if (sortMode === "views_desc") return b._views - a._views;
@@ -3175,9 +3176,9 @@ let trashSearchQuery = "";
 let trashSortMode = "az"; // az | za | newest | oldest
 let trashPage = 1;
 
-function renderRecycleBinCounts() {
-  document.getElementById("trashPostCount").textContent = loadTrashPosts().length;
-  document.getElementById("trashReportCount").textContent = loadTrashReports().length;
+async function renderRecycleBinCounts() {
+  document.getElementById("trashPostCount").textContent = (await loadTrashPosts()).length;
+  document.getElementById("trashReportCount").textContent = (await loadTrashReports()).length;
 }
 
 function openTrashList(type) {
@@ -3193,8 +3194,8 @@ function openTrashList(type) {
   renderTrashList();
 }
 
-function getFilteredTrash() {
-  const raw = trashViewType === "posts" ? loadTrashPosts() : loadTrashReports();
+async function getFilteredTrash() {
+  const raw = trashViewType === "posts" ? await loadTrashPosts() : await loadTrashReports();
   const q = trashSearchQuery.trim().toLowerCase();
   const filtered = q ? raw.filter((item) => (item.title || "").toLowerCase().includes(q)) : raw.slice();
   filtered.sort((a, b) => {
@@ -3206,13 +3207,13 @@ function getFilteredTrash() {
   return filtered;
 }
 
-function findTrashItem(id) {
-  const raw = trashViewType === "posts" ? loadTrashPosts() : loadTrashReports();
+async function findTrashItem(id) {
+  const raw = trashViewType === "posts" ? await loadTrashPosts() : await loadTrashReports();
   return raw.find((item) => item.id === id);
 }
 
-function renderTrashList() {
-  const filtered = getFilteredTrash();
+async function renderTrashList() {
+  const filtered = await getFilteredTrash();
   const list = document.getElementById("trashList");
 
   if (filtered.length === 0) {
@@ -3291,44 +3292,46 @@ document.getElementById("trashSortSelect").addEventListener("change", function (
 });
 
 function restoreTrashItem(id) {
-  const item = findTrashItem(id);
-  if (!item) return;
-  const label = trashViewType === "posts" ? "postingan" : "laporan";
-  openConfirmModal(
-    `Pulihkan "${item.title}"? Item akan dikembalikan ke daftar ${label} aktif.`,
-    function () {
-      restoreFromTrash(trashViewType, id);
-      renderTrashList();
-      renderRecycleBinCounts();
-      showToast("Berhasil dipulihkan");
-    },
-    { title: "Pulihkan", confirmLabel: "Ya, Pulihkan" }
-  );
+  findTrashItem(id).then((item) => {
+    if (!item) return;
+    const label = trashViewType === "posts" ? "postingan" : "laporan";
+    openConfirmModal(
+      `Pulihkan "${item.title}"? Item akan dikembalikan ke daftar ${label} aktif.`,
+      async function () {
+        await restoreFromTrash(trashViewType, id);
+        renderTrashList();
+        renderRecycleBinCounts();
+        showToast("Berhasil dipulihkan");
+      },
+      { title: "Pulihkan", confirmLabel: "Ya, Pulihkan" }
+    );
+  });
 }
 
 function deleteTrashItemPermanently(id) {
-  const item = findTrashItem(id);
-  if (!item) return;
-  openConfirmModal(
-    `Hapus permanen "${item.title}"? Tindakan ini TIDAK BISA dibatalkan.`,
-    function () {
-      permanentlyDeleteFromTrash(trashViewType, id);
-      renderTrashList();
-      renderRecycleBinCounts();
-      showToast("Item dihapus permanen");
-    },
-    { title: "Hapus Permanen", confirmLabel: "Ya, Hapus Permanen" }
-  );
+  findTrashItem(id).then((item) => {
+    if (!item) return;
+    openConfirmModal(
+      `Hapus permanen "${item.title}"? Tindakan ini TIDAK BISA dibatalkan.`,
+      async function () {
+        await permanentlyDeleteFromTrash(trashViewType, id);
+        renderTrashList();
+        renderRecycleBinCounts();
+        showToast("Item dihapus permanen");
+      },
+      { title: "Hapus Permanen", confirmLabel: "Ya, Hapus Permanen" }
+    );
+  });
 }
 
-document.getElementById("btnRestoreAllTrash").addEventListener("click", function () {
-  const filtered = getFilteredTrash();
+document.getElementById("btnRestoreAllTrash").addEventListener("click", async function () {
+  const filtered = await getFilteredTrash();
   if (filtered.length === 0) return;
   const label = trashViewType === "posts" ? "postingan" : "laporan";
   openConfirmModal(
     `Pulihkan semua (${filtered.length}) ${label} yang ditampilkan?`,
-    function () {
-      restoreAllFromTrash(
+    async function () {
+      await restoreAllFromTrash(
         trashViewType,
         filtered.map((i) => i.id)
       );
@@ -3341,14 +3344,14 @@ document.getElementById("btnRestoreAllTrash").addEventListener("click", function
   );
 });
 
-document.getElementById("btnDeleteAllTrash").addEventListener("click", function () {
-  const filtered = getFilteredTrash();
+document.getElementById("btnDeleteAllTrash").addEventListener("click", async function () {
+  const filtered = await getFilteredTrash();
   if (filtered.length === 0) return;
   const label = trashViewType === "posts" ? "postingan" : "laporan";
   openConfirmModal(
     `Hapus permanen semua (${filtered.length}) ${label} yang ditampilkan? Tindakan ini TIDAK BISA dibatalkan.`,
-    function () {
-      permanentlyDeleteAllFromTrash(
+    async function () {
+      await permanentlyDeleteAllFromTrash(
         trashViewType,
         filtered.map((i) => i.id)
       );
@@ -3363,8 +3366,8 @@ document.getElementById("btnDeleteAllTrash").addEventListener("click", function 
 
 // ---------- Modal: Preview item Recycle Bin ----------
 const trashPreviewModalBackdrop = document.getElementById("trashPreviewModalBackdrop");
-function openTrashPreview(id) {
-  const item = findTrashItem(id);
+async function openTrashPreview(id) {
+  const item = await findTrashItem(id);
   if (!item) return;
   const body = document.getElementById("trashPreviewBody");
   if (trashViewType === "posts") {
@@ -3410,10 +3413,10 @@ trashPreviewModalBackdrop.addEventListener("click", function (e) {
 // ---------- Modal: Detail item Recycle Bin ----------
 const trashDetailModalBackdrop = document.getElementById("trashDetailModalBackdrop");
 function openTrashDetail(id) {
-  const item = findTrashItem(id);
-  if (!item) return;
-  const body = document.getElementById("trashDetailBody");
-  body.innerHTML = `
+  findTrashItem(id).then((item) => {
+    if (!item) return;
+    const body = document.getElementById("trashDetailBody");
+    body.innerHTML = `
     <div class="vrb-row">
       <div class="vrb-label">Judul</div>
       <div class="vrb-value">${escapeHtmlAdmin(item.title || "(Tanpa judul)")}</div>
@@ -3423,7 +3426,8 @@ function openTrashDetail(id) {
       <div class="vrb-value">${escapeHtmlAdmin(formatReportDate(item.deletedAt))}</div>
     </div>
   `;
-  trashDetailModalBackdrop.classList.add("show");
+    trashDetailModalBackdrop.classList.add("show");
+  });
 }
 document.getElementById("btnCloseTrashDetail").addEventListener("click", function () {
   trashDetailModalBackdrop.classList.remove("show");

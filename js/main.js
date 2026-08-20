@@ -311,13 +311,13 @@ function initPWAInstallMenu() {
    Dipakai di semua halaman publik kecuali index & 404: berisi widget
    "Game Populer" (10 postingan), "Kategori" (platform/bahasa/jenis), dan
    "Rekomendasi Genre" (10 genre acak, grid 2 kolom). */
-function renderRightAside() {
+async function renderRightAside() {
   const aside = document.getElementById("rightAside");
   if (!aside) return;
 
   const populerEl = document.getElementById("asidePopuler");
   if (populerEl) {
-    const populer = getPopularPosts(10);
+    const populer = await getPopularPosts(10);
     populerEl.innerHTML = populer.length
       ? populer
           .map(
@@ -345,7 +345,7 @@ function renderRightAside() {
 
   const genreEl = document.getElementById("asideGenre");
   if (genreEl) {
-    const genres = getTopGenres(10);
+    const genres = await getTopGenres(10);
     genreEl.innerHTML = genres.length
       ? genres
           .map(

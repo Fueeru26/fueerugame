@@ -144,8 +144,11 @@
 <script src="../js/data.js"></script>
 <script src="../js/main.js"></script>
 <script>
-  document.getElementById("pageContentBody").innerHTML = getPageContent("cara-download").content;
+(async function () {
+  const pc = await getPageContent("cara-download");
+  document.getElementById("pageContentBody").innerHTML = pc.content;
   initSpoilers(document.getElementById("pageContentBody"));
+})();
 </script>
 
 </body>

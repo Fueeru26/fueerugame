@@ -141,17 +141,20 @@
 <script src="../js/data.js"></script>
 <script src="../js/main.js"></script>
 <script>
+(async function () {
   const params = new URLSearchParams(window.location.search);
   const platformParam = params.get("platform");
   const bahasaParam = params.get("bahasa");
   const jenisParam = params.get("jenis");
   const genreParam = params.get("genre");
   const catContent = document.getElementById("catContent");
-  const allPosts = getPublishedPosts();
+  const allPosts = await getPublishedPosts();
 
-  function renderOverview() {
+  async function renderOverview() {
     document.title = "Kategori — Fueeru Game";
-    const genres = getAllGenres();
+    const genres = await getAllGenres();
+    const genreCounts = {};
+    for (const g of genres) genreCounts[g] = await countPostsByGenre(g);
 
     catContent.innerHTML = `
       <div class="section-head"><h2>Platform</h2></div>
@@ -184,7 +187,7 @@
       genreListEl.innerHTML = `<p style="color:var(--ink-soft);font-size:.9rem;">Belum ada genre. Genre akan muncul otomatis begitu ada postingan yang memakainya.</p>`;
     } else {
       genreListEl.innerHTML = genres
-        .map((g) => `<a class="genre-tag" href="category.html?genre=${encodeURIComponent(g)}">${escapeHtml(g)} <span class="count">(${countPostsByGenre(g)})</span></a>`)
+        .map((g) => `<a class="genre-tag" href="category.html?genre=${encodeURIComponent(g)}">${escapeHtml(g)} <span class="count">(${genreCounts[g] || 0})</span></a>`)
         .join("");
     }
   }
@@ -221,6 +224,7 @@
   } else {
     renderOverview();
   }
+})();
 </script>
 
 </body>

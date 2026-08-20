@@ -141,9 +141,10 @@
 <script src="../js/data.js"></script>
 <script src="../js/main.js"></script>
 <script>
+(async function () {
   const params = new URLSearchParams(window.location.search);
   const postId = params.get("id");
-  const postRaw = postId ? getPostById(postId) : null;
+  const postRaw = postId ? await getPostById(postId) : null;
   // Postingan berstatus draft (belum dipublish) tidak boleh bisa diakses
   // langsung lewat URL di halaman publik.
   const post = postRaw && postRaw.published !== false ? postRaw : null;
@@ -187,7 +188,7 @@
     // ---------------- Postingan Terkait ----------------
     // Postingan lain dengan jenis yang sama & minimal 1 genre yang sama,
     // maksimal 6, diacak. Kalau tidak ada yang cocok, section tidak ditampilkan.
-    const related = getRelatedPosts(post, 6);
+    const related = await getRelatedPosts(post, 6);
     if (related.length > 0) {
       const relatedSection = document.createElement("section");
       relatedSection.setAttribute("aria-labelledby", "relatedHeading");
@@ -208,6 +209,7 @@
       initCarouselArrows("relatedTrack", "relatedPrev", "relatedNext");
     }
   }
+})();
 </script>
 
 </body>
