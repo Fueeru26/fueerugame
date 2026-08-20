@@ -10,7 +10,7 @@
    belakang layar.
    ========================================================= */
 
-const CACHE_NAME = "fueeru-game-cache-v2";
+const CACHE_NAME = "fueeru-game-cache-v3";
 
 const PRECACHE_URLS = [
   "./",
@@ -29,7 +29,9 @@ const PRECACHE_URLS = [
   "web/lapor.html",
   "web/search.html",
   "web/tentang.html",
-  "web/list.html"
+  "web/list.html",
+  "web/post.html",
+  "web/cara-download.html"
 ];
 
 self.addEventListener("install", (event) => {
@@ -60,7 +62,9 @@ self.addEventListener("fetch", (event) => {
   // sebenarnya tidak punya, tapi jaga-jaga) lewat apa adanya.
   if (req.method !== "GET") return;
   // Jangan cache Admin Panel — datanya harus selalu fresh dari sesi aktif.
-  if (req.url.indexOf("admin.html") !== -1) return;
+  // Cakup semua aset Admin Panel (admin.html, js/admin.js, css/admin.css,
+  // admin-manifest.json, ikon admin), bukan cuma admin.html saja.
+  if (req.url.indexOf("admin") !== -1) return;
 
   event.respondWith(
     caches.match(req).then((cached) => {

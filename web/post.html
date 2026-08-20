@@ -174,6 +174,8 @@
       <div class="post-detail-meta">
         <span><strong>Tanggal:</strong> ${escapeHtml(formatDate(post.date))}</span>
         <span class="pill">${escapeHtml(post.jenis)}</span>
+        ${(post.platform || []).map((t) => `<span class="pill">${escapeHtml(t)}</span>`).join("")}
+        ${post.bahasa ? `<span class="pill">${escapeHtml(post.bahasa)}</span>` : ""}
       </div>
       ${genres.length ? `<div class="genre-chip-row" style="margin-top:12px;">${genres.map((g) => `<span class="genre-chip">${escapeHtml(g)}</span>`).join("")}</div>` : ""}
     `;

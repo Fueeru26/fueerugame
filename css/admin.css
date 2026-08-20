@@ -965,6 +965,90 @@ body.admin-body {
   font-family: inherit;
 }
 
+/* ---------------- Custom Select: pengganti window pilihan bawaan browser ---------------- */
+.custom-select {
+  position: relative;
+  width: 100%;
+}
+.custom-select-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--sky-200);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: .92rem;
+  font-family: inherit;
+  font-weight: 600;
+  text-align: left;
+  transition: border-color .18s ease;
+}
+.custom-select-btn:hover,
+.custom-select-btn.open { border-color: var(--sky-500); }
+.custom-select-btn svg { flex: 0 0 auto; color: var(--sky-500); transition: transform .18s ease; }
+.custom-select-btn.open svg { transform: rotate(180deg); }
+.custom-select-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.custom-select-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  background: var(--surface);
+  border: 1.5px solid var(--sky-200);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-card);
+  z-index: 30;
+  max-height: 260px;
+  overflow-y: auto;
+  display: none;
+}
+.custom-select-menu.show { display: block; }
+.custom-select-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.custom-select-menu button:hover { background: var(--sky-50); }
+.custom-select-menu button.selected { color: var(--sky-700); background: var(--sky-50); font-weight: 800; }
+
+/* Dropdown sorting (file manager/recycle bin/views) dipakai di dalam
+   toolbar flex, jadi wrapper-nya perlu ukuran fleksibel yang sama
+   seperti <select> aslinya dulu. Dropdown Platform/Bahasa/Jenis di form
+   memakai lebar penuh (default block) jadi tidak perlu override. */
+.custom-select[data-for="fileSortSelect"] { flex: 1 1 160px; }
+.custom-select[data-for="trashSortSelect"] { margin-top: 14px; }
+.custom-select[data-for="postViewsSort"] { margin-bottom: 14px; }
+
+/* <select> asli dibiarkan tetap ada di DOM (bukan display:none) supaya
+   tetap valid untuk pembacaan/penulisan nilai & validasi form — cuma
+   disembunyikan dari tampilan. */
+.native-select-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .vfs-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1358,7 +1442,7 @@ body.admin-body {
   flex-direction: column;
   max-height: 82vh;
 }
-.post-views-modal #postViewsSort { flex: 0 0 auto; }
+.post-views-modal .custom-select[data-for="postViewsSort"] { flex: 0 0 auto; }
 .post-views-modal .pagination { flex: 0 0 auto; }
 .post-views-modal .modal-actions { flex: 0 0 auto; }
 .post-views-list {

@@ -118,6 +118,15 @@ loginWarningModalBackdrop.addEventListener("click", function (e) {
   if (e.target === loginWarningModalBackdrop) closeLoginWarning();
 });
 
+// ---------- Modal: Info Instalasi PWA (pengganti alert() bawaan browser) ----------
+const installInfoModalBackdrop = document.getElementById("installInfoModalBackdrop");
+document.getElementById("btnCloseInstallInfo").addEventListener("click", function () {
+  installInfoModalBackdrop.classList.remove("show");
+});
+installInfoModalBackdrop.addEventListener("click", function (e) {
+  if (e.target === installInfoModalBackdrop) installInfoModalBackdrop.classList.remove("show");
+});
+
 document.getElementById("btnLogout").addEventListener("click", function () {
   if (!isLoggedIn()) {
     requireLoginAlert();
@@ -603,6 +612,109 @@ function populateJenisSelect() {
   fieldJenis.innerHTML = JENIS_LIST.map((j) => `<option value="${j}">${j}</option>`).join("");
 }
 
+/* =========================================================
+   Custom Select — pengganti window pilihan bawaan browser/OS
+   untuk semua elemen <select> di Admin Panel (Platform, Bahasa,
+   Jenis Game, dan semua opsi sorting). Elemen <select> aslinya
+   tetap ada di DOM (cuma disembunyikan secara visual) sebagai
+   penyimpan nilai sebenarnya, supaya kode lain yang membaca/
+   menulis `.value`-nya tidak perlu diubah — tombol & menu custom
+   di atasnya cuma tampilan pengganti window bawaan browser.
+   ========================================================= */
+const customSelectRegistry = {};
+
+function buildCustomSelect(select) {
+  const wrap = document.createElement("div");
+  wrap.className = "custom-select";
+  wrap.setAttribute("data-for", select.id);
+
+  select.parentNode.insertBefore(wrap, select);
+  select.classList.add("native-select-hidden");
+  select.setAttribute("tabindex", "-1");
+  select.setAttribute("aria-hidden", "true");
+  wrap.appendChild(select);
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "custom-select-btn";
+  btn.innerHTML =
+    '<span class="custom-select-label"></span>' +
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+  wrap.appendChild(btn);
+
+  const menu = document.createElement("div");
+  menu.className = "custom-select-menu";
+  wrap.appendChild(menu);
+
+  const labelEl = btn.querySelector(".custom-select-label");
+
+  function closeMenu() {
+    menu.classList.remove("show");
+    btn.classList.remove("open");
+  }
+  function renderOptions() {
+    menu.innerHTML = Array.from(select.options)
+      .map(function (o) {
+        return (
+          '<button type="button" data-value="' +
+          escapeHtmlAdmin(o.value) +
+          '" class="' +
+          (o.value === select.value ? "selected" : "") +
+          '">' +
+          escapeHtmlAdmin(o.textContent) +
+          "</button>"
+        );
+      })
+      .join("");
+  }
+  function syncLabel() {
+    const opt = select.options[select.selectedIndex];
+    labelEl.textContent = opt ? opt.textContent : "";
+  }
+
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    const isOpen = menu.classList.contains("show");
+    document.querySelectorAll(".custom-select-menu.show").forEach(function (m) {
+      m.classList.remove("show");
+      if (m.previousElementSibling) m.previousElementSibling.classList.remove("open");
+    });
+    if (!isOpen) {
+      renderOptions();
+      menu.classList.add("show");
+      btn.classList.add("open");
+    }
+  });
+  menu.addEventListener("click", function (e) {
+    const optBtn = e.target.closest("button[data-value]");
+    if (!optBtn) return;
+    select.value = optBtn.getAttribute("data-value");
+    syncLabel();
+    closeMenu();
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  document.addEventListener("click", closeMenu);
+
+  syncLabel();
+  customSelectRegistry[select.id] = { syncLabel: syncLabel };
+}
+
+/** Sinkronkan label tombol custom select dengan nilai <select> aslinya —
+ * dipanggil setiap kali kode mengubah `.value` select secara terprogram
+ * (bukan lewat klik user di menu custom). */
+function refreshCustomSelect(select) {
+  if (!select) return;
+  const entry = customSelectRegistry[select.id];
+  if (entry) entry.syncLabel();
+}
+
+["fieldPlatform", "fieldBahasa", "fieldJenis", "fileSortSelect", "trashSortSelect", "postViewsSort"].forEach(
+  function (id) {
+    const el = document.getElementById(id);
+    if (el) buildCustomSelect(el);
+  }
+);
+
 // ---------- Genre tag input ----------
 const genreInputField = document.getElementById("genreInputField");
 const genreSuggestions = document.getElementById("genreSuggestions");
@@ -705,10 +817,13 @@ function resetForm() {
   uploadLabel.textContent = "Klik untuk upload gambar header";
   populatePlatformSelect();
   fieldPlatform.value = PLATFORM_OPTIONS[0];
+  refreshCustomSelect(fieldPlatform);
   populateBahasaSelect();
   fieldBahasa.value = BAHASA_LIST[0];
+  refreshCustomSelect(fieldBahasa);
   populateJenisSelect();
   fieldJenis.value = JENIS_LIST[0];
+  refreshCustomSelect(fieldJenis);
   currentGenres = [];
   renderGenreChips();
   genreInputField.value = "";
@@ -741,10 +856,13 @@ function openEditForm(id) {
   fieldTitle.value = post.title;
   populatePlatformSelect();
   fieldPlatform.value = platformTagsToOption(post.platform);
+  refreshCustomSelect(fieldPlatform);
   populateBahasaSelect();
   fieldBahasa.value = post.bahasa || BAHASA_LIST[0];
+  refreshCustomSelect(fieldBahasa);
   populateJenisSelect();
   fieldJenis.value = post.jenis;
+  refreshCustomSelect(fieldJenis);
   currentGenres = (post.genres || []).slice();
   renderGenreChips();
   editorContent.innerHTML = post.content;
@@ -2951,6 +3069,13 @@ function renderNotifModal() {
 }
 
 document.getElementById("btnNotifications").addEventListener("click", function () {
+  // Tombol lonceng menampilkan window peringatan "belum login" kalau
+  // belum login — berlaku di semua ukuran layar (mobile & desktop),
+  // bukan langsung membuka window Notifikasi.
+  if (!isLoggedIn()) {
+    requireLoginAlert();
+    return;
+  }
   notifPage = 1;
   renderNotifModal();
   notifModalBackdrop.classList.add("show");
@@ -3062,6 +3187,7 @@ function openTrashList(type) {
   trashPage = 1;
   document.getElementById("trashSearchInput").value = "";
   document.getElementById("trashSortSelect").value = "az";
+  refreshCustomSelect(document.getElementById("trashSortSelect"));
   document.getElementById("recycleBinListHeading").textContent = type === "posts" ? "Postingan" : "Laporan";
   showSub("viewRecycleBinList");
   renderTrashList();
@@ -3351,11 +3477,7 @@ window.addEventListener("appinstalled", function () {
         }
         deferredAdminInstallPrompt = null;
       } else {
-        alert(
-          "Browser ini belum menawarkan instalasi otomatis (atau Admin Panel sudah terpasang).\n\n" +
-            "Di iPhone/iPad: buka menu Share lalu pilih \"Tambah ke Layar Utama\".\n" +
-            "Di HP/PC lain: cari ikon Install di address bar browser."
-        );
+        document.getElementById("installInfoModalBackdrop").classList.add("show");
       }
     });
   }
