@@ -309,25 +309,22 @@ function initPWAInstallMenu() {
 
 /* ---------------- Navigasi bar kanan (tampilan desktop) ----------------
    Dipakai di semua halaman publik kecuali index & 404: berisi widget
-   "Game Populer" (5 postingan), "Kategori" (platform/bahasa/jenis), dan
-   "Rekomendasi Genre" (10 genre terbanyak, grid 2 kolom). */
+   "Game Populer" (10 postingan), "Kategori" (platform/bahasa/jenis), dan
+   "Rekomendasi Genre" (10 genre acak, grid 2 kolom). */
 function renderRightAside() {
   const aside = document.getElementById("rightAside");
   if (!aside) return;
 
   const populerEl = document.getElementById("asidePopuler");
   if (populerEl) {
-    const populer = getPopularPosts(5);
+    const populer = getPopularPosts(10);
     populerEl.innerHTML = populer.length
       ? populer
           .map(
             (p) => `
         <a class="aside-populer-item" href="${siteBase()}post.html?id=${encodeURIComponent(p.id)}">
           <img class="thumb" src="${resolveAsset(p.thumbnail)}" alt="Thumbnail ${escapeHtml(p.title)}" loading="lazy" ${thumbFallbackAttr()}>
-          <div class="ap-body">
-            <div class="ap-title">${escapeHtml(p.title)}</div>
-            <div class="ap-meta"><span>${escapeHtml(formatDate(p.date))}</span><span class="pill">${escapeHtml(p.jenis)}</span></div>
-          </div>
+          <div class="ap-title">${escapeHtml(p.title)}</div>
         </a>`
           )
           .join("")

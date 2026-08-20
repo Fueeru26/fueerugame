@@ -1215,27 +1215,18 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   background: var(--sky-100);
   border: 1px solid var(--card-border-color);
 }
-.aside-populer-item .ap-body { min-width: 0; }
 .aside-populer-item .ap-title {
+  flex: 1 1 auto;
+  min-width: 0;
   font-weight: 700;
   font-size: .85rem;
   color: var(--ink);
-  line-height: 1.3;
-  margin-bottom: 4px;
+  line-height: 1.35;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.aside-populer-item .ap-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  font-size: .72rem;
-  color: var(--ink-soft);
-}
-.aside-populer-item .ap-meta .pill { padding: 2px 8px; font-size: .68rem; }
 
 .aside-kategori { display: flex; flex-direction: column; gap: 8px; }
 .aside-kategori a {
@@ -1288,7 +1279,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
     gap: 34px;
     align-items: start;
   }
-  .right-aside { display: flex; flex-direction: column; }
+  .right-aside { display: flex; flex-direction: column; padding-top: 28px; }
 
   .post-list.post-grid {
     display: grid;

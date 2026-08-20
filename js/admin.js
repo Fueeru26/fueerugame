@@ -106,9 +106,17 @@ function confirmLogout() {
 }
 /** Pesan yang tampil saat mengklik navigasi bar kiri (tampilan desktop)
  * padahal belum login. */
+const loginWarningModalBackdrop = document.getElementById("loginWarningModalBackdrop");
 function requireLoginAlert() {
-  alert("Kamu belum login, silahkan login terlebih dahulu");
+  loginWarningModalBackdrop.classList.add("show");
 }
+function closeLoginWarning() {
+  loginWarningModalBackdrop.classList.remove("show");
+}
+document.getElementById("btnCloseLoginWarning").addEventListener("click", closeLoginWarning);
+loginWarningModalBackdrop.addEventListener("click", function (e) {
+  if (e.target === loginWarningModalBackdrop) closeLoginWarning();
+});
 
 document.getElementById("btnLogout").addEventListener("click", function () {
   if (!isLoggedIn()) {
