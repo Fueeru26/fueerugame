@@ -51,6 +51,14 @@ CREATE TABLE IF NOT EXISTS settings (
   value TEXT
 );
 
+CREATE TABLE IF NOT EXISTS otp_codes (
+  id TEXT PRIMARY KEY,
+  code TEXT NOT NULL,
+  expiresAt TEXT NOT NULL,
+  used INTEGER NOT NULL DEFAULT 0,
+  createdAt TEXT NOT NULL
+);
+
 -- Password admin default: admin123 (ganti lewat Admin Panel setelah deploy pertama)
 INSERT OR IGNORE INTO settings (key, value) VALUES ('admin_password', 'admin123');
 

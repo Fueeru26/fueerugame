@@ -127,21 +127,34 @@
   </div>
 </section>
 
-<!-- ===== VIEW: Recovery Password ===== -->
+<!-- ===== VIEW: Recovery Password (OTP via email) ===== -->
 <section id="viewRecovery" class="admin-login-wrap hidden">
   <div class="admin-login-card">
     <img src="webpictures/logo.webp" alt="Logo Fueeru Game">
-    <h1>Recovery Password</h1>
-    <p class="sub">Masukkan kata sandi darurat dan kata sandi baru untuk memulihkan kata sandi</p>
-    <form id="recoveryForm">
-      <input type="password" id="emergencyPasswordInput" placeholder="Kata sandi darurat" autocomplete="off" required>
+    <h1>Lupa Kata Sandi</h1>
+
+    <!-- Langkah 1: minta kode OTP dikirim ke email admin -->
+    <div id="otpStep1">
+      <p class="sub">Masukkan salah satu email admin yang terdaftar untuk menerima kode verifikasi.</p>
+      <input type="email" id="otpEmailInput" placeholder="Email admin" autocomplete="off" required>
+      <button type="button" id="btnRequestOtp" class="btn-primary" style="margin-top:12px;">Kirim Kode ke Email</button>
+      <div class="admin-error" id="otpRequestMsg"></div>
+    </div>
+
+    <!-- Langkah 2: masukkan kode + password baru -->
+    <form id="recoveryForm" class="hidden">
+      <p class="sub">Masukkan kode yang dikirim ke email, dan kata sandi baru.</p>
+      <input type="text" id="otpCodeInput" placeholder="Kode OTP (6 digit)" autocomplete="off" inputmode="numeric" maxlength="6" required>
       <input type="password" id="newPasswordRecoveryInput" placeholder="Kata sandi baru" autocomplete="off" required style="margin-top:12px;">
-      <button type="submit" class="btn-primary" style="margin-top:16px;">Masuk dan ubah kata sandi</button>
+      <button type="submit" class="btn-primary" style="margin-top:16px;">Verifikasi dan Ubah Kata Sandi</button>
       <div class="admin-error" id="recoveryError"></div>
-      <a href="#" id="btnBackToLogin" class="forgot-password-link" style="display:block;text-align:center;margin-top:14px;">← Kembali ke halaman masuk</a>
+      <a href="#" id="btnResendOtp" class="forgot-password-link" style="display:block;text-align:center;margin-top:10px;">Kirim ulang kode</a>
     </form>
+
+    <a href="#" id="btnBackToLogin" class="forgot-password-link" style="display:block;text-align:center;margin-top:14px;">← Kembali ke halaman masuk</a>
   </div>
 </section>
+
 
 <!-- ===== Admin shell (setelah login) ===== -->
 <div id="adminShell" class="hidden">

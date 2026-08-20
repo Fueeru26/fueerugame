@@ -1,13 +1,12 @@
 /* =========================================================
    Fueeru Game — Admin Panel logic
    Kata sandi (sementara): admin123
-   Kata sandi darurat (recovery, hardcode): GINTAMA12345
+   Recovery: kode OTP dikirim ke email admin
    ========================================================= */
 
 const SESSION_KEY = "fueeru_admin_session";
 const REMEMBER_KEY = "fueeru_admin_remember";
 const PAGE_SIZE = 10;
-const EMERGENCY_PASSWORD = "GINTAMA12345";
 
 let editingId = null; // null = mode tambah, string = mode edit
 let currentGenres = []; // genre yang sedang dipilih di form
@@ -64,11 +63,15 @@ document.getElementById("loginForm").addEventListener("submit", async function (
   }
 });
 
-// ---------- Recovery Password ----------
+// ---------- Recovery Password (OTP via email) ----------
 document.getElementById("btnForgotPassword").addEventListener("click", function (e) {
   e.preventDefault();
+  document.getElementById("otpStep1").classList.remove("hidden");
+  document.getElementById("recoveryForm").classList.add("hidden");
   document.getElementById("recoveryForm").reset();
+  document.getElementById("otpEmailInput").value = "";
   document.getElementById("recoveryError").textContent = "";
+  document.getElementById("otpRequestMsg").textContent = "";
   viewLogin.classList.add("hidden");
   viewRecovery.classList.remove("hidden");
 });
@@ -77,9 +80,36 @@ document.getElementById("btnBackToLogin").addEventListener("click", function (e)
   viewRecovery.classList.add("hidden");
   viewLogin.classList.remove("hidden");
 });
+
+async function sendOtp(msgEl) {
+  const email = document.getElementById("otpEmailInput").value.trim();
+  if (!email) {
+    msgEl.textContent = "Masukkan email admin terlebih dahulu.";
+    return;
+  }
+  msgEl.textContent = "Mengirim kode…";
+  try {
+    await requestPasswordResetOtp(email);
+    msgEl.textContent = "";
+    document.getElementById("otpStep1").classList.add("hidden");
+    document.getElementById("recoveryForm").classList.remove("hidden");
+    document.getElementById("recoveryError").textContent = "Kode terkirim ke " + email + ". Cek inbox (atau folder spam).";
+  } catch (e) {
+    msgEl.textContent = e.message || "Gagal mengirim kode. Coba lagi.";
+  }
+}
+
+document.getElementById("btnRequestOtp").addEventListener("click", function () {
+  sendOtp(document.getElementById("otpRequestMsg"));
+});
+document.getElementById("btnResendOtp").addEventListener("click", function (e) {
+  e.preventDefault();
+  sendOtp(document.getElementById("recoveryError"));
+});
+
 document.getElementById("recoveryForm").addEventListener("submit", async function (e) {
   e.preventDefault();
-  const emergencyVal = document.getElementById("emergencyPasswordInput").value;
+  const codeVal = document.getElementById("otpCodeInput").value.trim();
   const newVal = document.getElementById("newPasswordRecoveryInput").value;
   const errorEl = document.getElementById("recoveryError");
 
@@ -88,16 +118,16 @@ document.getElementById("recoveryForm").addEventListener("submit", async functio
     return;
   }
   errorEl.textContent = "Memproses…";
-  const ok = await recoverAdminPassword(emergencyVal, newVal.trim());
-  if (!ok) {
-    errorEl.textContent = "Kata sandi darurat salah.";
-    return;
+  try {
+    await verifyOtpAndResetPassword(codeVal, newVal.trim());
+    setAdminSessionPassword(newVal.trim());
+    errorEl.textContent = "";
+    viewRecovery.classList.add("hidden");
+    doLogin();
+    showToast("Kata sandi berhasil diubah");
+  } catch (e) {
+    errorEl.textContent = e.message || "Kode OTP salah atau sudah kedaluwarsa.";
   }
-  setAdminSessionPassword(newVal.trim());
-  errorEl.textContent = "";
-  viewRecovery.classList.add("hidden");
-  doLogin();
-  showToast("Kata sandi berhasil diubah");
 });
 
 /** Tampilkan window peringatan konfirmasi keluar dari Admin Panel. Dipakai

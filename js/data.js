@@ -427,14 +427,14 @@ async function setAdminPassword(newPassword) {
   }
 }
 
-/** [PUBLIK] Reset password lewat kata sandi darurat (lupa password). */
-async function recoverAdminPassword(emergencyPassword, newPassword) {
-  try {
-    await apiCall("PATCH", "/api/auth", { emergencyPassword, newPassword }, false);
-    return true;
-  } catch (e) {
-    return false;
-  }
+/** [PUBLIK] Minta kode OTP dikirim ke salah satu email admin yang terdaftar. */
+async function requestPasswordResetOtp(email) {
+  await apiCall("POST", "/api/auth/otp/request", { email }, false);
+}
+
+/** [PUBLIK] Verifikasi kode OTP dan set password baru. */
+async function verifyOtpAndResetPassword(code, newPassword) {
+  await apiCall("POST", "/api/auth/otp/verify", { code, newPassword }, false);
 }
 
 // =========================================================

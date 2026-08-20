@@ -330,6 +330,99 @@ async function handleAuth(request, env, method) {
   return badRequest("Method tidak didukung");
 }
 
+async function sendOtpEmail(env, toEmail, code) {
+  const res = await fetch("https://api.mailersend.com/v1/email", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: "Bearer " + env.MAILERSEND_API_TOKEN
+    },
+    body: JSON.stringify({
+      from: { email: env.MAIL_FROM, name: "Fueeru Game" },
+      to: [{ email: toEmail }],
+      subject: "Kode OTP Reset Kata Sandi Admin",
+      text:
+        "Kode OTP kamu: " +
+        code +
+        "\n\nKode ini berlaku 5 menit. Jangan bagikan kode ini ke siapa pun.\n\nKalau kamu tidak meminta ini, abaikan email ini."
+    })
+  });
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    throw new Error("Gagal kirim email: " + res.status + " " + t.slice(0, 200));
+  }
+}
+
+async function handleOtpRequest(request, env, method) {
+  if (method !== "POST") return badRequest("Method tidak didukung");
+  const body = await request.json().catch(() => null);
+  const emailInput = (body && body.email ? String(body.email) : "").trim().toLowerCase();
+  if (!emailInput) return badRequest("Email belum diisi.");
+
+  const registeredEmails = env.ADMIN_EMAIL.split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  if (!registeredEmails.includes(emailInput)) {
+    return json({ error: "Email tidak terdaftar sebagai admin." }, 403);
+  }
+
+  // Rate limit: minimal 60 detik antar permintaan OTP.
+  const lastRow = await env.DB.prepare("SELECT value FROM settings WHERE key = 'last_otp_sent_at'").first();
+  if (lastRow) {
+    const elapsed = Date.now() - new Date(lastRow.value).getTime();
+    if (elapsed < 60000) {
+      return json({ error: "Tunggu sebentar sebelum minta kode lagi." }, 429);
+    }
+  }
+
+  const code = String(Math.floor(100000 + Math.random() * 900000));
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+  const now = new Date().toISOString();
+
+  try {
+    await sendOtpEmail(env, emailInput, code);
+  } catch (e) {
+    return json({ error: e.message }, 500);
+  }
+
+  await env.DB.prepare("INSERT INTO otp_codes (id, code, expiresAt, used, createdAt) VALUES (?, ?, ?, 0, ?)")
+    .bind(newId("otp"), code, expiresAt, now)
+    .run();
+  await env.DB.prepare(
+    "INSERT INTO settings (key, value) VALUES ('last_otp_sent_at', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+  )
+    .bind(now)
+    .run();
+
+  return json({ ok: true });
+}
+
+async function handleOtpVerify(request, env, method) {
+  if (method !== "POST") return badRequest("Method tidak didukung");
+  const body = await request.json().catch(() => null);
+  if (!body || !body.code || !body.newPassword) return badRequest("Data tidak lengkap");
+
+  const row = await env.DB.prepare(
+    "SELECT * FROM otp_codes WHERE code = ? AND used = 0 ORDER BY createdAt DESC LIMIT 1"
+  )
+    .bind(String(body.code).trim())
+    .first();
+
+  if (!row) return json({ error: "Kode OTP salah." }, 401);
+  if (new Date(row.expiresAt).getTime() < Date.now()) {
+    return json({ error: "Kode OTP sudah kedaluwarsa. Minta kode baru." }, 401);
+  }
+
+  await env.DB.prepare("UPDATE otp_codes SET used = 1 WHERE id = ?").bind(row.id).run();
+  await env.DB.prepare(
+    "INSERT INTO settings (key, value) VALUES ('admin_password', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+  )
+    .bind(body.newPassword)
+    .run();
+
+  return json({ ok: true });
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -357,6 +450,9 @@ export default {
       if (m) return await handleTrashItem(request, env, method, m[1], decodeURIComponent(m[2]));
 
       if (path === "/api/auth") return await handleAuth(request, env, method);
+
+      if (path === "/api/auth/otp/request") return await handleOtpRequest(request, env, method);
+      if (path === "/api/auth/otp/verify") return await handleOtpVerify(request, env, method);
 
       if (path.startsWith("/api/")) return json({ error: "Endpoint tidak ditemukan" }, 404);
 
