@@ -630,9 +630,17 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4H18a1 1 0 011 1v15l-2.5-1.5L14 20l-2.5-1.5L9 20l-2.5-1.5L4 20V6.5A2.5 2.5 0 016.5 4z"/><line x1="8" y1="8" x2="14" y2="8"/><line x1="8" y1="11.5" x2="14" y2="11.5"/><line x1="8" y1="15" x2="12" y2="15"/></svg>
           <span>Halaman</span>
         </button>
+        <button type="button" class="recycle-folder-btn" id="btnOpenBackupWebsite">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Website</span>
+        </button>
+        <button type="button" class="recycle-folder-btn" id="btnOpenDeployWebsite">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 9v6a2 2 0 01-2 2H5a2 2 0 01-2-2V9"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span>Deploy</span>
+        </button>
       </div>
 
-      <p class="backup-desc" style="margin-top:20px;">Pilih ingin membackup data Postingan atau Halaman, File Backup Data akan berupa file <code>json</code>, Untuk berjaga-jaga, jangan lupa untuk selalu membackup data!</p>
+      <p class="backup-desc" style="margin-top:20px;">Pilih ingin membackup data <strong>Postingan</strong> atau <strong>Halaman</strong> (file <code>.json</code>) — jangan lupa selalu backup data secara berkala! <strong>Website</strong> untuk mengunduh salinan lengkap seluruh file &amp; folder situs (jaga-jaga kalau kehilangan akses ke HP/penyimpanan), dan <strong>Deploy</strong> untuk mengunggah perubahan situs langsung dari sini tanpa perlu Termux.</p>
       <p class="backup-desc">Kamu akan mendapatkan pemberitahuan pengingat jika tidak melakukan backup selama seminggu.</p>
     </div>
 
@@ -716,6 +724,52 @@
 
         <button type="button" class="btn-primary" id="btnRestoreBackupPages" disabled>Pulihkan dari File</button>
         <div class="backup-status" id="backupStatusPages"></div>
+      </div>
+    </div>
+
+    <!-- ===== VIEW: Backup & Restore — Website (zip lengkap) ===== -->
+    <div id="viewBackupWebsite" class="admin-panel-card hidden">
+      <div class="admin-subheader">
+        <button type="button" class="btn-back-mini" id="btnBackFromBackupWebsite">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1>Backup Website</h1>
+      </div>
+
+      <div class="backup-section">
+        <div class="subsection-title" style="margin-top:4px;">Backup (Unduh)</div>
+        <p class="backup-desc">Unduh salinan lengkap seluruh file &amp; folder situs (kode, gambar, semua yang ada di repo) sebagai satu file <code>.zip</code>. Berguna sebagai cadangan darurat kalau HP atau penyimpanan kamu suatu saat hilang/rusak.</p>
+        <p class="backup-desc"><strong>Catatan:</strong> ini berbeda dari Backup Postingan/Halaman — file ini adalah salinan kode & aset situs, bukan data database.</p>
+        <button type="button" class="btn-primary" id="btnDownloadBackupWebsite">Unduh Backup Website (.zip)</button>
+        <div class="backup-status" id="backupWebsiteStatus"></div>
+      </div>
+    </div>
+
+    <!-- ===== VIEW: Deploy Website ===== -->
+    <div id="viewDeployWebsite" class="admin-panel-card hidden">
+      <div class="admin-subheader">
+        <button type="button" class="btn-back-mini" id="btnBackFromDeployWebsite">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1>Deploy Website</h1>
+      </div>
+
+      <div class="backup-section">
+        <div class="subsection-title" style="margin-top:4px;">Unggah &amp; Deploy</div>
+        <p class="backup-desc">Pilih file <code>.zip</code> berisi seluruh isi folder situs kamu untuk langsung mengunggah &amp; men-deploy perubahan — tanpa perlu Termux. File dengan nama sama akan <strong>ditimpa</strong>, dan file yang tidak ada di dalam zip akan <strong>dihapus</strong> dari situs live (zip dianggap sebagai kondisi lengkap terbaru).</p>
+
+        <label class="backup-file-label" for="deployFileInput">
+          <input type="file" id="deployFileInput" accept=".zip,application/zip" hidden>
+          <span id="deployFileName">Belum ada file dipilih</span>
+          <span class="btn-secondary">Pilih File .zip</span>
+        </label>
+
+        <button type="button" class="btn-primary" id="btnStartDeploy" disabled>Deploy Website</button>
+        <div class="backup-status" id="deployStatus"></div>
+        <div id="deployProgressWrap" class="hidden" style="margin-top:12px;">
+          <div class="deploy-progress-bar-bg"><div class="deploy-progress-bar-fill" id="deployProgressFill"></div></div>
+          <p class="backup-desc" id="deployProgressText" style="margin-top:6px;"></p>
+        </div>
       </div>
     </div>
 
@@ -1096,6 +1150,7 @@
 
 <script src="js/data.js?v=20260821"></script>
 <script src="js/vfs.js?v=20260821"></script>
+<script src="js/ziputil.js?v=20260821"></script>
 <script src="js/admin.js?v=20260821"></script>
 </body>
 </html>

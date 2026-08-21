@@ -220,6 +220,8 @@ const SUB_VIEWS = [
   "viewBackup",
   "viewBackupPosts",
   "viewBackupPages",
+  "viewBackupWebsite",
+  "viewDeployWebsite",
   "viewInfo",
   "viewRecycleBin",
   "viewRecycleBinList"
@@ -356,6 +358,21 @@ document.getElementById("btnBackFromBackupPosts").addEventListener("click", () =
   showSub("viewBackup");
 });
 document.getElementById("btnBackFromBackupPages").addEventListener("click", () => {
+  renderBackupDatesInfo();
+  showSub("viewBackup");
+});
+document.getElementById("btnOpenBackupWebsite").addEventListener("click", () => {
+  showSub("viewBackupWebsite");
+});
+document.getElementById("btnBackFromBackupWebsite").addEventListener("click", () => {
+  renderBackupDatesInfo();
+  showSub("viewBackup");
+});
+document.getElementById("btnOpenDeployWebsite").addEventListener("click", () => {
+  resetDeployForm();
+  showSub("viewDeployWebsite");
+});
+document.getElementById("btnBackFromDeployWebsite").addEventListener("click", () => {
   renderBackupDatesInfo();
   showSub("viewBackup");
 });
@@ -3004,6 +3021,152 @@ btnRestoreBackupPages.addEventListener("click", async function () {
     { title: "Konfirmasi Restore", confirmLabel: mode === "replace" ? "Ya, Timpa Semua" : "Ya, Gabungkan" }
   );
 });
+
+// =========================================================
+// Backup Website (unduh zip lengkap repo)
+// =========================================================
+function setBackupWebsiteStatus(msg, cls) {
+  const el = document.getElementById("backupWebsiteStatus");
+  el.textContent = msg;
+  el.className = "backup-status" + (cls ? " " + cls : "");
+}
+
+document.getElementById("btnDownloadBackupWebsite").addEventListener("click", async function () {
+  const btn = this;
+  btn.disabled = true;
+  setBackupWebsiteStatus("Menyiapkan file zip… (bisa makan waktu beberapa detik)", "");
+  try {
+    const res = await fetch("/api/backup-website", {
+      headers: { "x-admin-password": getAdminSessionPassword() }
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || "Gagal membuat backup (" + res.status + ")");
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "fueerugame-backup-" + new Date().toISOString().slice(0, 10) + ".zip";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    setBackupWebsiteStatus("Backup berhasil diunduh.", "success");
+  } catch (e) {
+    setBackupWebsiteStatus(e.message || "Gagal membuat backup.", "error");
+  }
+  btn.disabled = false;
+});
+
+// =========================================================
+// Deploy Website (upload .zip -> commit ke GitHub -> auto-deploy)
+// =========================================================
+let deployZipEntries = null; // hasil parse zip: [{ path, bytes }]
+const DEPLOY_BATCH_SIZE = 35; // jaga di bawah limit 50 subrequest/permintaan Worker
+
+function resetDeployForm() {
+  deployZipEntries = null;
+  document.getElementById("deployFileInput").value = "";
+  document.getElementById("deployFileName").textContent = "Belum ada file dipilih";
+  document.getElementById("btnStartDeploy").disabled = true;
+  document.getElementById("deployStatus").textContent = "";
+  document.getElementById("deployStatus").className = "backup-status";
+  document.getElementById("deployProgressWrap").classList.add("hidden");
+  document.getElementById("deployProgressFill").style.width = "0%";
+}
+
+function setDeployStatus(msg, cls) {
+  const el = document.getElementById("deployStatus");
+  el.textContent = msg;
+  el.className = "backup-status" + (cls ? " " + cls : "");
+}
+
+document.getElementById("deployFileInput").addEventListener("change", async function () {
+  const file = this.files[0];
+  const nameEl = document.getElementById("deployFileName");
+  const btn = document.getElementById("btnStartDeploy");
+  deployZipEntries = null;
+  btn.disabled = true;
+  setDeployStatus("", "");
+
+  if (!file) {
+    nameEl.textContent = "Belum ada file dipilih";
+    return;
+  }
+  nameEl.textContent = "Membaca " + file.name + "…";
+  try {
+    const buf = await file.arrayBuffer();
+    const entries = await readZipEntries(buf);
+    if (entries.length === 0) throw new Error("Zip kosong / tidak ada file di dalamnya.");
+    deployZipEntries = entries;
+    const folderSet = new Set();
+    entries.forEach((e) => {
+      const parts = e.path.split("/");
+      for (let i = 1; i < parts.length; i++) folderSet.add(parts.slice(0, i).join("/"));
+    });
+    nameEl.textContent = file.name + " — " + entries.length + " file, " + folderSet.size + " folder";
+    btn.disabled = false;
+  } catch (e) {
+    nameEl.textContent = "Gagal membaca zip: " + (e.message || "");
+    deployZipEntries = null;
+  }
+});
+
+document.getElementById("btnStartDeploy").addEventListener("click", function () {
+  if (!deployZipEntries || deployZipEntries.length === 0) return;
+  const fileCount = deployZipEntries.length;
+  const folderSet = new Set();
+  deployZipEntries.forEach((e) => {
+    const parts = e.path.split("/");
+    for (let i = 1; i < parts.length; i++) folderSet.add(parts.slice(0, i).join("/"));
+  });
+
+  openConfirmModal(
+    `Akan mengunggah ${fileCount} file dan ${folderSet.size} folder. File dengan nama sama akan DITIMPA, dan file yang tidak ada di zip ini akan DIHAPUS dari situs live. Lanjutkan deploy?`,
+    runDeploy,
+    { title: "Konfirmasi Deploy", confirmLabel: "Ya, Deploy Sekarang" }
+  );
+});
+
+async function runDeploy() {
+  const btn = document.getElementById("btnStartDeploy");
+  const progressWrap = document.getElementById("deployProgressWrap");
+  const progressFill = document.getElementById("deployProgressFill");
+  const progressText = document.getElementById("deployProgressText");
+  btn.disabled = true;
+  progressWrap.classList.remove("hidden");
+  setDeployStatus("Memulai sesi deploy…", "");
+
+  try {
+    const startRes = await apiCall("POST", "/api/deploy/start", { expectedTotal: deployZipEntries.length }, true);
+    const sessionId = startRes.sessionId;
+
+    let uploaded = 0;
+    for (let i = 0; i < deployZipEntries.length; i += DEPLOY_BATCH_SIZE) {
+      const batch = deployZipEntries.slice(i, i + DEPLOY_BATCH_SIZE);
+      const files = batch.map((e) => ({ path: e.path, contentBase64: bytesToBase64(e.bytes) }));
+      await apiCall("POST", "/api/deploy/batch", { sessionId, files }, true);
+      uploaded += batch.length;
+      const pct = Math.round((uploaded / deployZipEntries.length) * 100);
+      progressFill.style.width = pct + "%";
+      progressText.textContent = `Mengunggah… ${uploaded}/${deployZipEntries.length} file (${pct}%)`;
+      setDeployStatus("Mengunggah file ke GitHub…", "");
+    }
+
+    progressText.textContent = "Merakit commit & mendorong ke GitHub…";
+    setDeployStatus("Menyelesaikan deploy…", "");
+    await apiCall("POST", "/api/deploy/finish", { sessionId }, true);
+
+    progressFill.style.width = "100%";
+    progressText.textContent = "Selesai — " + deployZipEntries.length + " file ter-deploy.";
+    setDeployStatus("Berhasil! GitHub Actions akan otomatis men-deploy ke Cloudflare (biasanya 1-2 menit).", "success");
+    showToast("Deploy berhasil dikirim");
+  } catch (e) {
+    setDeployStatus(e.message || "Gagal deploy. Coba lagi.", "error");
+  }
+  btn.disabled = false;
+}
 
 // =========================================================
 // Informasi Web (statistik + kata sandi admin)

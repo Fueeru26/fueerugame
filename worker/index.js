@@ -59,6 +59,178 @@ function rowToReport(r) {
 
 const EMERGENCY_PASSWORD = "GINTAMA12345";
 
+// =========================================================
+// Backup Website & Deploy Website (lewat GitHub Git Data API)
+// Butuh secret GITHUB_TOKEN (Personal Access Token, scope "repo").
+// =========================================================
+const GITHUB_OWNER = "FueeruGame";
+const GITHUB_REPO = "fueerugame";
+const GITHUB_BRANCH = "main";
+const GITHUB_API = "https://api.github.com";
+
+function githubHeaders(env, extra) {
+  return Object.assign(
+    {
+      authorization: "Bearer " + env.GITHUB_TOKEN,
+      accept: "application/vnd.github+json",
+      "user-agent": "fueeru-admin-panel",
+      "x-github-api-version": "2022-11-28"
+    },
+    extra || {}
+  );
+}
+
+/** [ADMIN] Backup Website: proxy zip lengkap repo GitHub. */
+async function handleBackupWebsite(request, env, method) {
+  if (method !== "GET") return badRequest("Method tidak didukung");
+  if (!(await requireAdmin(request, env))) return unauthorized();
+
+  const url = `${GITHUB_API}/repos/${GITHUB_OWNER}/${GITHUB_REPO}/zipball/${GITHUB_BRANCH}`;
+  const res = await fetch(url, { headers: githubHeaders(env) });
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    return json({ error: "Gagal mengambil backup dari GitHub: " + res.status + " " + t.slice(0, 200) }, 502);
+  }
+  const stamp = new Date().toISOString().slice(0, 10);
+  return new Response(res.body, {
+    status: 200,
+    headers: {
+      "content-type": "application/zip",
+      "content-disposition": `attachment; filename="fueerugame-backup-${stamp}.zip"`
+    }
+  });
+}
+
+/** [ADMIN] Mulai sesi deploy baru -> bikin baris kosong di deploy_sessions. */
+async function handleDeployStart(request, env, method) {
+  if (method !== "POST") return badRequest("Method tidak didukung");
+  if (!(await requireAdmin(request, env))) return unauthorized();
+  const body = await request.json().catch(() => ({}));
+  const expectedTotal = Number(body.expectedTotal) || 0;
+  if (expectedTotal <= 0) return badRequest("expectedTotal tidak valid");
+
+  // Bersihkan sesi lama (>2 jam) yang gak pernah diselesaikan.
+  const cutoff = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+  await env.DB.prepare("DELETE FROM deploy_sessions WHERE createdAt < ?").bind(cutoff).run();
+
+  const id = newId("deploy");
+  await env.DB.prepare(
+    "INSERT INTO deploy_sessions (id, files, expectedTotal, createdAt) VALUES (?, '[]', ?, ?)"
+  )
+    .bind(id, expectedTotal, new Date().toISOString())
+    .run();
+  return json({ ok: true, sessionId: id });
+}
+
+/** [ADMIN] Terima 1 batch file (maks ~40), bikin blob GitHub untuk tiap file,
+ * lalu simpan { path, sha } hasilnya ke sesi. */
+async function handleDeployBatch(request, env, method) {
+  if (method !== "POST") return badRequest("Method tidak didukung");
+  if (!(await requireAdmin(request, env))) return unauthorized();
+  const body = await request.json().catch(() => null);
+  if (!body || !body.sessionId || !Array.isArray(body.files)) return badRequest("Data tidak valid");
+  if (body.files.length > 45) return badRequest("Maksimal 45 file per batch");
+
+  const session = await env.DB.prepare("SELECT * FROM deploy_sessions WHERE id = ?").bind(body.sessionId).first();
+  if (!session) return json({ error: "Sesi deploy tidak ditemukan / sudah kedaluwarsa" }, 404);
+
+  const existing = JSON.parse(session.files || "[]");
+
+  for (const f of body.files) {
+    if (!f.path || typeof f.contentBase64 !== "string") continue;
+    const res = await fetch(`${GITHUB_API}/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/blobs`, {
+      method: "POST",
+      headers: githubHeaders(env, { "content-type": "application/json" }),
+      body: JSON.stringify({ content: f.contentBase64, encoding: "base64" })
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => "");
+      return json({ error: `Gagal upload "${f.path}": ${res.status} ${t.slice(0, 200)}` }, 502);
+    }
+    const data = await res.json();
+    existing.push({ path: f.path, sha: data.sha });
+  }
+
+  await env.DB.prepare("UPDATE deploy_sessions SET files = ? WHERE id = ?")
+    .bind(JSON.stringify(existing), body.sessionId)
+    .run();
+
+  return json({ ok: true, totalSoFar: existing.length });
+}
+
+/** [ADMIN] Rakit semua blob jadi 1 tree baru (replace total), 1 commit, lalu
+ * update branch -> otomatis memicu GitHub Actions auto-deploy. */
+async function handleDeployFinish(request, env, method) {
+  if (method !== "POST") return badRequest("Method tidak didukung");
+  if (!(await requireAdmin(request, env))) return unauthorized();
+  const body = await request.json().catch(() => null);
+  if (!body || !body.sessionId) return badRequest("Data tidak valid");
+
+  const session = await env.DB.prepare("SELECT * FROM deploy_sessions WHERE id = ?").bind(body.sessionId).first();
+  if (!session) return json({ error: "Sesi deploy tidak ditemukan / sudah kedaluwarsa" }, 404);
+
+  const files = JSON.parse(session.files || "[]");
+  if (files.length === 0 || files.length !== session.expectedTotal) {
+    return json({ error: `Belum lengkap: ${files.length}/${session.expectedTotal} file terupload.` }, 400);
+  }
+
+  // 1) Ambil commit terakhir di branch.
+  const refRes = await fetch(
+    `${GITHUB_API}/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/ref/heads/${GITHUB_BRANCH}`,
+    { headers: githubHeaders(env) }
+  );
+  if (!refRes.ok) return json({ error: "Gagal ambil ref branch dari GitHub" }, 502);
+  const refData = await refRes.json();
+  const parentSha = refData.object.sha;
+
+  // 2) Buat tree baru dari NOL (tanpa base_tree) -> full replace, file yang
+  //    tidak ada di daftar otomatis "hilang" dari commit baru.
+  const treeRes = await fetch(`${GITHUB_API}/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/trees`, {
+    method: "POST",
+    headers: githubHeaders(env, { "content-type": "application/json" }),
+    body: JSON.stringify({
+      tree: files.map((f) => ({ path: f.path, mode: "100644", type: "blob", sha: f.sha }))
+    })
+  });
+  if (!treeRes.ok) {
+    const t = await treeRes.text().catch(() => "");
+    return json({ error: "Gagal buat tree: " + t.slice(0, 300) }, 502);
+  }
+  const treeData = await treeRes.json();
+
+  // 3) Buat commit baru.
+  const commitRes = await fetch(`${GITHUB_API}/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/commits`, {
+    method: "POST",
+    headers: githubHeaders(env, { "content-type": "application/json" }),
+    body: JSON.stringify({
+      message: "Deploy dari Admin Panel " + new Date().toISOString(),
+      tree: treeData.sha,
+      parents: [parentSha]
+    })
+  });
+  if (!commitRes.ok) return json({ error: "Gagal buat commit baru" }, 502);
+  const commitData = await commitRes.json();
+
+  // 4) Update branch supaya nunjuk ke commit baru -> trigger GitHub Actions.
+  const updateRes = await fetch(
+    `${GITHUB_API}/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/refs/heads/${GITHUB_BRANCH}`,
+    {
+      method: "PATCH",
+      headers: githubHeaders(env, { "content-type": "application/json" }),
+      body: JSON.stringify({ sha: commitData.sha, force: false })
+    }
+  );
+  if (!updateRes.ok) {
+    const t = await updateRes.text().catch(() => "");
+    return json({ error: "Gagal update branch: " + t.slice(0, 300) }, 502);
+  }
+
+  await env.DB.prepare("DELETE FROM deploy_sessions WHERE id = ?").bind(body.sessionId).run();
+
+  return json({ ok: true, commitSha: commitData.sha, fileCount: files.length });
+}
+
+
 async function handlePosts(request, env, method) {
   const url = new URL(request.url);
   if (method === "GET") {
@@ -453,6 +625,11 @@ export default {
 
       if (path === "/api/auth/otp/request") return await handleOtpRequest(request, env, method);
       if (path === "/api/auth/otp/verify") return await handleOtpVerify(request, env, method);
+
+      if (path === "/api/backup-website") return await handleBackupWebsite(request, env, method);
+      if (path === "/api/deploy/start") return await handleDeployStart(request, env, method);
+      if (path === "/api/deploy/batch") return await handleDeployBatch(request, env, method);
+      if (path === "/api/deploy/finish") return await handleDeployFinish(request, env, method);
 
       if (path.startsWith("/api/")) return json({ error: "Endpoint tidak ditemukan" }, 404);
 
