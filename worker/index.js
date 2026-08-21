@@ -230,23 +230,71 @@ async function handleDeployFinish(request, env, method) {
   return json({ ok: true, commitSha: commitData.sha, fileCount: files.length });
 }
 
-/** [ADMIN] Cek status GitHub Actions (workflow run) untuk 1 commit SHA. */
-async function handleDeployStatus(request, env, method) {
+/** Verifikasi tanda tangan HMAC-SHA256 dari GitHub webhook. */
+async function verifyGithubWebhookSignature(secret, payloadText, signatureHeader) {
+  if (!signatureHeader || !signatureHeader.startsWith("sha256=")) return false;
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const sigBuf = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payloadText));
+  const computedHex = Array.from(new Uint8Array(sigBuf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  const expectedHex = signatureHeader.slice("sha256=".length);
+  if (computedHex.length !== expectedHex.length) return false;
+  let diff = 0;
+  for (let i = 0; i < computedHex.length; i++) diff |= computedHex.charCodeAt(i) ^ expectedHex.charCodeAt(i);
+  return diff === 0;
+}
+
+/** [PUBLIK, tapi diverifikasi tanda tangan] Webhook dari GitHub — dipanggil
+ * otomatis oleh GitHub tiap kali status workflow Actions berubah. Kita cuma
+ * proses saat statusnya "completed" (final: berhasil/gagal), lalu simpan
+ * sebagai notifikasi server supaya bisa muncul di lonceng Admin Panel,
+ * berlaku untuk commit dari mana saja (Admin Panel, Termux, atau GitHub.com). */
+async function handleGithubWebhook(request, env, method) {
+  if (method !== "POST") return badRequest("Method tidak didukung");
+  const payloadText = await request.text();
+  const sigOk = await verifyGithubWebhookSignature(
+    env.GITHUB_WEBHOOK_SECRET,
+    payloadText,
+    request.headers.get("x-hub-signature-256")
+  );
+  if (!sigOk) return unauthorized();
+
+  const event = request.headers.get("x-github-event");
+  if (event !== "workflow_run") return json({ ok: true, skipped: true });
+
+  const body = JSON.parse(payloadText);
+  const run = body.workflow_run;
+  if (!run || run.status !== "completed") return json({ ok: true, skipped: true });
+
+  const shortSha = (run.head_sha || "").slice(0, 7);
+  const isSuccess = run.conclusion === "success";
+  const text = isSuccess
+    ? `Deploy berhasil diterapkan ke Cloudflare (commit ${shortSha}).`
+    : `Deploy GAGAL diterapkan (commit ${shortSha}, status: ${run.conclusion || "error"}).`;
+
+  await env.DB.prepare("INSERT INTO server_notifications (id, type, text, date) VALUES (?, ?, ?, ?)")
+    .bind(newId("srvnotif"), isSuccess ? "deploy_success" : "deploy_failed", text, new Date().toISOString())
+    .run();
+
+  return json({ ok: true });
+}
+
+/** [ADMIN] Ambil notifikasi server yang belum diambil, lalu hapus (sekali ambil). */
+async function handleServerNotifications(request, env, method) {
   if (method !== "GET") return badRequest("Method tidak didukung");
   if (!(await requireAdmin(request, env))) return unauthorized();
-  const url = new URL(request.url);
-  const sha = url.searchParams.get("sha");
-  if (!sha) return badRequest("Parameter sha wajib diisi");
-
-  const res = await fetch(
-    `${GITHUB_API}/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs?head_sha=${encodeURIComponent(sha)}&per_page=1`,
-    { headers: githubHeaders(env) }
-  );
-  if (!res.ok) return json({ error: "Gagal cek status GitHub Actions" }, 502);
-  const data = await res.json();
-  const run = data.workflow_runs && data.workflow_runs[0];
-  if (!run) return json({ status: "not_found" });
-  return json({ status: run.status, conclusion: run.conclusion, htmlUrl: run.html_url });
+  const { results } = await env.DB.prepare("SELECT * FROM server_notifications ORDER BY date ASC").all();
+  if (results.length > 0) {
+    await env.DB.prepare("DELETE FROM server_notifications").run();
+  }
+  return json(results);
 }
 
 
@@ -649,7 +697,8 @@ export default {
       if (path === "/api/deploy/start") return await handleDeployStart(request, env, method);
       if (path === "/api/deploy/batch") return await handleDeployBatch(request, env, method);
       if (path === "/api/deploy/finish") return await handleDeployFinish(request, env, method);
-      if (path === "/api/deploy/status") return await handleDeployStatus(request, env, method);
+      if (path === "/api/github/webhook") return await handleGithubWebhook(request, env, method);
+      if (path === "/api/notifications") return await handleServerNotifications(request, env, method);
 
       if (path.startsWith("/api/")) return json({ error: "Endpoint tidak ditemukan" }, 404);
 

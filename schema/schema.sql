@@ -66,6 +66,13 @@ CREATE TABLE IF NOT EXISTS deploy_sessions (
   createdAt TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS server_notifications (
+  id TEXT PRIMARY KEY,
+  type TEXT NOT NULL,
+  text TEXT NOT NULL,
+  date TEXT NOT NULL
+);
+
 -- Password admin default: admin123 (ganti lewat Admin Panel setelah deploy pertama)
 INSERT OR IGNORE INTO settings (key, value) VALUES ('admin_password', 'admin123');
 

@@ -34,6 +34,31 @@ function doLogin(remember) {
   checkBackupReminder();
   updateNotifBadge();
   purgeOldTrash();
+  fetchServerNotifications();
+  startServerNotificationsPolling();
+}
+
+/** Ambil notifikasi deploy dari server (dikirim GitHub lewat webhook tiap
+ * kali status Actions berubah final), lalu gabungkan ke notifikasi lokal.
+ * Berlaku untuk commit dari mana saja: Admin Panel, Termux, atau GitHub.com. */
+async function fetchServerNotifications() {
+  if (!isLoggedIn()) return;
+  try {
+    const items = await apiCall("GET", "/api/notifications", undefined, true);
+    if (Array.isArray(items) && items.length > 0) {
+      items.forEach((n) => addNotification(n.type, n.text));
+      updateNotifBadge();
+      if (notifModalBackdrop.classList.contains("show")) renderNotifModal();
+    }
+  } catch (e) {
+    // gagal ambil -> coba lagi di siklus berikutnya, tidak fatal
+  }
+}
+
+let serverNotifIntervalId = null;
+function startServerNotificationsPolling() {
+  if (serverNotifIntervalId) return;
+  serverNotifIntervalId = setInterval(fetchServerNotifications, 30000);
 }
 
 function doLogout() {
@@ -3165,40 +3190,11 @@ async function runDeploy() {
     setDeployStatus("File deploy berhasil diunggah.", "success");
     showToast("Deploy berhasil dikirim");
     openOtpNotif("Berhasil", "File deploy berhasil diunggah, silahkan tunggu hingga proses deploy selesai.");
-
-    pollDeployStatus(finishRes.commitSha);
   } catch (e) {
     setDeployStatus(e.message || "Gagal deploy. Coba lagi.", "error");
     openOtpNotif("Error", e.message || "Gagal mengunggah file deploy. Coba lagi.");
   }
   btn.disabled = false;
-}
-
-/** Cek status GitHub Actions tiap beberapa detik sampai selesai, lalu catat
- * hasilnya sebagai notifikasi lonceng. Berhenti otomatis kalau lebih dari
- * ~4 menit (dianggap timeout) atau kalau tab/halaman ini ditutup. */
-async function pollDeployStatus(sha, attempt) {
-  attempt = attempt || 0;
-  if (attempt >= 24) {
-    addNotification("deploy_failed", "Status deploy tidak diketahui setelah beberapa menit — cek langsung di tab Actions GitHub.");
-    updateNotifBadge();
-    return;
-  }
-  try {
-    const res = await apiCall("GET", "/api/deploy/status?sha=" + encodeURIComponent(sha), undefined, true);
-    if (res.status === "completed") {
-      if (res.conclusion === "success") {
-        addNotification("deploy_success", "Deploy berhasil diterapkan ke GitHub dan Cloudflare.");
-      } else {
-        addNotification("deploy_failed", "Deploy gagal diterapkan (GitHub Actions: " + (res.conclusion || "error") + "). Cek tab Actions di GitHub untuk detail.");
-      }
-      updateNotifBadge();
-      return;
-    }
-  } catch (e) {
-    // gagal cek status -> coba lagi di percobaan berikutnya, tidak fatal
-  }
-  setTimeout(() => pollDeployStatus(sha, attempt + 1), 10000);
 }
 
 // =========================================================
@@ -3755,6 +3751,8 @@ document.addEventListener("DOMContentLoaded", function () {
     // tetap tertangani dengan benar walau Admin Panel dibuka ulang dari
     // sesi yang sudah login sebelumnya.
     pushBackTrap();
+    fetchServerNotifications();
+    startServerNotificationsPolling();
   } else {
     viewLogin.classList.remove("hidden");
     adminShell.classList.add("hidden");
