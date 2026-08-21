@@ -757,6 +757,8 @@
       <div class="backup-section">
         <div class="subsection-title" style="margin-top:4px;">Unggah &amp; Deploy</div>
         <p class="backup-desc">Pilih file <code>.zip</code> berisi seluruh isi folder situs kamu untuk langsung mengunggah &amp; men-deploy perubahan — tanpa perlu Termux. File dengan nama sama akan <strong>ditimpa</strong>, dan file yang tidak ada di dalam zip akan <strong>dihapus</strong> dari situs live (zip dianggap sebagai kondisi lengkap terbaru).</p>
+        <p class="backup-desc"><strong>Struktur zip:</strong> semua file &amp; folder situs (mis. <code>index.html</code>, <code>js/</code>, <code>css/</code>, dst) harus berada langsung di root zip — jangan dibungkus dalam 1 folder tambahan.</p>
+        <p class="backup-desc"><strong>Cara kerja unggah:</strong> karena ada batasan jumlah permintaan per proses, file diunggah bertahap (dicicil) dalam beberapa batch berisi maksimal 35 file, satu per satu sampai semua selesai — makanya progress bar akan naik bertahap, bukan langsung 100%. Setelah semua batch terunggah, sistem otomatis merakitnya jadi 1 kali pengiriman (commit) ke GitHub, yang lalu memicu GitHub Actions untuk men-deploy ke Cloudflare secara otomatis (±1-2 menit).</p>
 
         <label class="backup-file-label" for="deployFileInput">
           <input type="file" id="deployFileInput" accept=".zip,application/zip" hidden>
@@ -764,7 +766,7 @@
           <span class="btn-secondary">Pilih File .zip</span>
         </label>
 
-        <button type="button" class="btn-primary" id="btnStartDeploy" disabled>Deploy Website</button>
+        <button type="button" class="btn-primary" id="btnStartDeploy" disabled style="margin-top:18px;">Deploy Website</button>
         <div class="backup-status" id="deployStatus"></div>
         <div id="deployProgressWrap" class="hidden" style="margin-top:12px;">
           <div class="deploy-progress-bar-bg"><div class="deploy-progress-bar-fill" id="deployProgressFill"></div></div>

@@ -1519,6 +1519,8 @@ body.admin-body {
   flex: 0 0 auto;
 }
 .notif-item.type-backup_reminder .notif-icon { background: #fff2d6; color: #b8860b; }
+.notif-item.type-deploy_success .notif-icon { background: #d9f7e3; color: #1c8a4b; }
+.notif-item.type-deploy_failed .notif-icon { background: #fde0e0; color: #c0392b; }
 .notif-item .notif-icon svg { width: 17px; height: 17px; }
 .notif-item .notif-body { flex: 1; min-width: 0; }
 .notif-item .notif-text { font-size: .85rem; color: var(--ink); line-height: 1.5; font-weight: 600; }

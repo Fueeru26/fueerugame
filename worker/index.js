@@ -230,6 +230,25 @@ async function handleDeployFinish(request, env, method) {
   return json({ ok: true, commitSha: commitData.sha, fileCount: files.length });
 }
 
+/** [ADMIN] Cek status GitHub Actions (workflow run) untuk 1 commit SHA. */
+async function handleDeployStatus(request, env, method) {
+  if (method !== "GET") return badRequest("Method tidak didukung");
+  if (!(await requireAdmin(request, env))) return unauthorized();
+  const url = new URL(request.url);
+  const sha = url.searchParams.get("sha");
+  if (!sha) return badRequest("Parameter sha wajib diisi");
+
+  const res = await fetch(
+    `${GITHUB_API}/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs?head_sha=${encodeURIComponent(sha)}&per_page=1`,
+    { headers: githubHeaders(env) }
+  );
+  if (!res.ok) return json({ error: "Gagal cek status GitHub Actions" }, 502);
+  const data = await res.json();
+  const run = data.workflow_runs && data.workflow_runs[0];
+  if (!run) return json({ status: "not_found" });
+  return json({ status: run.status, conclusion: run.conclusion, htmlUrl: run.html_url });
+}
+
 
 async function handlePosts(request, env, method) {
   const url = new URL(request.url);
@@ -630,6 +649,7 @@ export default {
       if (path === "/api/deploy/start") return await handleDeployStart(request, env, method);
       if (path === "/api/deploy/batch") return await handleDeployBatch(request, env, method);
       if (path === "/api/deploy/finish") return await handleDeployFinish(request, env, method);
+      if (path === "/api/deploy/status") return await handleDeployStatus(request, env, method);
 
       if (path.startsWith("/api/")) return json({ error: "Endpoint tidak ditemukan" }, 404);
 

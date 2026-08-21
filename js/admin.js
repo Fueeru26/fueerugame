@@ -3156,16 +3156,47 @@ async function runDeploy() {
 
     progressText.textContent = "Merakit commit & mendorong ke GitHub…";
     setDeployStatus("Menyelesaikan deploy…", "");
-    await apiCall("POST", "/api/deploy/finish", { sessionId }, true);
+    const finishRes = await apiCall("POST", "/api/deploy/finish", { sessionId }, true);
 
     progressFill.style.width = "100%";
-    progressText.textContent = "Selesai — " + deployZipEntries.length + " file ter-deploy.";
-    setDeployStatus("Berhasil! GitHub Actions akan otomatis men-deploy ke Cloudflare (biasanya 1-2 menit).", "success");
+    progressText.textContent = "Selesai — " + deployZipEntries.length + " file terunggah.";
+    setDeployStatus("File deploy berhasil diunggah.", "success");
     showToast("Deploy berhasil dikirim");
+    openOtpNotif("Berhasil", "File deploy berhasil diunggah, silahkan tunggu hingga proses deploy selesai.");
+
+    pollDeployStatus(finishRes.commitSha);
   } catch (e) {
     setDeployStatus(e.message || "Gagal deploy. Coba lagi.", "error");
+    openOtpNotif("Error", e.message || "Gagal mengunggah file deploy. Coba lagi.");
   }
   btn.disabled = false;
+}
+
+/** Cek status GitHub Actions tiap beberapa detik sampai selesai, lalu catat
+ * hasilnya sebagai notifikasi lonceng. Berhenti otomatis kalau lebih dari
+ * ~4 menit (dianggap timeout) atau kalau tab/halaman ini ditutup. */
+async function pollDeployStatus(sha, attempt) {
+  attempt = attempt || 0;
+  if (attempt >= 24) {
+    addNotification("deploy_failed", "Status deploy tidak diketahui setelah beberapa menit — cek langsung di tab Actions GitHub.");
+    updateNotifBadge();
+    return;
+  }
+  try {
+    const res = await apiCall("GET", "/api/deploy/status?sha=" + encodeURIComponent(sha), undefined, true);
+    if (res.status === "completed") {
+      if (res.conclusion === "success") {
+        addNotification("deploy_success", "Deploy berhasil diterapkan ke GitHub dan Cloudflare.");
+      } else {
+        addNotification("deploy_failed", "Deploy gagal diterapkan (GitHub Actions: " + (res.conclusion || "error") + "). Cek tab Actions di GitHub untuk detail.");
+      }
+      updateNotifBadge();
+      return;
+    }
+  } catch (e) {
+    // gagal cek status -> coba lagi di percobaan berikutnya, tidak fatal
+  }
+  setTimeout(() => pollDeployStatus(sha, attempt + 1), 10000);
 }
 
 // =========================================================
@@ -3231,7 +3262,9 @@ const notifModalBackdrop = document.getElementById("notifModalBackdrop");
 let notifPage = 1;
 const NOTIF_ICONS = {
   report: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L14.71 3.86a2 2 0 00-3.42 0z"/></svg>`,
-  backup_reminder: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8H3v13h18V8z"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>`
+  backup_reminder: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8H3v13h18V8z"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>`,
+  deploy_success: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
+  deploy_failed: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`
 };
 
 function updateNotifBadge() {
