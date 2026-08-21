@@ -89,3 +89,29 @@ function bytesToBase64(bytes) {
   }
   return btoa(binary);
 }
+
+/** Cari root situs berdasarkan lokasi file "index.html" (penanda root yang
+ * pasti cuma ada 1 dan selalu di root situs). Folder tempat index.html itu
+ * berada dianggap sebagai root, sisanya di-strip dari semua path. Kalau
+ * index.html sama sekali tidak ditemukan, lempar error. */
+function resolveZipRoot(entries) {
+  let best = null; // entry dengan depth (jumlah folder) paling sedikit
+  for (const e of entries) {
+    const parts = e.path.split("/");
+    const fileName = parts[parts.length - 1];
+    if (fileName.toLowerCase() === "index.html") {
+      const depth = parts.length - 1;
+      if (best === null || depth < best.depth) best = { depth, dirParts: parts.slice(0, -1) };
+    }
+  }
+  if (best === null) {
+    throw new Error("File index.html tidak ditemukan");
+  }
+  if (best.dirParts.length === 0) return entries; // sudah di root, tidak perlu strip apa-apa
+
+  const prefix = best.dirParts.join("/") + "/";
+  return entries
+    .filter((e) => e.path.startsWith(prefix))
+    .map((e) => ({ path: e.path.slice(prefix.length), bytes: e.bytes }));
+}
+

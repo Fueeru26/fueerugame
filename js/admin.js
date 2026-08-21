@@ -3097,7 +3097,8 @@ document.getElementById("deployFileInput").addEventListener("change", async func
   nameEl.textContent = "Membaca " + file.name + "…";
   try {
     const buf = await file.arrayBuffer();
-    const entries = await readZipEntries(buf);
+    let entries = await readZipEntries(buf);
+    entries = resolveZipRoot(entries);
     if (entries.length === 0) throw new Error("Zip kosong / tidak ada file di dalamnya.");
     deployZipEntries = entries;
     const folderSet = new Set();
@@ -3108,8 +3109,9 @@ document.getElementById("deployFileInput").addEventListener("change", async func
     nameEl.textContent = file.name + " — " + entries.length + " file, " + folderSet.size + " folder";
     btn.disabled = false;
   } catch (e) {
-    nameEl.textContent = "Gagal membaca zip: " + (e.message || "");
+    nameEl.textContent = "Belum ada file dipilih";
     deployZipEntries = null;
+    openOtpNotif("Error", "Gagal mengunggah deploy, " + (e.message === "File index.html tidak ditemukan" ? "file index.html tidak ditemukan" : e.message || "file zip tidak valid") + ".");
   }
 });
 
