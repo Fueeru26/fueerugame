@@ -73,6 +73,11 @@ CREATE TABLE IF NOT EXISTS server_notifications (
   date TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS processed_workflow_runs (
+  run_id TEXT PRIMARY KEY,
+  processedAt TEXT NOT NULL
+);
+
 -- Password admin default: admin123 (ganti lewat Admin Panel setelah deploy pertama)
 INSERT OR IGNORE INTO settings (key, value) VALUES ('admin_password', 'admin123');
 

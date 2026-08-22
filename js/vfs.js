@@ -53,9 +53,8 @@ const SEED_PATHS = [
   { path: "css", type: "folder" },
   { path: "js", type: "folder" },
   { path: "font", type: "folder" },
-  { path: "pictures", type: "folder" },
-  { path: "postheader", type: "folder" },
   { path: "webpictures", type: "folder" },
+  { path: "backup", type: "folder" },
   { path: "web", type: "folder" },
   { path: "index.html", type: "file" },
   { path: "admin.html", type: "file" },
@@ -69,35 +68,30 @@ const SEED_PATHS = [
   { path: "web/404.html", type: "file" },
   { path: "css/admin.css", type: "file" },
   { path: "css/style.css", type: "file" },
-  { path: "css/info.md", type: "file" },
   { path: "js/admin.js", type: "file" },
   { path: "js/data.js", type: "file" },
   { path: "js/main.js", type: "file" },
   { path: "js/vfs.js", type: "file" },
-  { path: "js/info.md", type: "file" },
-  { path: "web/info.md", type: "file" },
   { path: "font/FredokaOne-Regular.otf", type: "file" },
   { path: "font/FredokaOne-Regular.ttf", type: "file" },
   { path: "font/OFL.txt", type: "file" },
-  { path: "font/info.md", type: "file" },
-  { path: "pictures/info.md", type: "file" },
-  { path: "postheader/info.md", type: "file" },
-  { path: "webpictures/header.png", type: "file" },
   { path: "webpictures/header.webp", type: "file" },
-  { path: "webpictures/logo.png", type: "file" },
   { path: "webpictures/logo.webp", type: "file" },
-  { path: "webpictures/404.png", type: "file" },
   { path: "webpictures/404.webp", type: "file" },
-  { path: "webpictures/postplaceholder.png", type: "file" },
   { path: "webpictures/postplaceholder.webp", type: "file" },
-  { path: "webpictures/info.md", type: "file" }
+  { path: "webpictures/icon-192.png", type: "file" },
+  { path: "webpictures/icon-512.png", type: "file" },
+  { path: "webpictures/icon-maskable-192.png", type: "file" },
+  { path: "webpictures/icon-maskable-512.png", type: "file" },
+  { path: "webpictures/icon-admin-192.png", type: "file" },
+  { path: "webpictures/icon-admin-512.png", type: "file" },
+  { path: "webpictures/icon-admin-maskable-192.png", type: "file" },
+  { path: "webpictures/icon-admin-maskable-512.png", type: "file" },
+  { path: "backup/header.png", type: "file" },
+  { path: "backup/logo.png", type: "file" },
+  { path: "backup/404.png", type: "file" },
+  { path: "backup/postplaceholder.png", type: "file" }
 ];
-
-/* Catatan: folder "postheader" & "pictures" sengaja dibiarkan kosong
-   (dipakai sebagai folder backup gambar yang akan diupload lewat Admin —
-   lihat info.md di masing-masing folder), jadi tidak ada file seed di
-   dalamnya. */
-
 function buildSeedVFS() {
   const map = {};
   SEED_PATHS.forEach((entry) => {

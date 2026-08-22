@@ -273,6 +273,19 @@ async function handleGithubWebhook(request, env, method) {
   const run = body.workflow_run;
   if (!run || run.status !== "completed") return json({ ok: true, skipped: true });
 
+  // Cuma proses workflow deploy kita sendiri (deploy.yml), biar workflow lain
+  // (mis. "pages build and deployment" bawaan GitHub) tidak ikut bikin notifikasi.
+  if (run.name !== "Deploy to Cloudflare") return json({ ok: true, skipped: true });
+
+  // Anti-dobel: GitHub kadang kirim ulang webhook yang sama (retry otomatis
+  // atau redeliver manual) -> pastikan 1 run cuma menghasilkan 1 notifikasi.
+  const dedupe = await env.DB.prepare(
+    "INSERT OR IGNORE INTO processed_workflow_runs (run_id, processedAt) VALUES (?, ?)"
+  )
+    .bind(String(run.id), new Date().toISOString())
+    .run();
+  if (!dedupe.meta || dedupe.meta.changes === 0) return json({ ok: true, deduped: true });
+
   const shortSha = (run.head_sha || "").slice(0, 7);
   const isSuccess = run.conclusion === "success";
   const text = isSuccess
