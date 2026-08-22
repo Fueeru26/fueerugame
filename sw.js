@@ -10,7 +10,7 @@
    belakang layar.
    ========================================================= */
 
-const CACHE_NAME = "fueeru-game-cache-v3";
+const CACHE_NAME = "fueeru-game-cache-v4";
 
 const PRECACHE_URLS = [
   "./",
@@ -34,15 +34,37 @@ const PRECACHE_URLS = [
   "web/cara-download.html"
 ];
 
+/* Cloudflare (assets.html_handling) otomatis redirect "xxx.html" -> "xxx"
+   (307). Kalau response hasil redirect itu langsung disimpan ke Cache
+   lalu suatu saat dipakai buat respondWith() request navigasi (buka
+   halaman), Chrome akan menolaknya: "Response served by service worker
+   has redirections" -> muncul sebagai ERR_FAILED / "Situs ini tidak
+   dapat dijangkau", walau server aslinya baik-baik saja. Makanya sebelum
+   disimpan ke cache, response yang "redirected" dibungkus ulang jadi
+   Response baru (redirected: false) supaya aman dipakai lagi nanti. */
+function stripRedirected(response) {
+  if (!response || !response.redirected) return response;
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: response.headers
+  });
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches
-      .open(CACHE_NAME)
-      .then((cache) => cache.addAll(PRECACHE_URLS))
-      .catch(() => {
-        /* Kalau salah satu URL gagal di-precache (mis. belum ada koneksi
-           saat install), jangan gagalkan instalasi SW-nya. */
-      })
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(
+        PRECACHE_URLS.map((url) =>
+          fetch(url)
+            .then((res) => cache.put(url, stripRedirected(res)))
+            .catch(() => {
+              /* Kalau satu URL gagal di-precache (mis. belum ada koneksi
+                 saat install), jangan gagalkan instalasi SW-nya / URL lain. */
+            })
+        )
+      )
+    )
   );
   self.skipWaiting();
 });
@@ -72,12 +94,12 @@ self.addEventListener("fetch", (event) => {
         .then((res) => {
           if (res && res.status === 200 && res.type === "basic") {
             const clone = res.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, stripRedirected(clone)));
           }
           return res;
         })
         .catch(() => cached); // offline -> pakai versi cache kalau ada
-      return cached || network;
+      return stripRedirected(cached) || network;
     })
   );
 });
