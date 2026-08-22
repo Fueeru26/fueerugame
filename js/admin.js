@@ -3094,6 +3094,7 @@ function resetDeployForm() {
   deployZipEntries = null;
   document.getElementById("deployFileInput").value = "";
   document.getElementById("deployFileName").textContent = "Belum ada file dipilih";
+  document.getElementById("deployFileInput").closest(".backup-file-label").classList.remove("has-file");
   document.getElementById("btnStartDeploy").disabled = true;
   document.getElementById("deployStatus").textContent = "";
   document.getElementById("deployStatus").className = "backup-status";
@@ -3110,9 +3111,11 @@ function setDeployStatus(msg, cls) {
 document.getElementById("deployFileInput").addEventListener("change", async function () {
   const file = this.files[0];
   const nameEl = document.getElementById("deployFileName");
+  const labelEl = this.closest(".backup-file-label");
   const btn = document.getElementById("btnStartDeploy");
   deployZipEntries = null;
   btn.disabled = true;
+  labelEl.classList.remove("has-file");
   setDeployStatus("", "");
 
   if (!file) {
@@ -3132,6 +3135,7 @@ document.getElementById("deployFileInput").addEventListener("change", async func
       for (let i = 1; i < parts.length; i++) folderSet.add(parts.slice(0, i).join("/"));
     });
     nameEl.textContent = file.name + " — " + entries.length + " file, " + folderSet.size + " folder";
+    labelEl.classList.add("has-file");
     btn.disabled = false;
   } catch (e) {
     nameEl.textContent = "Belum ada file dipilih";

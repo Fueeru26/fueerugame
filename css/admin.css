@@ -1313,6 +1313,25 @@ body.admin-body {
 }
 .backup-file-label.has-file #restoreFileName { color: var(--ink); font-weight: 600; }
 
+/* Varian "stack": teks di atas (boleh multi-baris), tombol di bawah,
+   ditengahkan — dipakai untuk Deploy Website supaya nama file panjang
+   tidak menabrak tombol. */
+.backup-file-label--stack {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  padding: 16px 14px;
+}
+.backup-file-label--stack span#deployFileName {
+  font-size: .82rem;
+  color: var(--ink-soft);
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.4;
+}
+.backup-file-label--stack.has-file span#deployFileName { color: var(--ink); font-weight: 600; }
+
 .btn-secondary {
   flex: 0 0 auto;
   padding: 8px 16px;

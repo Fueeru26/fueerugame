@@ -760,7 +760,7 @@
         <p class="backup-desc"><strong>Struktur zip:</strong> zip wajib berisi file <code>index.html</code> — sistem otomatis mendeteksi folder tempat <code>index.html</code> berada sebagai root situs (jadi boleh dibungkus 1 folder tambahan atau tidak, sama-sama valid). Kalau <code>index.html</code> tidak ditemukan, unggahan akan ditolak — sekaligus jadi pengaman kalau salah pilih file zip.</p>
         <p class="backup-desc"><strong>Cara kerja unggah:</strong> karena ada batasan jumlah permintaan per proses, file diunggah bertahap (dicicil) dalam beberapa batch berisi maksimal 35 file, satu per satu sampai semua selesai — makanya progress bar akan naik bertahap, bukan langsung 100%. Setelah semua batch terunggah, sistem otomatis merakitnya jadi 1 kali pengiriman (commit) ke GitHub, yang lalu memicu GitHub Actions untuk men-deploy ke Cloudflare secara otomatis (±1-2 menit).</p>
 
-        <label class="backup-file-label" for="deployFileInput">
+        <label class="backup-file-label backup-file-label--stack" for="deployFileInput">
           <input type="file" id="deployFileInput" accept=".zip,application/zip" hidden>
           <span id="deployFileName">Belum ada file dipilih</span>
           <span class="btn-secondary">Pilih File .zip</span>
