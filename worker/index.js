@@ -230,6 +230,23 @@ async function handleDeployFinish(request, env, method) {
   return json({ ok: true, commitSha: commitData.sha, fileCount: files.length });
 }
 
+/** [ADMIN] Daftar lengkap folder & file di repo (untuk Penampil File, read-only). */
+async function handleFilesTree(request, env, method) {
+  if (method !== "GET") return badRequest("Method tidak didukung");
+  if (!(await requireAdmin(request, env))) return unauthorized();
+
+  const res = await fetch(
+    `${GITHUB_API}/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/trees/${GITHUB_BRANCH}?recursive=1`,
+    { headers: githubHeaders(env) }
+  );
+  if (!res.ok) return json({ error: "Gagal mengambil daftar file dari GitHub" }, 502);
+  const data = await res.json();
+  const items = (data.tree || [])
+    .filter((t) => t.type === "blob" || t.type === "tree")
+    .map((t) => ({ path: t.path, type: t.type === "tree" ? "folder" : "file", size: t.size || 0 }));
+  return json({ items, truncated: !!data.truncated });
+}
+
 /** Verifikasi tanda tangan HMAC-SHA256 dari GitHub webhook. */
 async function verifyGithubWebhookSignature(secret, payloadText, signatureHeader) {
   if (!signatureHeader || !signatureHeader.startsWith("sha256=")) return false;
@@ -711,6 +728,7 @@ export default {
       if (path === "/api/deploy/batch") return await handleDeployBatch(request, env, method);
       if (path === "/api/deploy/finish") return await handleDeployFinish(request, env, method);
       if (path === "/api/github/webhook") return await handleGithubWebhook(request, env, method);
+      if (path === "/api/files/tree") return await handleFilesTree(request, env, method);
       if (path === "/api/notifications") return await handleServerNotifications(request, env, method);
 
       if (path.startsWith("/api/")) return json({ error: "Endpoint tidak ditemukan" }, 404);

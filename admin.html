@@ -74,8 +74,8 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
       </span>
       <span>
-        <div class="amc-title">Manajemen File</div>
-        <div class="amc-sub">Lihat &amp; kelola folder / file website</div>
+        <div class="amc-title">Penampil File</div>
+        <div class="amc-sub">Lihat folder / file website</div>
       </span>
     </button>
     <button type="button" class="admin-menu-card" data-target="menuRecycleBin">
@@ -216,8 +216,8 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
           </span>
           <span>
-            <div class="amc-title">Manajemen File</div>
-            <div class="amc-sub">Lihat &amp; kelola folder / file website</div>
+            <div class="amc-title">Penampil File</div>
+            <div class="amc-sub">Lihat folder / file website</div>
           </span>
         </button>
         <button type="button" class="admin-menu-card" id="menuRecycleBin">
@@ -557,34 +557,24 @@
       <div class="pagination" id="reportsPagination"></div>
     </div>
 
-    <!-- ===== VIEW: Manajemen File (daftar folder/file) ===== -->
+    <!-- ===== VIEW: Penampil File (daftar folder/file) ===== -->
     <div id="viewFiles" class="admin-panel-card hidden">
       <div class="admin-subheader">
         <button type="button" class="btn-back-mini" id="btnBackFromFiles">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <h1 id="filesHeading">Manajemen File</h1>
+        <h1 id="filesHeading">Penampil File</h1>
       </div>
       <div class="admin-filesearch-row">
         <div class="admin-search-box admin-search-box--compact">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input type="text" id="fileSearchInput" placeholder="Cari nama folder atau file">
         </div>
-        <button type="button" class="vfs-refresh-btn" id="btnRefreshFiles" title="Refresh daftar folder &amp; file" aria-label="Refresh daftar folder dan file">
+        <button type="button" class="vfs-refresh-btn" id="btnRefreshFiles" title="Ambil data terbaru dari deploy" aria-label="Ambil data terbaru dari deploy">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
         </button>
       </div>
       <div class="vfs-toolbar">
-        <div class="vfs-dropdown" id="addDropdownWrap">
-          <button type="button" class="vfs-dropdown-btn" id="btnAddDropdownToggle">
-            Tambahkan
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div class="vfs-dropdown-menu" id="addDropdownMenu">
-            <button type="button" id="btnOpenAddFileModal">Tambahkan File</button>
-            <button type="button" id="btnOpenAddFolderModal">Tambahkan Folder</button>
-          </div>
-        </div>
         <select class="vfs-sort-select" id="fileSortSelect">
           <option value="asc">Urutkan A -&gt; Z</option>
           <option value="desc">Urutkan Z -&gt; A</option>
@@ -598,7 +588,7 @@
       <div class="pagination" id="vfsFilePagination"></div>
     </div>
 
-    <!-- ===== VIEW: Edit File (Manajemen File) ===== -->
+    <!-- ===== VIEW: Lihat File (Penampil File, read-only) ===== -->
     <div id="viewFileEdit" class="admin-panel-card hidden">
       <div class="admin-subheader">
         <button type="button" class="btn-back-mini" id="btnBackFromFileEdit">
@@ -606,10 +596,8 @@
         </button>
         <h1 id="fileEditHeading">index.html</h1>
       </div>
-      <div class="subsection-title" style="margin-top:4px;">Edit File</div>
       <div class="file-edit-note" id="fileEditNote"></div>
-      <textarea class="file-edit-textarea" id="fileEditTextarea" placeholder="(Isi filenya disini)"></textarea>
-      <button type="button" class="btn-primary" id="btnSaveFileEdit" style="margin-top:16px;">Simpan</button>
+      <pre class="file-edit-textarea" id="fileEditTextarea"></pre>
     </div>
 
     <!-- ===== VIEW: Backup & Restore (pilih Postingan/Halaman) ===== -->
@@ -1034,77 +1022,21 @@
   </div>
 </div>
 
-<!-- ===== Modal: Tambahkan File ===== -->
-<div class="modal-backdrop" id="addFileModalBackdrop">
-  <div class="modal-box">
-    <h3>Tambahkan File</h3>
-    <label for="newFileNameInput">Masukkan nama File</label>
-    <input type="text" id="newFileNameInput" placeholder="contoh: catatan.txt">
-    <div class="modal-actions">
-      <button type="button" class="btn-cancel" id="btnCancelAddFile" style="flex:1;">Batal</button>
-      <button type="button" class="btn-primary" id="btnConfirmAddFile" style="flex:1;">Tambahkan</button>
-    </div>
-
-    <div class="modal-divider"><span>atau</span></div>
-
-    <h3>Upload File</h3>
-    <div class="upload-box" id="uploadFileBox">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      <div id="uploadFileLabel">Klik untuk pilih file</div>
-      <input type="file" id="uploadFileInput">
-    </div>
-    <div class="modal-actions">
-      <button type="button" class="btn-primary" id="btnConfirmUploadFile" style="flex:1;">Tambahkan</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===== Modal: Tambahkan Folder ===== -->
-<div class="modal-backdrop" id="addFolderModalBackdrop">
-  <div class="modal-box">
-    <h3>Tambahkan Folder</h3>
-    <label for="newFolderNameInput">Masukkan nama Folder</label>
-    <input type="text" id="newFolderNameInput" placeholder="contoh: assets">
-    <div class="modal-actions">
-      <button type="button" class="btn-cancel" id="btnCancelAddFolder" style="flex:1;">Batal</button>
-      <button type="button" class="btn-primary" id="btnConfirmAddFolder" style="flex:1;">Tambahkan</button>
-    </div>
-  </div>
-</div>
-
 <!-- ===== Modal: Preview Gambar ===== -->
 <div class="modal-backdrop" id="imagePreviewModalBackdrop">
   <div class="modal-box">
     <h3 id="imagePreviewName">gambar.png</h3>
     <img id="imagePreviewImg" class="image-preview-img" alt="">
-    <input type="file" id="replaceImageInput" accept="image/*" class="hidden">
     <div class="modal-actions">
-      <button type="button" class="btn-cancel" id="btnClosePreview" style="flex:1;">Tutup</button>
-      <button type="button" class="btn-primary" id="btnReplaceImage" style="flex:1;">Ganti Gambar</button>
+      <button type="button" class="btn-primary" id="btnClosePreview" style="flex:1;">Tutup</button>
     </div>
-    <button type="button" class="btn-danger-outline" id="btnDeleteImageFromPreview" style="margin-top:12px;">Hapus Gambar</button>
   </div>
 </div>
 
 <!-- ===== Menu titik-tiga (⋮) — dipakai bersama untuk semua item file/folder ===== -->
 <div class="vfs-context-menu" id="vfsContextMenu">
-  <button type="button" data-action="rename">Ganti Nama</button>
   <button type="button" data-action="detail">Detail</button>
   <button type="button" data-action="download" id="vfsContextDownload">Download</button>
-  <button type="button" data-action="delete" class="danger">Hapus</button>
-</div>
-
-<!-- ===== Modal: Ganti Nama ===== -->
-<div class="modal-backdrop" id="renameModalBackdrop">
-  <div class="modal-box">
-    <h3>Ganti Nama</h3>
-    <label for="renameInput">Masukkan nama baru</label>
-    <input type="text" id="renameInput">
-    <div class="modal-actions">
-      <button type="button" class="btn-cancel" id="btnCancelRename" style="flex:1;">Batal</button>
-      <button type="button" class="btn-primary" id="btnConfirmRename" style="flex:1;">Simpan</button>
-    </div>
-  </div>
 </div>
 
 <!-- ===== Modal: Atur Postingan Terjadwal ===== -->

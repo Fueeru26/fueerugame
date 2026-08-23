@@ -349,9 +349,10 @@ document.getElementById("menuInformasiWeb").addEventListener("click", async () =
   await renderInfoView();
 });
 document.getElementById("btnBackFromInfo").addEventListener("click", () => showSub("viewMenu"));
-document.getElementById("menuManajemenFile").addEventListener("click", () => {
-  navigateToFolder("");
+document.getElementById("menuManajemenFile").addEventListener("click", async () => {
   showSub("viewFiles");
+  await loadFilesIfNeeded();
+  navigateToFolder("");
 });
 document.getElementById("menuRecycleBin").addEventListener("click", () => {
   renderRecycleBinCounts();
@@ -2170,7 +2171,7 @@ document.getElementById("btnDeleteAllReports").addEventListener("click", async f
 });
 
 // =========================================================
-// MANAJEMEN FILE (virtual file manager, lihat js/vfs.js)
+// PENAMPIL FILE (read-only, data live dari GitHub — lihat js/vfs.js)
 // =========================================================
 const GRID_PAGE_SIZE = 15; // folder & gambar
 const FILE_PAGE_SIZE = 10; // file teks/lainnya
@@ -2182,6 +2183,17 @@ let vfsGridPage = 1;
 let vfsFilePage = 1;
 let currentEditingFilePath = null;
 let currentPreviewImagePath = null;
+
+async function loadFilesIfNeeded() {
+  if (vfsLoaded) return;
+  const listEl = document.getElementById("vfsFileList");
+  listEl.innerHTML = `<div class="empty-state"><h3>Memuat…</h3><p>Mengambil daftar folder &amp; file dari deploy terbaru.</p></div>`;
+  try {
+    await vfsRefreshFromServer();
+  } catch (e) {
+    listEl.innerHTML = `<div class="empty-state"><h3>Gagal memuat</h3><p>${escapeHtmlAdmin(e.message || "Coba tekan tombol refresh.")}</p></div>`;
+  }
+}
 
 function navigateToFolder(path) {
   currentFolderPath = path;
@@ -2201,7 +2213,7 @@ function folderIconSvg() {
 
 function renderFilesView() {
   document.getElementById("filesHeading").textContent =
-    currentFolderPath === "" ? "Manajemen File" : nameOf(currentFolderPath);
+    currentFolderPath === "" ? "Penampil File" : nameOf(currentFolderPath);
 
   const { folders, files } = vfsList(currentFolderPath);
   const q = fileSearchQuery.toLowerCase();
@@ -2308,35 +2320,24 @@ function renderFilesView() {
   );
 }
 
-function deleteVfsNode(path) {
-  const node = vfsGetNode(path);
-  if (!node) return;
-  const isFolder = node.type === "folder";
-  openConfirmModal(
-    isFolder
-      ? `Hapus folder "${node.name}" beserta seluruh isinya? Tindakan ini tidak bisa dibatalkan.`
-      : `Hapus file "${node.name}"? Tindakan ini tidak bisa dibatalkan.`,
-    function () {
-      vfsDeleteNode(path);
-      renderFilesView();
-      showToast(isFolder ? "Folder dihapus" : "File dihapus");
-    },
-    { title: isFolder ? "Hapus Folder" : "Hapus File" }
-  );
-}
-
-document.getElementById("btnRefreshFiles").addEventListener("click", function () {
+document.getElementById("btnRefreshFiles").addEventListener("click", async function () {
   const btn = this;
   btn.classList.remove("is-spinning");
   void btn.offsetWidth; // restart animasi kalau diklik berkali-kali
   btn.classList.add("is-spinning");
+  btn.disabled = true;
 
-  const added = vfsSyncWithSeed();
-  vfsGridPage = 1;
-  vfsFilePage = 1;
-  renderFilesView();
-  showToast(added > 0 ? `${added} folder/file baru ditemukan & ditambahkan` : "Tidak ada folder/file baru");
+  try {
+    const total = await vfsRefreshFromServer();
+    vfsGridPage = 1;
+    vfsFilePage = 1;
+    renderFilesView();
+    showToast(`Diperbarui — ${total} folder/file sesuai deploy terbaru`);
+  } catch (e) {
+    showToast(e.message || "Gagal mengambil data terbaru");
+  }
 
+  btn.disabled = false;
   setTimeout(() => btn.classList.remove("is-spinning"), 650);
 });
 
@@ -2352,183 +2353,43 @@ document.getElementById("fileSortSelect").addEventListener("change", function ()
   renderFilesView();
 });
 
-// ---------- Dropdown "Tambahkan" ----------
-const addDropdownMenu = document.getElementById("addDropdownMenu");
-document.getElementById("btnAddDropdownToggle").addEventListener("click", function (e) {
-  e.stopPropagation();
-  addDropdownMenu.classList.toggle("show");
-});
-document.addEventListener("click", function () {
-  addDropdownMenu.classList.remove("show");
-});
-
-// ---------- Modal: Tambahkan Folder ----------
-const addFolderModalBackdrop = document.getElementById("addFolderModalBackdrop");
-const newFolderNameInput = document.getElementById("newFolderNameInput");
-
-document.getElementById("btnOpenAddFolderModal").addEventListener("click", function () {
-  addDropdownMenu.classList.remove("show");
-  newFolderNameInput.value = "";
-  addFolderModalBackdrop.classList.add("show");
-  setTimeout(() => newFolderNameInput.focus(), 100);
-});
-document.getElementById("btnCancelAddFolder").addEventListener("click", () => {
-  addFolderModalBackdrop.classList.remove("show");
-});
-addFolderModalBackdrop.addEventListener("click", (e) => {
-  if (e.target === addFolderModalBackdrop) addFolderModalBackdrop.classList.remove("show");
-});
-document.getElementById("btnConfirmAddFolder").addEventListener("click", function () {
-  const name = newFolderNameInput.value.trim();
-  if (!name) {
-    newFolderNameInput.focus();
-    return;
-  }
-  if (vfsNodeExists(currentFolderPath, name)) {
-    showToast("Sudah ada folder/file dengan nama itu");
-    return;
-  }
-  vfsAddFolder(currentFolderPath, name);
-  addFolderModalBackdrop.classList.remove("show");
-  renderFilesView();
-  showToast("Folder ditambahkan");
-});
-
-// ---------- Modal: Tambahkan File ----------
-const addFileModalBackdrop = document.getElementById("addFileModalBackdrop");
-const newFileNameInput = document.getElementById("newFileNameInput");
-const uploadFileInput = document.getElementById("uploadFileInput");
-const uploadFileLabel = document.getElementById("uploadFileLabel");
-let pendingUploadFile = null;
-
-document.getElementById("btnOpenAddFileModal").addEventListener("click", function () {
-  addDropdownMenu.classList.remove("show");
-  newFileNameInput.value = "";
-  uploadFileInput.value = "";
-  uploadFileLabel.textContent = "Klik untuk pilih file";
-  pendingUploadFile = null;
-  addFileModalBackdrop.classList.add("show");
-  setTimeout(() => newFileNameInput.focus(), 100);
-});
-document.getElementById("btnCancelAddFile").addEventListener("click", () => {
-  addFileModalBackdrop.classList.remove("show");
-});
-addFileModalBackdrop.addEventListener("click", (e) => {
-  if (e.target === addFileModalBackdrop) addFileModalBackdrop.classList.remove("show");
-});
-
-document.getElementById("btnConfirmAddFile").addEventListener("click", function () {
-  const name = newFileNameInput.value.trim();
-  if (!name) {
-    newFileNameInput.focus();
-    return;
-  }
-  if (vfsNodeExists(currentFolderPath, name)) {
-    showToast("Sudah ada folder/file dengan nama itu");
-    return;
-  }
-  vfsAddFile(currentFolderPath, name, { content: "" });
-  addFileModalBackdrop.classList.remove("show");
-  renderFilesView();
-  showToast("File ditambahkan");
-});
-
-uploadFileInput.addEventListener("change", function () {
-  const file = uploadFileInput.files && uploadFileInput.files[0];
-  if (!file) return;
-  pendingUploadFile = file;
-  uploadFileLabel.textContent = file.name;
-});
-
-document.getElementById("btnConfirmUploadFile").addEventListener("click", function () {
-  if (!pendingUploadFile) {
-    showToast("Pilih file terlebih dahulu");
-    return;
-  }
-  const file = pendingUploadFile;
-  if (vfsNodeExists(currentFolderPath, file.name)) {
-    showToast("Sudah ada folder/file dengan nama itu");
-    return;
-  }
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    if (isImageName(file.name)) {
-      vfsAddFile(currentFolderPath, file.name, { dataUrl: e.target.result });
-    } else {
-      vfsAddFile(currentFolderPath, file.name, { content: typeof e.target.result === "string" ? e.target.result : "" });
-    }
-    addFileModalBackdrop.classList.remove("show");
-    renderFilesView();
-    showToast("File berhasil diupload");
-  };
-  if (isImageName(file.name)) {
-    reader.readAsDataURL(file);
-  } else {
-    reader.readAsText(file);
-  }
-});
-
-// ---------- View: Edit File ----------
+// ---------- View: Lihat File (read-only) ----------
 function openFileEdit(path) {
   const node = vfsGetNode(path);
   if (!node) return;
   if (!node.isText) {
-    showToast("File ini tidak bisa dibuka");
+    showToast("File ini tidak bisa dibuka di sini");
     return;
   }
   currentEditingFilePath = path;
   document.getElementById("fileEditHeading").textContent = node.name;
-  const textarea = document.getElementById("fileEditTextarea");
+  const contentEl = document.getElementById("fileEditTextarea");
   const note = document.getElementById("fileEditNote");
-  textarea.value = "";
-  note.textContent = "";
+  contentEl.textContent = "";
+  note.textContent = "Memuat isi file…";
   pushBackTrap();
+  showSub("viewFileEdit");
 
-  if (node.content != null) {
-    textarea.value = node.content;
-    showSub("viewFileEdit");
-    return;
-  }
-
-  if (node.original) {
-    // Coba muat isi asli file lewat fetch() — hanya berhasil jika situs
-    // dibuka lewat server/http, tidak berhasil jika dibuka via file://
-    note.textContent = "Memuat isi file…";
-    showSub("viewFileEdit");
-    fetch(vfsRealPath(node.path))
-      .then((res) => {
-        if (!res.ok) throw new Error("fetch gagal");
-        return res.text();
-      })
-      .then((text) => {
-        if (currentEditingFilePath !== path) return;
-        textarea.value = text;
-        note.textContent = "";
-      })
-      .catch(() => {
-        if (currentEditingFilePath !== path) return;
-        note.textContent =
-          "Isi asli file ini tidak bisa dimuat di mode ini (perlu dibuka lewat server, bukan langsung dari file). Kamu tetap bisa menulis ulang isinya di bawah lalu Simpan.";
-      });
-  } else {
-    showSub("viewFileEdit");
-  }
+  fetch(vfsRealPath(node.path))
+    .then((res) => {
+      if (!res.ok) throw new Error("fetch gagal");
+      return res.text();
+    })
+    .then((text) => {
+      if (currentEditingFilePath !== path) return;
+      contentEl.textContent = text;
+      note.textContent = "";
+    })
+    .catch(() => {
+      if (currentEditingFilePath !== path) return;
+      note.textContent = "Gagal memuat isi file ini.";
+    });
 }
-
-document.getElementById("btnSaveFileEdit").addEventListener("click", function () {
-  if (!currentEditingFilePath) return;
-  const content = document.getElementById("fileEditTextarea").value;
-  vfsUpdateFileContent(currentEditingFilePath, content);
-  showToast("File disimpan");
-  showSub("viewFiles");
-  renderFilesView();
-});
 
 // ---------- Modal: Preview Gambar ----------
 const imagePreviewModalBackdrop = document.getElementById("imagePreviewModalBackdrop");
 const imagePreviewImg = document.getElementById("imagePreviewImg");
 const imagePreviewName = document.getElementById("imagePreviewName");
-const replaceImageInput = document.getElementById("replaceImageInput");
 
 function openImagePreview(path) {
   const node = vfsGetNode(path);
@@ -2544,41 +2405,9 @@ document.getElementById("btnClosePreview").addEventListener("click", () => {
 imagePreviewModalBackdrop.addEventListener("click", (e) => {
   if (e.target === imagePreviewModalBackdrop) imagePreviewModalBackdrop.classList.remove("show");
 });
-document.getElementById("btnReplaceImage").addEventListener("click", () => {
-  replaceImageInput.click();
-});
-replaceImageInput.addEventListener("change", function () {
-  const file = replaceImageInput.files && replaceImageInput.files[0];
-  if (!file || !currentPreviewImagePath) return;
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    vfsReplaceImage(currentPreviewImagePath, e.target.result);
-    imagePreviewImg.src = e.target.result;
-    renderFilesView();
-    showToast("Gambar diganti");
-  };
-  reader.readAsDataURL(file);
-  replaceImageInput.value = "";
-});
-document.getElementById("btnDeleteImageFromPreview").addEventListener("click", () => {
-  if (!currentPreviewImagePath) return;
-  const path = currentPreviewImagePath;
-  const node = vfsGetNode(path);
-  if (!node) return;
-  openConfirmModal(
-    `Hapus file "${node.name}"? Tindakan ini tidak bisa dibatalkan.`,
-    function () {
-      vfsDeleteNode(path);
-      imagePreviewModalBackdrop.classList.remove("show");
-      renderFilesView();
-      showToast("File dihapus");
-    },
-    { title: "Hapus File" }
-  );
-});
 
 // =========================================================
-// Menu titik-tiga (⋮): Ganti Nama, Detail, Download, Hapus
+// Menu titik-tiga (⋮): Detail & Download saja (read-only)
 // =========================================================
 const vfsContextMenu = document.getElementById("vfsContextMenu");
 const vfsContextDownload = document.getElementById("vfsContextDownload");
@@ -2626,58 +2455,8 @@ vfsContextMenu.addEventListener("click", function (e) {
   const action = btn.getAttribute("data-action");
   closeVfsContextMenu();
 
-  if (action === "rename") openRenameModal(path);
-  else if (action === "detail") openDetailModal(path);
+  if (action === "detail") openDetailModal(path);
   else if (action === "download") downloadVfsNode(path);
-  else if (action === "delete") deleteVfsNode(path);
-});
-
-// ---------- Ganti Nama ----------
-const renameModalBackdrop = document.getElementById("renameModalBackdrop");
-const renameInput = document.getElementById("renameInput");
-let renamingPath = null;
-
-function openRenameModal(path) {
-  const node = vfsGetNode(path);
-  if (!node) return;
-  renamingPath = path;
-  renameInput.value = node.name;
-  renameModalBackdrop.classList.add("show");
-  setTimeout(() => {
-    renameInput.focus();
-    renameInput.select();
-  }, 100);
-}
-document.getElementById("btnCancelRename").addEventListener("click", () => {
-  renameModalBackdrop.classList.remove("show");
-});
-renameModalBackdrop.addEventListener("click", (e) => {
-  if (e.target === renameModalBackdrop) renameModalBackdrop.classList.remove("show");
-});
-document.getElementById("btnConfirmRename").addEventListener("click", async function () {
-  if (!renamingPath) return;
-  const newName = renameInput.value.trim();
-  if (!newName) {
-    renameInput.focus();
-    return;
-  }
-  const node = vfsGetNode(renamingPath);
-  if (!node) return;
-  if (newName === node.name) {
-    renameModalBackdrop.classList.remove("show");
-    return;
-  }
-  const parent = parentOf(renamingPath);
-  if (vfsNodeExists(parent, newName)) {
-    showToast("Sudah ada folder/file dengan nama itu");
-    return;
-  }
-  // Simpan dulu byte asli gambar (jika ada) supaya thumbnail tidak rusak
-  await vfsTryPreserveImageBytes(renamingPath);
-  vfsRenameNode(renamingPath, newName);
-  renameModalBackdrop.classList.remove("show");
-  renderFilesView();
-  showToast("Nama berhasil diubah");
 });
 
 // ---------- Detail ----------
@@ -2705,18 +2484,15 @@ function openDetailModal(path) {
       detailRow("Jalur Folder", "/" + node.path) +
       detailRow(
         "Ukuran Folder",
-        formatBytes(stats.totalSize) + (stats.hasUnknownSize ? " (sebagian file asli tidak diketahui ukurannya)" : "")
+        formatBytes(stats.totalSize) + (stats.hasUnknownSize ? " (sebagian file tidak diketahui ukurannya)" : "")
       ) +
-      detailRow("Tanggal Ditambahkan", formatReportDate(node.dateAdded)) +
       detailRow("Isi Folder", `${stats.folderCount} folder, ${stats.fileCount} file`);
   } else {
-    const size = vfsFileSizeBytes(node);
     detailModalTitle.textContent = "Detail File";
     detailModalBody.innerHTML =
       detailRow("Nama File", node.name) +
       detailRow("Jalur File", "/" + node.path) +
-      detailRow("Ukuran File", size == null ? "Tidak diketahui (file asli di server)" : formatBytes(size)) +
-      detailRow("Tanggal Ditambahkan", formatReportDate(node.dateAdded));
+      detailRow("Ukuran File", formatBytes(node.size));
   }
   detailModalBackdrop.classList.add("show");
 }
@@ -2733,16 +2509,7 @@ function downloadVfsNode(path) {
   if (!node || node.type !== "file") return;
   const a = document.createElement("a");
   a.download = node.name;
-  if (node.dataUrl) {
-    a.href = node.dataUrl;
-  } else if (node.content != null) {
-    a.href = URL.createObjectURL(new Blob([node.content], { type: "text/plain" }));
-  } else if (node.original) {
-    a.href = vfsRealPath(node.path);
-  } else {
-    showToast("File ini belum memiliki isi untuk diunduh");
-    return;
-  }
+  a.href = vfsRealPath(node.path);
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -3204,12 +2971,6 @@ async function runDeploy() {
 // =========================================================
 // Informasi Web (statistik + kata sandi admin)
 // =========================================================
-function formatBytes(bytes) {
-  if (bytes < 1024) return bytes + " B";
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-  return (bytes / (1024 * 1024)).toFixed(2) + " MB";
-}
-
 async function renderInfoView() {
   const visitStats = getVisitStats();
   const posts = await loadPosts();

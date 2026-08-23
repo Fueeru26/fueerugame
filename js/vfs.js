@@ -1,27 +1,19 @@
 /* =========================================================
-   Fueeru Game — Virtual File System (Manajemen File)
+   Fueeru Game — Penampil File (read-only)
 
-   PENTING: karena situs ini tidak punya server/backend, "Manajemen
-   File" bekerja di atas salinan virtual struktur folder (disimpan di
-   localStorage), BUKAN mengubah file asli di server. Untuk file yang
-   memang ada di disk, isi teks aslinya dicoba dimuat lewat fetch()
-   (hanya berhasil jika situs dibuka lewat server/http, bukan dengan
-   membuka file HTML secara langsung/file://). File/folder baru yang
-   dibuat lewat panel ini hanya tersimpan di browser admin yang
-   bersangkutan.
+   Daftar folder & file diambil langsung dari repo GitHub (commit
+   terbaru di branch main) lewat endpoint /api/files/tree, jadi selalu
+   sesuai dengan deploy yang sedang live begitu tombol Refresh ditekan.
+
+   Isi file (untuk preview teks) & gambar diambil langsung dari situs
+   yang sudah live (same-origin fetch/ <img src>), BUKAN lewat GitHub —
+   karena file itu memang sudah tersaji apa adanya oleh Worker.
+
+   Read-only: tidak ada tambah/ganti nama/hapus dari sini.
    ========================================================= */
 
-const VFS_KEY = "fueeru_vfs_v3";
-/* Tanggal tetap yang dipakai sebagai "Tanggal Ditambahkan" untuk semua
-   file/folder bawaan (seed) situs — merepresentasikan kapan situs ini
-   pertama kali dibuat. */
-const SEED_DATE = "2026-08-01T00:00:00.000Z";
-
 const IMAGE_EXT = ["png", "jpg", "jpeg", "gif", "webp", "svg"];
-/* Ekstensi yang dianggap "berbasis teks" (bisa dibuka & diedit lewat
- * Manajemen File). Selain ini (misalnya font .otf/.ttf) dianggap file
- * biner dan tidak bisa dibuka lewat editor teks. */
-const TEXT_EXT = ["html", "css", "js", "json", "md", "txt", "xml", "csv"];
+const TEXT_EXT = ["html", "css", "js", "json", "md", "txt", "xml", "csv", "yml", "yaml"];
 
 function fileExt(name) {
   const idx = name.lastIndexOf(".");
@@ -41,141 +33,47 @@ function nameOf(path) {
   const idx = path.lastIndexOf("/");
   return idx === -1 ? path : path.slice(idx + 1);
 }
-function joinPath(parent, name) {
-  return parent ? parent + "/" + name : name;
-}
 
-/* Struktur folder & file asli di server (real relative path, dipakai
-   sebagai src gambar / target fetch() langsung — bukan disalin).
-   Path di sini merepresentasikan lokasi sebenarnya relatif terhadap
-   folder utama situs (tempat index.html berada). */
-const SEED_PATHS = [
-  { path: "css", type: "folder" },
-  { path: "js", type: "folder" },
-  { path: "font", type: "folder" },
-  { path: "webpictures", type: "folder" },
-  { path: "backup", type: "folder" },
-  { path: "web", type: "folder" },
-  { path: "index.html", type: "file" },
-  { path: "admin.html", type: "file" },
-  { path: "404.html", type: "file" },
-  { path: "web/category.html", type: "file" },
-  { path: "web/donasi.html", type: "file" },
-  { path: "web/lapor.html", type: "file" },
-  { path: "web/post.html", type: "file" },
-  { path: "web/search.html", type: "file" },
-  { path: "web/tentang.html", type: "file" },
-  { path: "web/404.html", type: "file" },
-  { path: "css/admin.css", type: "file" },
-  { path: "css/style.css", type: "file" },
-  { path: "js/admin.js", type: "file" },
-  { path: "js/data.js", type: "file" },
-  { path: "js/main.js", type: "file" },
-  { path: "js/vfs.js", type: "file" },
-  { path: "font/FredokaOne-Regular.otf", type: "file" },
-  { path: "font/FredokaOne-Regular.ttf", type: "file" },
-  { path: "font/OFL.txt", type: "file" },
-  { path: "webpictures/header.webp", type: "file" },
-  { path: "webpictures/logo.webp", type: "file" },
-  { path: "webpictures/404.webp", type: "file" },
-  { path: "webpictures/postplaceholder.webp", type: "file" },
-  { path: "webpictures/icon-192.png", type: "file" },
-  { path: "webpictures/icon-512.png", type: "file" },
-  { path: "webpictures/icon-maskable-192.png", type: "file" },
-  { path: "webpictures/icon-maskable-512.png", type: "file" },
-  { path: "webpictures/icon-admin-192.png", type: "file" },
-  { path: "webpictures/icon-admin-512.png", type: "file" },
-  { path: "webpictures/icon-admin-maskable-192.png", type: "file" },
-  { path: "webpictures/icon-admin-maskable-512.png", type: "file" },
-  { path: "backup/header.png", type: "file" },
-  { path: "backup/logo.png", type: "file" },
-  { path: "backup/404.png", type: "file" },
-  { path: "backup/postplaceholder.png", type: "file" }
-];
-function buildSeedVFS() {
+let vfsMap = {};
+let vfsLoaded = false;
+
+function vfsBuildFromItems(items) {
   const map = {};
-  SEED_PATHS.forEach((entry) => {
-    map[entry.path] = {
-      path: entry.path,
-      name: nameOf(entry.path),
-      type: entry.type,
-      isImage: entry.type === "file" ? isImageName(entry.path) : false,
-      isText: entry.type === "file" ? isTextName(entry.path) : false,
-      original: true,
-      content: null,
-      dataUrl: null,
-      dateAdded: SEED_DATE
+  items.forEach((it) => {
+    map[it.path] = {
+      path: it.path,
+      name: nameOf(it.path),
+      type: it.type,
+      isImage: it.type === "file" ? isImageName(it.path) : false,
+      isText: it.type === "file" ? isTextName(it.path) : false,
+      size: it.type === "file" ? it.size : null
     };
+  });
+  // Jaga-jaga: pastikan semua folder induk tercatat, meski GitHub tidak
+  // mengembalikan entry "tree" untuk sebagiannya.
+  Object.keys(map).forEach((p) => {
+    let parent = parentOf(p);
+    while (parent && !map[parent]) {
+      map[parent] = { path: parent, name: nameOf(parent), type: "folder", isImage: false, isText: false, size: null };
+      parent = parentOf(parent);
+    }
   });
   return map;
 }
 
-function loadVFS() {
-  try {
-    const raw = localStorage.getItem(VFS_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === "object") return parsed;
-    }
-    const seeded = buildSeedVFS();
-    localStorage.setItem(VFS_KEY, JSON.stringify(seeded));
-    return seeded;
-  } catch (e) {
-    return buildSeedVFS();
-  }
-}
-
-function saveVFS(map) {
-  try {
-    localStorage.setItem(VFS_KEY, JSON.stringify(map));
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
-
-/** Sinkronkan VFS yang tersimpan dengan SEED_PATHS terkini.
- *
- * loadVFS() hanya membangun VFS dari SEED_PATHS SEKALI, saat localStorage
- * situs itu masih kosong — setelah itu isi localStorage dipakai apa
- * adanya. Akibatnya, kalau SEED_PATHS ditambah entri baru di kode (mis.
- * ada folder/file baru yang memang sudah ada di situs) lalu situs
- * di-deploy ulang, browser admin yang localStorage-nya sudah terisi
- * duluan TIDAK akan pernah melihat entri baru itu di Manajemen File.
- *
- * Fungsi ini dipanggil lewat tombol "Refresh": menambahkan ke VFS semua
- * path di SEED_PATHS yang belum tercatat, tanpa pernah menimpa atau
- * menghapus node yang sudah ada (termasuk file/folder yang ditambahkan
- * atau diedit sendiri lewat panel ini). Mengembalikan jumlah entri baru
- * yang ditambahkan. */
-function vfsSyncWithSeed() {
-  const map = loadVFS();
-  let added = 0;
-  SEED_PATHS.forEach((entry) => {
-    if (map[entry.path]) return;
-    map[entry.path] = {
-      path: entry.path,
-      name: nameOf(entry.path),
-      type: entry.type,
-      isImage: entry.type === "file" ? isImageName(entry.path) : false,
-      isText: entry.type === "file" ? isTextName(entry.path) : false,
-      original: true,
-      content: null,
-      dataUrl: null,
-      dateAdded: new Date().toISOString()
-    };
-    added++;
-  });
-  if (added > 0) saveVFS(map);
-  return added;
+/** Ambil ulang daftar folder & file terbaru dari GitHub. Return jumlah entri. */
+async function vfsRefreshFromServer() {
+  const data = await apiCall("GET", "/api/files/tree", undefined, true);
+  vfsMap = vfsBuildFromItems(data.items || []);
+  vfsLoaded = true;
+  return Object.keys(vfsMap).length;
 }
 
 /** Ambil daftar folder & file langsung di dalam folderPath ("" = root). */
 function vfsList(folderPath) {
-  const map = loadVFS();
   const folders = [];
   const files = [];
-  Object.values(map).forEach((node) => {
+  Object.values(vfsMap).forEach((node) => {
     if (parentOf(node.path) === folderPath && node.path !== folderPath) {
       if (node.type === "folder") folders.push(node);
       else files.push(node);
@@ -185,152 +83,18 @@ function vfsList(folderPath) {
 }
 
 function vfsGetNode(path) {
-  const map = loadVFS();
-  return map[path] || null;
+  return vfsMap[path] || null;
 }
 
-function vfsNodeExists(parentPath, name) {
-  const map = loadVFS();
-  return !!map[joinPath(parentPath, name)];
-}
-
-function vfsAddFolder(parentPath, name) {
-  const map = loadVFS();
-  const path = joinPath(parentPath, name);
-  if (map[path]) return false;
-  map[path] = {
-    path,
-    name,
-    type: "folder",
-    isImage: false,
-    original: false,
-    content: null,
-    dataUrl: null,
-    dateAdded: new Date().toISOString()
-  };
-  saveVFS(map);
-  return true;
-}
-
-/** Tambah file baru (kosong, atau dari upload dataUrl). */
-function vfsAddFile(parentPath, name, opts) {
-  opts = opts || {};
-  const map = loadVFS();
-  const path = joinPath(parentPath, name);
-  if (map[path]) return false;
-  map[path] = {
-    path,
-    name,
-    type: "file",
-    isImage: isImageName(name),
-    isText: isTextName(name),
-    original: false,
-    content: opts.dataUrl ? null : opts.content != null ? opts.content : "",
-    dataUrl: opts.dataUrl || null,
-    dateAdded: new Date().toISOString()
-  };
-  saveVFS(map);
-  return true;
-}
-
-/** Hapus 1 node (dan seluruh isi di dalamnya jika folder). */
-function vfsDeleteNode(path) {
-  const map = loadVFS();
-  const node = map[path];
-  if (!node) return false;
-  if (node.type === "folder") {
-    const prefix = path + "/";
-    Object.keys(map).forEach((p) => {
-      if (p === path || p.startsWith(prefix)) delete map[p];
-    });
-  } else {
-    delete map[path];
-  }
-  saveVFS(map);
-  return true;
-}
-
-/** Simpan hasil edit isi file teks. */
-function vfsUpdateFileContent(path, content) {
-  const map = loadVFS();
-  const node = map[path];
-  if (!node) return false;
-  node.content = content;
-  saveVFS(map);
-  return true;
-}
-
-/** Ganti gambar (replace) — dipakai saat "Ganti Gambar" pada file gambar. */
-function vfsReplaceImage(path, dataUrl) {
-  const map = loadVFS();
-  const node = map[path];
-  if (!node) return false;
-  node.dataUrl = dataUrl;
-  node.original = false;
-  saveVFS(map);
-  return true;
-}
-
-/** Sumber tampilan gambar: dataUrl (jika ada override) atau path asli di disk. */
-function vfsImageSrc(node) {
-  return node.dataUrl || (node.original ? vfsRealPath(node.path) : "");
-}
-
-/** admin.html (satu-satunya pemakai vfs.js) sekarang berada di folder
- * utama situs (sama seperti index.html), jadi path asli (relatif ke
- * root situs) yang tersimpan di VFS bisa dipakai langsung tanpa
- * prefix tambahan sebagai src gambar / target fetch(). */
+/** Path relatif ke root situs (dipakai untuk src gambar / fetch isi teks /
+ * link download) — situs & Admin Panel berada di root yang sama. */
 function vfsRealPath(path) {
-  return path;
+  return "/" + path;
 }
 
-/** Ganti nama file/folder. Untuk folder, seluruh path anak ikut disesuaikan. */
-function vfsRenameNode(path, newName) {
-  const map = loadVFS();
-  const node = map[path];
-  if (!node) return false;
-  const parent = parentOf(path);
-  const newPath = joinPath(parent, newName);
-  if (map[newPath]) return false;
-
-  if (node.type === "folder") {
-    const prefix = path + "/";
-    const affected = Object.keys(map).filter((p) => p === path || p.startsWith(prefix));
-    affected.forEach((oldP) => {
-      const rest = oldP.slice(path.length); // "" atau "/anak/..."
-      const newP = newPath + rest;
-      const n = map[oldP];
-      n.path = newP;
-      if (oldP === path) n.name = newName;
-      map[newP] = n;
-      delete map[oldP];
-    });
-  } else {
-    node.path = newPath;
-    node.name = newName;
-    map[newPath] = node;
-    delete map[path];
-  }
-  saveVFS(map);
-  return true;
-}
-
-/** Perkiraan ukuran 1 file dalam byte. null jika tidak diketahui
- * (file asli di server yang belum pernah dibuka/diubah lewat panel ini). */
-function vfsFileSizeBytes(node) {
-  if (node.dataUrl) {
-    const commaIdx = node.dataUrl.indexOf(",");
-    const b64 = commaIdx === -1 ? node.dataUrl : node.dataUrl.slice(commaIdx + 1);
-    return Math.round((b64.length * 3) / 4);
-  }
-  if (node.content != null) {
-    try {
-      return new Blob([node.content]).size;
-    } catch (e) {
-      return node.content.length;
-    }
-  }
-  return null;
+/** Sumber tampilan gambar: langsung dari file yang sudah live. */
+function vfsImageSrc(node) {
+  return vfsRealPath(node.path);
 }
 
 /** Format byte jadi teks mudah dibaca (KB/MB). */
@@ -342,16 +106,15 @@ function formatBytes(bytes) {
 }
 
 /** Statistik 1 folder: jumlah file & folder langsung di dalamnya, serta
- * total ukuran seluruh isi (rekursif, sebatas yang ukurannya diketahui). */
+ * total ukuran seluruh isi (rekursif). */
 function vfsFolderStats(path) {
-  const map = loadVFS();
   const prefix = path === "" ? "" : path + "/";
   let fileCount = 0;
   let folderCount = 0;
   let totalSize = 0;
   let hasUnknownSize = false;
 
-  Object.values(map).forEach((node) => {
+  Object.values(vfsMap).forEach((node) => {
     if (node.path === path) return;
     const isDirectChild = parentOf(node.path) === path;
     const isDescendant = path === "" ? true : node.path.startsWith(prefix);
@@ -360,53 +123,10 @@ function vfsFolderStats(path) {
       else fileCount++;
     }
     if (isDescendant && node.type === "file") {
-      const size = vfsFileSizeBytes(node);
-      if (size == null) hasUnknownSize = true;
-      else totalSize += size;
+      if (node.size == null) hasUnknownSize = true;
+      else totalSize += node.size;
     }
   });
 
   return { fileCount, folderCount, totalSize, hasUnknownSize };
-}
-
-/** Best-effort: sebelum me-rename file gambar ASLI (yang belum pernah
- * disentuh, sehingga belum punya dataUrl), coba muat byte aslinya lewat
- * fetch() dan simpan sebagai dataUrl — supaya thumbnail-nya tidak rusak
- * setelah namanya berubah (path aslinya di disk jadi tidak cocok lagi).
- * Hanya berhasil jika situs dibuka lewat server/http; jika gagal (mis.
- * dibuka via file://), rename tetap dilanjutkan apa adanya. */
-function vfsTryPreserveImageBytes(path) {
-  return new Promise((resolve) => {
-    const map = loadVFS();
-    const node = map[path];
-    if (!node || node.type !== "file" || !node.isImage || node.dataUrl || !node.original) {
-      resolve();
-      return;
-    }
-    fetch(vfsRealPath(node.path))
-      .then((res) => {
-        if (!res.ok) throw new Error("fetch gagal");
-        return res.blob();
-      })
-      .then(
-        (blob) =>
-          new Promise((res) => {
-            const reader = new FileReader();
-            reader.onload = () => res(reader.result);
-            reader.onerror = () => res(null);
-            reader.readAsDataURL(blob);
-          })
-      )
-      .then((dataUrl) => {
-        if (dataUrl) {
-          const freshMap = loadVFS();
-          if (freshMap[path]) {
-            freshMap[path].dataUrl = dataUrl;
-            saveVFS(freshMap);
-          }
-        }
-        resolve();
-      })
-      .catch(() => resolve());
-  });
 }

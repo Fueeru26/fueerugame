@@ -1244,6 +1244,7 @@ body.admin-body {
 .file-edit-textarea {
   width: 100%;
   min-height: 320px;
+  max-height: 60vh;
   padding: 14px;
   border-radius: var(--radius-sm);
   border: 1.5px solid var(--sky-200);
@@ -1252,10 +1253,13 @@ body.admin-body {
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   font-size: .84rem;
   line-height: 1.6;
-  resize: vertical;
   outline: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow: auto;
+  margin: 0;
+  user-select: text;
 }
-.file-edit-textarea:focus { border-color: var(--sky-500); }
 
 /* ---------------- Backup & Restore ---------------- */
 .admin-menu-card:nth-child(4) { background: linear-gradient(135deg, #f0b45c, var(--navy-700)); }
