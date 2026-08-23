@@ -78,6 +78,17 @@ CREATE TABLE IF NOT EXISTS processed_workflow_runs (
   processedAt TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS site_visits (
+  id TEXT PRIMARY KEY,
+  date TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS post_views (
+  id TEXT PRIMARY KEY,
+  postId TEXT NOT NULL,
+  date TEXT NOT NULL
+);
+
 -- Password admin default: admin123 (ganti lewat Admin Panel setelah deploy pertama)
 INSERT OR IGNORE INTO settings (key, value) VALUES ('admin_password', 'admin123');
 

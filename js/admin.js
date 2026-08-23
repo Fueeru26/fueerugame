@@ -2972,14 +2972,16 @@ async function runDeploy() {
 // Informasi Web (statistik + kata sandi admin)
 // =========================================================
 async function renderInfoView() {
-  const visitStats = getVisitStats();
+  const visitStats = await getVisitStats();
   const posts = await loadPosts();
   const reports = await loadReports();
   const viewStats = await getPostViewStats();
 
   document.getElementById("infoTotalVisits").textContent = visitStats.total;
+  document.getElementById("infoVisitsToday").textContent = visitStats.today;
   document.getElementById("infoVisitsThisWeek").textContent = visitStats.thisWeek;
   document.getElementById("infoVisitsLastWeek").textContent = visitStats.lastWeek;
+  document.getElementById("infoVisitsAvgDay").textContent = visitStats.avgPerDay7d;
   document.getElementById("infoTotalPosts").textContent = posts.length;
   document.getElementById("infoTotalReports").textContent = reports.length;
   document.getElementById("infoReportsPending").textContent = reports.filter(
@@ -2988,14 +2990,28 @@ async function renderInfoView() {
   document.getElementById("infoStorageSize").textContent = formatBytes(getStorageSizeEstimate());
 
   document.getElementById("infoViewsTotal").textContent = viewStats.total;
+  document.getElementById("infoViewsToday").textContent = viewStats.today;
   document.getElementById("infoViewsThisWeek").textContent = viewStats.thisWeek;
   document.getElementById("infoViewsLastWeek").textContent = viewStats.lastWeek;
 
   document.getElementById("infoCurrentPassword").textContent = "••••••••";
+  document.getElementById("btnTogglePasswordVisibility").textContent = "Lihat Kata Sandi";
   document.getElementById("newPasswordInput").value = "";
   document.getElementById("passwordStatus").textContent = "";
   document.getElementById("passwordStatus").className = "backup-status";
 }
+
+document.getElementById("btnTogglePasswordVisibility").addEventListener("click", function () {
+  const el = document.getElementById("infoCurrentPassword");
+  const isHidden = el.textContent === "••••••••";
+  if (isHidden) {
+    el.textContent = getAdminSessionPassword() || "(tidak diketahui)";
+    this.textContent = "Sembunyikan Kata Sandi";
+  } else {
+    el.textContent = "••••••••";
+    this.textContent = "Lihat Kata Sandi";
+  }
+});
 
 document.getElementById("btnSavePassword").addEventListener("click", async function () {
   const input = document.getElementById("newPasswordInput");
@@ -3014,6 +3030,7 @@ document.getElementById("btnSavePassword").addEventListener("click", async funct
     return;
   }
   document.getElementById("infoCurrentPassword").textContent = "••••••••";
+  document.getElementById("btnTogglePasswordVisibility").textContent = "Lihat Kata Sandi";
   input.value = "";
   statusEl.textContent = "Kata sandi admin berhasil diganti.";
   statusEl.className = "backup-status success";

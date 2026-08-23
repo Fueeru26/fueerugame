@@ -247,6 +247,98 @@ async function handleFilesTree(request, env, method) {
   return json({ items, truncated: !!data.truncated });
 }
 
+/** [PUBLIK] Catat 1 kunjungan situs (dipanggil sekali per pemuatan halaman). */
+async function handleTrackVisit(request, env, method) {
+  if (method !== "POST") return badRequest("Method tidak didukung");
+  await env.DB.prepare("INSERT INTO site_visits (id, date) VALUES (?, ?)")
+    .bind(newId("visit"), new Date().toISOString())
+    .run();
+  return json({ ok: true });
+}
+
+/** [PUBLIK] Catat 1 kali postingan dilihat. */
+async function handleTrackView(request, env, method) {
+  if (method !== "POST") return badRequest("Method tidak didukung");
+  const body = await request.json().catch(() => null);
+  if (!body || !body.postId) return badRequest("postId wajib diisi");
+  await env.DB.prepare("INSERT INTO post_views (id, postId, date) VALUES (?, ?, ?)")
+    .bind(newId("view"), body.postId, new Date().toISOString())
+    .run();
+  return json({ ok: true });
+}
+
+function weekBoundaries() {
+  const now = new Date();
+  const day = now.getDay();
+  const diff = (day === 0 ? -6 : 1) - day;
+  const thisWeekStart = new Date(now);
+  thisWeekStart.setDate(now.getDate() + diff);
+  thisWeekStart.setHours(0, 0, 0, 0);
+  const thisWeekEnd = new Date(thisWeekStart.getTime() + 7 * 86400000);
+  const lastWeekStart = new Date(thisWeekStart.getTime() - 7 * 86400000);
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 86400000);
+  return { thisWeekStart, thisWeekEnd, lastWeekStart, todayStart, sevenDaysAgo, now };
+}
+
+/** [ADMIN] Statistik kunjungan situs, akurat gabungan semua pengunjung/device. */
+async function handleStatsVisits(request, env, method) {
+  if (method !== "GET") return badRequest("Method tidak didukung");
+  if (!(await requireAdmin(request, env))) return unauthorized();
+
+  const b = weekBoundaries();
+  const count = async (fromIso, toIso) => {
+    const row = toIso
+      ? await env.DB.prepare("SELECT COUNT(*) AS c FROM site_visits WHERE date >= ? AND date < ?")
+          .bind(fromIso, toIso)
+          .first()
+      : await env.DB.prepare("SELECT COUNT(*) AS c FROM site_visits WHERE date >= ?").bind(fromIso).first();
+    return row ? row.c : 0;
+  };
+
+  const total = (await env.DB.prepare("SELECT COUNT(*) AS c FROM site_visits").first()).c;
+  const today = await count(b.todayStart.toISOString());
+  const thisWeek = await count(b.thisWeekStart.toISOString(), b.thisWeekEnd.toISOString());
+  const lastWeek = await count(b.lastWeekStart.toISOString(), b.thisWeekStart.toISOString());
+  const last7Days = await count(b.sevenDaysAgo.toISOString());
+  const avgPerDay7d = Math.round((last7Days / 7) * 10) / 10;
+
+  return json({ total, today, thisWeek, lastWeek, avgPerDay7d });
+}
+
+/** [ADMIN] Statistik views postingan, akurat gabungan semua pengunjung/device
+ * (hanya menghitung postingan yang masih ada). */
+async function handleStatsViews(request, env, method) {
+  if (method !== "GET") return badRequest("Method tidak didukung");
+  if (!(await requireAdmin(request, env))) return unauthorized();
+
+  const b = weekBoundaries();
+  const count = async (fromIso, toIso) => {
+    const row = toIso
+      ? await env.DB.prepare(
+          "SELECT COUNT(*) AS c FROM post_views WHERE date >= ? AND date < ? AND postId IN (SELECT id FROM posts)"
+        )
+          .bind(fromIso, toIso)
+          .first()
+      : await env.DB.prepare(
+          "SELECT COUNT(*) AS c FROM post_views WHERE date >= ? AND postId IN (SELECT id FROM posts)"
+        )
+          .bind(fromIso)
+          .first();
+    return row ? row.c : 0;
+  };
+
+  const total = (
+    await env.DB.prepare("SELECT COUNT(*) AS c FROM post_views WHERE postId IN (SELECT id FROM posts)").first()
+  ).c;
+  const today = await count(b.todayStart.toISOString());
+  const thisWeek = await count(b.thisWeekStart.toISOString(), b.thisWeekEnd.toISOString());
+  const lastWeek = await count(b.lastWeekStart.toISOString(), b.thisWeekStart.toISOString());
+
+  return json({ total, today, thisWeek, lastWeek });
+}
+
 /** Verifikasi tanda tangan HMAC-SHA256 dari GitHub webhook. */
 async function verifyGithubWebhookSignature(secret, payloadText, signatureHeader) {
   if (!signatureHeader || !signatureHeader.startsWith("sha256=")) return false;
@@ -729,6 +821,10 @@ export default {
       if (path === "/api/deploy/finish") return await handleDeployFinish(request, env, method);
       if (path === "/api/github/webhook") return await handleGithubWebhook(request, env, method);
       if (path === "/api/files/tree") return await handleFilesTree(request, env, method);
+      if (path === "/api/track/visit") return await handleTrackVisit(request, env, method);
+      if (path === "/api/track/view") return await handleTrackView(request, env, method);
+      if (path === "/api/stats/visits") return await handleStatsVisits(request, env, method);
+      if (path === "/api/stats/views") return await handleStatsViews(request, env, method);
       if (path === "/api/notifications") return await handleServerNotifications(request, env, method);
 
       if (path.startsWith("/api/")) return json({ error: "Endpoint tidak ditemukan" }, 404);

@@ -1297,3 +1297,86 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   }
   .post-grid .post-row .prow-body { width: 100%; }
 }
+
+/* ---------- Peringatan Konten Dewasa (Age Gate) ---------- */
+#ageGateBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(8, 22, 40, 0.86);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.age-gate-box {
+  background: #fff;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  max-width: 400px;
+  width: 100%;
+  padding: 28px 24px;
+  text-align: center;
+}
+.age-gate-logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  margin: 0 auto 14px;
+  display: block;
+  box-shadow: var(--shadow-card);
+}
+.age-gate-box h2 {
+  font-size: 1.2rem;
+  color: var(--navy-900);
+  margin-bottom: 10px;
+}
+.age-gate-box p {
+  font-size: .88rem;
+  color: #4a6a89;
+  line-height: 1.55;
+  margin-bottom: 16px;
+}
+.age-gate-error {
+  color: #c0392b;
+  font-size: .82rem;
+  font-weight: 600;
+  min-height: 1.2em;
+  margin-bottom: 12px;
+}
+.age-gate-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.age-gate-actions button {
+  flex: 1;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-weight: 700;
+  font-size: .92rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+#ageGateNo {
+  background: #e6f2fa;
+  color: var(--navy-900);
+}
+#ageGateNo:hover { background: #dceefa; }
+#ageGateYes {
+  background: var(--sky-500);
+  color: #fff;
+}
+#ageGateYes:hover { background: var(--sky-600); }
+.age-gate-remember {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: .85rem;
+  color: #4a6a89;
+  cursor: pointer;
+}
+.age-gate-remember input { accent-color: var(--sky-500); width: 16px; height: 16px; }
+

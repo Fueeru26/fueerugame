@@ -774,17 +774,20 @@
 
       <div class="info-box">
         <div class="info-row"><span>Total Pengunjung</span><strong id="infoTotalVisits">0</strong></div>
+        <div class="info-row"><span>Pengunjung Hari Ini</span><strong id="infoVisitsToday">0</strong></div>
         <div class="info-row"><span>Total Pengunjung Minggu ini</span><strong id="infoVisitsThisWeek">0</strong></div>
         <div class="info-row"><span>Total Pengunjung Minggu Lalu</span><strong id="infoVisitsLastWeek">0</strong></div>
+        <div class="info-row"><span>Rata-rata Pengunjung/Hari (7 hari terakhir)</span><strong id="infoVisitsAvgDay">0</strong></div>
         <div class="info-row"><span>Total Postingan</span><strong id="infoTotalPosts">0</strong></div>
         <div class="info-row"><span>Total Laporan</span><strong id="infoTotalReports">0</strong></div>
         <div class="info-row"><span>Laporan Belum Ditangani</span><strong id="infoReportsPending">0</strong></div>
-        <div class="info-row"><span>Perkiraan Ukuran Data Tersimpan</span><strong id="infoStorageSize">0 KB</strong></div>
+        <div class="info-row"><span>Perkiraan Ukuran Data Lokal (Perangkat Ini)</span><strong id="infoStorageSize">0 KB</strong></div>
       </div>
 
       <div class="info-box">
         <div class="info-box-title">Postingan Views</div>
         <div class="info-row"><span>Total Views Postingan</span><strong id="infoViewsTotal">0</strong></div>
+        <div class="info-row"><span>Views Postingan Hari Ini</span><strong id="infoViewsToday">0</strong></div>
         <div class="info-row"><span>Total Views Postingan Minggu ini</span><strong id="infoViewsThisWeek">0</strong></div>
         <div class="info-row"><span>Total Views Postingan Minggu Lalu</span><strong id="infoViewsLastWeek">0</strong></div>
         <button type="button" class="btn-primary" id="btnViewPostViews" style="width:100%;margin-top:14px;">Lihat Views Postingan</button>
@@ -793,6 +796,7 @@
       <div class="info-box">
         <div class="info-box-title">Kata Sandi Admin</div>
         <p class="backup-desc" style="margin-top:2px;">Kata Sandi saat ini: <strong id="infoCurrentPassword" style="color:var(--ink);"></strong></p>
+        <button type="button" class="btn-cancel" id="btnTogglePasswordVisibility" style="width:100%;margin-top:4px;">Lihat Kata Sandi</button>
         <div class="subsection-title" style="margin-top:14px;">Ganti Kata Sandi</div>
         <input type="text" id="newPasswordInput" class="info-text-input" placeholder="Kata sandi baru" autocomplete="off">
         <button type="button" class="btn-primary" id="btnSavePassword" style="width:100%;margin-top:12px;">Simpan</button>

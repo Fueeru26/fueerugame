@@ -266,9 +266,14 @@ function _saveLog(key, arr) {
 }
 
 function logVisit() {
+  // Tetap dicatat lokal (dipakai widget "Populer" per-device di halaman
+  // publik), DAN dikirim ke server supaya Admin Panel bisa menampilkan
+  // statistik akurat gabungan semua pengunjung/device.
   const arr = _loadLog(VISITS_KEY);
   arr.push(new Date().toISOString());
   _saveLog(VISITS_KEY, arr);
+
+  fetch("/api/track/visit", { method: "POST" }).catch(() => {});
 }
 
 function logPostView(postId) {
@@ -284,6 +289,12 @@ function logPostView(postId) {
   try {
     localStorage.setItem(POST_VIEWS_KEY, JSON.stringify(raw));
   } catch (e) {}
+
+  fetch("/api/track/view", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ postId })
+  }).catch(() => {});
 }
 
 function loadPostViewsLog() {
@@ -313,39 +324,15 @@ function _countInRange(isoArr, start, end) {
   return n;
 }
 
-function getVisitStats() {
-  const arr = _loadLog(VISITS_KEY);
-  const now = new Date();
-  const thisWeekStart = startOfWeek(now);
-  const thisWeekEnd = new Date(thisWeekStart.getTime() + 7 * 86400000);
-  const lastWeekStart = new Date(thisWeekStart.getTime() - 7 * 86400000);
-  return {
-    total: arr.length,
-    thisWeek: _countInRange(arr, thisWeekStart, thisWeekEnd),
-    lastWeek: _countInRange(arr, lastWeekStart, thisWeekStart)
-  };
+/** [ADMIN] Statistik kunjungan situs — akurat, gabungan semua pengunjung/device
+ * (diambil dari server, bukan lagi localStorage browser ini saja). */
+async function getVisitStats() {
+  return apiCall("GET", "/api/stats/visits", undefined, true);
 }
 
-/** [ADMIN] Statistik views postingan (gabungan semua postingan yang masih ada). */
+/** [ADMIN] Statistik views postingan — akurat, gabungan semua pengunjung/device. */
 async function getPostViewStats() {
-  const log = loadPostViewsLog();
-  const posts = await loadPosts();
-  const validIds = new Set(posts.map((p) => p.id));
-  const now = new Date();
-  const thisWeekStart = startOfWeek(now);
-  const thisWeekEnd = new Date(thisWeekStart.getTime() + 7 * 86400000);
-  const lastWeekStart = new Date(thisWeekStart.getTime() - 7 * 86400000);
-  let total = 0,
-    thisWeek = 0,
-    lastWeek = 0;
-  Object.keys(log).forEach((id) => {
-    if (!validIds.has(id)) return;
-    const arr = log[id];
-    total += arr.length;
-    thisWeek += _countInRange(arr, thisWeekStart, thisWeekEnd);
-    lastWeek += _countInRange(arr, lastWeekStart, thisWeekStart);
-  });
-  return { total, thisWeek, lastWeek };
+  return apiCall("GET", "/api/stats/views", undefined, true);
 }
 
 function getViewsForPost(postId) {
