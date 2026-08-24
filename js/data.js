@@ -5,9 +5,12 @@
    localStorage — jadi semua perubahan langsung terlihat di semua
    device/browser/pengunjung.
 
-   Statistik kunjungan (views) dan Notifikasi Admin Panel TETAP di
-   localStorage (murni informasi lokal per-device, tidak krusial untuk
-   ditampilkan ke publik).
+   Statistik kunjungan (views) dicatat ke server (D1) lewat /api/track/...
+   sehingga akurat gabungan semua pengunjung/device — termasuk widget
+   "Game Populer" di sidebar publik (mode desktop) yang sekarang memakai
+   /api/posts/popular. Salinan lokal di localStorage tetap disimpan
+   sebagai cadangan ringan/offline, dan dipakai admin.js untuk badge
+   views per-postingan di Admin Panel.
    ========================================================= */
 
 const ADMIN_PW_SESSION_KEY = "fueeru_admin_session_password";
@@ -156,15 +159,14 @@ async function countPostsByBahasa(bahasa) {
   return posts.filter((p) => p.bahasa === bahasa).length;
 }
 
-/** [PUBLIK] Postingan paling populer berdasarkan views (localStorage device ini). */
+/** [PUBLIK] Postingan paling populer berdasarkan total views di server
+ * (gabungan semua pengunjung/device, dihitung dari tabel post_views di D1). */
 async function getPopularPosts(max) {
-  const posts = await getPublishedPosts();
-  const withViews = posts.map((p) => ({
-    post: p,
-    views: typeof getViewsForPost === "function" ? getViewsForPost(p.id) : 0
-  }));
-  withViews.sort((a, b) => b.views - a.views || new Date(b.post.date) - new Date(a.post.date));
-  return withViews.slice(0, max || 5).map((x) => x.post);
+  try {
+    return await apiCall("GET", "/api/posts/popular?limit=" + encodeURIComponent(max || 5), undefined, false);
+  } catch (e) {
+    return [];
+  }
 }
 
 async function getTopGenres(max) {
@@ -266,9 +268,9 @@ function _saveLog(key, arr) {
 }
 
 function logVisit() {
-  // Tetap dicatat lokal (dipakai widget "Populer" per-device di halaman
-  // publik), DAN dikirim ke server supaya Admin Panel bisa menampilkan
-  // statistik akurat gabungan semua pengunjung/device.
+  // Tetap dicatat lokal (cadangan ringan, dipakai badge views per-postingan
+  // di Admin Panel), DAN dikirim ke server (sumber utama, dipakai juga oleh
+  // widget "Game Populer" publik lewat /api/posts/popular).
   const arr = _loadLog(VISITS_KEY);
   arr.push(new Date().toISOString());
   _saveLog(VISITS_KEY, arr);

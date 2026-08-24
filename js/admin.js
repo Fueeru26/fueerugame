@@ -260,6 +260,10 @@ function showSub(id) {
 document.getElementById("menuAturPostingan").addEventListener("click", () => {
   postSearchQuery = "";
   document.getElementById("postSearchInput").value = "";
+  postStatusFilterValue = "all";
+  const statusFilterEl = document.getElementById("postStatusFilter");
+  statusFilterEl.value = "all";
+  refreshCustomSelect(statusFilterEl);
   postsPage = 1;
   showSub("viewPosts");
   renderPostsList();
@@ -606,6 +610,7 @@ btnConfirmModalOk.addEventListener("click", function () {
 // ATUR POSTINGAN (list + search + pagination)
 // =========================================================
 let postSearchQuery = "";
+let postStatusFilterValue = "all";
 let postsPage = 1;
 
 document.getElementById("postSearchInput").addEventListener("input", function () {
@@ -614,10 +619,27 @@ document.getElementById("postSearchInput").addEventListener("input", function ()
   renderPostsList();
 });
 
+/** "all" | "published" | "draft" | "scheduled" — sama seperti label yang
+ * ditampilkan di tiap kartu postingan (Dipublish/Draft/Terjadwal). */
+function getPostStatus(p) {
+  if (p.published === false) return "draft";
+  if (p.scheduledAt && new Date(p.scheduledAt).getTime() > Date.now()) return "scheduled";
+  return "published";
+}
+
+document.getElementById("postStatusFilter").addEventListener("change", function () {
+  postStatusFilterValue = this.value;
+  postsPage = 1;
+  renderPostsList();
+});
+
 async function renderPostsList() {
   let posts = (await loadPosts()).slice().sort((a, b) => new Date(b.date) - new Date(a.date));
   if (postSearchQuery) {
     posts = posts.filter((p) => p.title.toLowerCase().includes(postSearchQuery));
+  }
+  if (postStatusFilterValue !== "all") {
+    posts = posts.filter((p) => getPostStatus(p) === postStatusFilterValue);
   }
 
   const list = document.getElementById("adminPostList");
@@ -805,7 +827,7 @@ function refreshCustomSelect(select) {
   if (entry) entry.syncLabel();
 }
 
-["fieldPlatform", "fieldBahasa", "fieldJenis", "fileSortSelect", "trashSortSelect", "postViewsSort"].forEach(
+["fieldPlatform", "fieldBahasa", "fieldJenis", "fileSortSelect", "trashSortSelect", "postViewsSort", "postStatusFilter"].forEach(
   function (id) {
     const el = document.getElementById(id);
     if (el) buildCustomSelect(el);
@@ -3519,7 +3541,40 @@ window.addEventListener("appinstalled", function () {
 })();
 
 // ---------- Init ----------
+/* ---------------- Toggle mode tampilan (terang/gelap) ----------------
+   Terhubung dengan toggle di sidebar website publik lewat localStorage
+   kunci yang sama ("fueeru_theme"), jadi ganti mode di Admin Panel juga
+   berlaku saat kembali ke halaman publik (dan sebaliknya). */
+function initAdminThemeToggle() {
+  const THEME_KEY = "fueeru_theme";
+  const themeButtons = document.querySelectorAll(".theme-btn");
+  if (!themeButtons.length) return;
+
+  function getCurrentTheme() {
+    return document.documentElement.classList.contains("dark") ? "dark" : "light";
+  }
+  function applyTheme(theme) {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    themeButtons.forEach((btn) => {
+      btn.classList.toggle("active", btn.getAttribute("data-theme") === theme);
+    });
+  }
+  themeButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const theme = btn.getAttribute("data-theme");
+      try {
+        localStorage.setItem(THEME_KEY, theme);
+      } catch (e) {
+        /* localStorage tidak tersedia, abaikan */
+      }
+      applyTheme(theme);
+    });
+  });
+  applyTheme(getCurrentTheme());
+}
+
 document.addEventListener("DOMContentLoaded", function () {
+  initAdminThemeToggle();
   populatePlatformSelect();
   populateBahasaSelect();
   populateJenisSelect();

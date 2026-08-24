@@ -267,6 +267,30 @@ async function handleTrackView(request, env, method) {
   return json({ ok: true });
 }
 
+/** [PUBLIK] Postingan paling populer berdasarkan total views di server
+ * (gabungan semua pengunjung/device), dipakai widget "Game Populer" di
+ * sidebar publik (mode desktop). */
+async function handlePostsPopular(request, env, method) {
+  if (method !== "GET") return badRequest("Method tidak didukung");
+  const url = new URL(request.url);
+  const limit = Math.max(1, Math.min(50, parseInt(url.searchParams.get("limit") || "10", 10) || 10));
+  const now = new Date().toISOString();
+
+  const { results } = await env.DB.prepare(
+    `SELECT p.*, COUNT(v.id) AS viewCount
+     FROM posts p
+     LEFT JOIN post_views v ON v.postId = p.id
+     WHERE p.published = 1 AND (p.scheduledAt IS NULL OR p.scheduledAt <= ?)
+     GROUP BY p.id
+     ORDER BY viewCount DESC, p.date DESC
+     LIMIT ?`
+  )
+    .bind(now, limit)
+    .all();
+
+  return json(results.map((r) => ({ ...rowToPost(r), views: r.viewCount || 0 })));
+}
+
 function weekBoundaries() {
   const now = new Date();
   const day = now.getDay();
@@ -792,6 +816,7 @@ export default {
 
     try {
       if (path === "/api/posts") return await handlePosts(request, env, method);
+      if (path === "/api/posts/popular") return await handlePostsPopular(request, env, method);
 
       let m = path.match(/^\/api\/posts\/([^/]+)$/);
       if (m) return await handlePostById(request, env, method, decodeURIComponent(m[1]));
