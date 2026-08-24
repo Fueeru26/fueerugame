@@ -247,11 +247,129 @@ async function handleFilesTree(request, env, method) {
   return json({ items, truncated: !!data.truncated });
 }
 
-/** [PUBLIK] Catat 1 kunjungan situs (dipanggil sekali per pemuatan halaman). */
+/** Deteksi 'mobile' | 'desktop' dari User-Agent (heuristik sederhana, cukup
+ * akurat untuk statistik kasar, tidak perlu library UA-parser tambahan). */
+function detectDeviceType(userAgent) {
+  const ua = (userAgent || "").toLowerCase();
+  const isMobile = /mobi|android|iphone|ipad|ipod/.test(ua);
+  return isMobile ? "mobile" : "desktop";
+}
+
+/** Ekstrak domain dari header Referer / document.referrer, atau "Direct"
+ * kalau kosong (akses langsung / referrer di-strip browser). */
+function extractReferrerDomain(referrer) {
+  if (!referrer) return "Direct";
+  try {
+    const host = new URL(referrer).hostname.replace(/^www\./, "");
+    // Referrer dari situs sendiri (navigasi internal) tidak dihitung sebagai
+    // sumber eksternal.
+    if (host === "fueerugame.com" || host === "fueeru.pages.dev") return "Direct";
+    return host || "Direct";
+  } catch (e) {
+    return "Direct";
+  }
+}
+
+/** [ADMIN] Riwayat commit/deploy — ditarik LANGSUNG dari GitHub Actions API
+ * tiap dibuka (bukan disalin ke D1), difilter khusus workflow
+ * "Deploy to Cloudflare" (pakai endpoint per-workflow bawaan GitHub supaya
+ * tidak kecampur workflow lain), dibuang yang lebih dari 30 hari (hanya
+ * penyaringan tampilan di Admin Panel, histori asli di GitHub tetap utuh
+ * selamanya), dipaginasi 20/halaman. Tidak ada tombol hapus karena ini
+ * bukan data milik kita.
+ * ID workflow di-cache di settings (jarang berubah) supaya hemat 1 API
+ * call GitHub di request-request berikutnya. */
+async function getDeployWorkflowId(env) {
+  const cached = await env.DB.prepare("SELECT value FROM settings WHERE key = 'gh_deploy_workflow_id'").first();
+  if (cached && cached.value) return cached.value;
+
+  const res = await fetch(`${GITHUB_API}/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows`, {
+    headers: githubHeaders(env)
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  const wf = (data.workflows || []).find((w) => w.name === "Deploy to Cloudflare");
+  if (!wf) return null;
+
+  await env.DB.prepare(
+    "INSERT INTO settings (key, value) VALUES ('gh_deploy_workflow_id', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+  )
+    .bind(String(wf.id))
+    .run();
+  return String(wf.id);
+}
+
+async function handleCommitHistory(request, env, method) {
+  if (method !== "GET") return badRequest("Method tidak didukung");
+  if (!(await requireAdmin(request, env))) return unauthorized();
+
+  const url = new URL(request.url);
+  const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10) || 1);
+
+  const workflowId = await getDeployWorkflowId(env);
+  if (!workflowId) {
+    return json({ error: "Workflow \"Deploy to Cloudflare\" tidak ditemukan di repo GitHub." }, 502);
+  }
+
+  const res = await fetch(
+    `${GITHUB_API}/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${workflowId}/runs?per_page=20&page=${page}`,
+    { headers: githubHeaders(env) }
+  );
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    return json({ error: "Gagal mengambil riwayat dari GitHub: " + res.status + " " + t.slice(0, 200) }, 502);
+  }
+  const data = await res.json();
+  const rawRuns = data.workflow_runs || [];
+
+  const cutoff = Date.now() - 30 * 86400000;
+  const items = rawRuns
+    .filter((r) => new Date(r.created_at).getTime() >= cutoff)
+    .map((r) => ({
+      id: r.id,
+      runNumber: r.run_number,
+      status: r.status,
+      conclusion: r.conclusion,
+      headSha: (r.head_sha || "").slice(0, 7),
+      commitMessage: r.head_commit ? String(r.head_commit.message || "").split("\n")[0] : "",
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+      htmlUrl: r.html_url
+    }));
+
+  const hasMore = items.length > 0 && rawRuns.length === 20;
+
+  return json({ items, page, hasMore });
+}
+
+/** [PUBLIK] Catat 1 kunjungan situs (dipanggil sekali per pemuatan halaman).
+ * Ikut menyimpan device, negara/kota (dari header Cloudflare gratis), dan
+ * domain perujuk — dipakai statistik pengunjung di Informasi Web. */
 async function handleTrackVisit(request, env, method) {
   if (method !== "POST") return badRequest("Method tidak didukung");
-  await env.DB.prepare("INSERT INTO site_visits (id, date) VALUES (?, ?)")
-    .bind(newId("visit"), new Date().toISOString())
+  const body = await request.json().catch(() => ({}));
+  const device = detectDeviceType(request.headers.get("user-agent"));
+  const country = request.headers.get("cf-ipcountry") || null;
+  const city = (request.cf && request.cf.city) || null;
+  const referrer = extractReferrerDomain(body && body.referrer ? String(body.referrer) : "");
+
+  await env.DB.prepare(
+    "INSERT INTO site_visits (id, date, device, country, city, referrer) VALUES (?, ?, ?, ?, ?, ?)"
+  )
+    .bind(newId("visit"), new Date().toISOString(), device, country, city, referrer)
+    .run();
+  return json({ ok: true });
+}
+
+/** [PUBLIK] Catat 1 kali halaman statis (Tutorial/Cara Download/Donasi/
+ * Tentang) dibuka — dipakai "Halaman Paling Sering Dibuka" di Informasi Web. */
+async function handleTrackPage(request, env, method) {
+  if (method !== "POST") return badRequest("Method tidak didukung");
+  const body = await request.json().catch(() => null);
+  const allowedPages = ["tutorial", "cara-download", "donasi", "tentang"];
+  if (!body || !allowedPages.includes(body.pageId)) return badRequest("pageId tidak valid");
+  await env.DB.prepare("INSERT INTO page_views (id, pageId, date) VALUES (?, ?, ?)")
+    .bind(newId("pv"), body.pageId, new Date().toISOString())
     .run();
   return json({ ok: true });
 }
@@ -306,7 +424,9 @@ function weekBoundaries() {
   return { thisWeekStart, thisWeekEnd, lastWeekStart, todayStart, sevenDaysAgo, now };
 }
 
-/** [ADMIN] Statistik kunjungan situs, akurat gabungan semua pengunjung/device. */
+/** [ADMIN] Statistik kunjungan situs, akurat gabungan semua pengunjung/device.
+ * Termasuk breakdown device, jam ramai (WIB), referrer, dan negara/kota
+ * (dihitung dari 30 hari terakhir supaya tetap relevan). */
 async function handleStatsVisits(request, env, method) {
   if (method !== "GET") return badRequest("Method tidak didukung");
   if (!(await requireAdmin(request, env))) return unauthorized();
@@ -328,7 +448,51 @@ async function handleStatsVisits(request, env, method) {
   const last7Days = await count(b.sevenDaysAgo.toISOString());
   const avgPerDay7d = Math.round((last7Days / 7) * 10) / 10;
 
-  return json({ total, today, thisWeek, lastWeek, avgPerDay7d });
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
+
+  const { results: deviceRows } = await env.DB.prepare(
+    `SELECT COALESCE(device, 'unknown') AS device, COUNT(*) AS c
+     FROM site_visits WHERE date >= ? GROUP BY device ORDER BY c DESC`
+  )
+    .bind(thirtyDaysAgo)
+    .all();
+
+  const { results: referrerRows } = await env.DB.prepare(
+    `SELECT COALESCE(referrer, 'Direct') AS referrer, COUNT(*) AS c
+     FROM site_visits WHERE date >= ? GROUP BY referrer ORDER BY c DESC LIMIT 8`
+  )
+    .bind(thirtyDaysAgo)
+    .all();
+
+  const { results: countryRows } = await env.DB.prepare(
+    `SELECT COALESCE(country, '??') AS country, COALESCE(city, '') AS city, COUNT(*) AS c
+     FROM site_visits WHERE date >= ? GROUP BY country, city ORDER BY c DESC LIMIT 8`
+  )
+    .bind(thirtyDaysAgo)
+    .all();
+
+  const { results: hourRows } = await env.DB.prepare(
+    `SELECT CAST(((CAST(strftime('%H', date) AS INTEGER) + 7) % 24) AS TEXT) AS hour, COUNT(*) AS c
+     FROM site_visits WHERE date >= ? GROUP BY hour`
+  )
+    .bind(thirtyDaysAgo)
+    .all();
+  const hourly = Array.from({ length: 24 }, (_, h) => {
+    const row = hourRows.find((r) => Number(r.hour) === h);
+    return { hour: h, count: row ? row.c : 0 };
+  });
+
+  return json({
+    total,
+    today,
+    thisWeek,
+    lastWeek,
+    avgPerDay7d,
+    deviceBreakdown: deviceRows,
+    referrerBreakdown: referrerRows,
+    locationBreakdown: countryRows,
+    hourly
+  });
 }
 
 /** [ADMIN] Statistik views postingan, akurat gabungan semua pengunjung/device
@@ -361,6 +525,50 @@ async function handleStatsViews(request, env, method) {
   const lastWeek = await count(b.lastWeekStart.toISOString(), b.thisWeekStart.toISOString());
 
   return json({ total, today, thisWeek, lastWeek });
+}
+
+/** [ADMIN] Statistik lanjutan untuk entri "Postingan & Halaman": postingan
+ * populer minggu ini, genre terpopuler (berdasar total views), dan halaman
+ * statis (Tutorial/Cara Download/Donasi/Tentang) paling sering dibuka. */
+async function handleStatsPostsHalaman(request, env, method) {
+  if (method !== "GET") return badRequest("Method tidak didukung");
+  if (!(await requireAdmin(request, env))) return unauthorized();
+
+  const b = weekBoundaries();
+
+  const { results: popularThisWeek } = await env.DB.prepare(
+    `SELECT p.id, p.title, COUNT(v.id) AS views
+     FROM posts p
+     JOIN post_views v ON v.postId = p.id
+     WHERE v.date >= ? AND v.date < ?
+     GROUP BY p.id
+     ORDER BY views DESC
+     LIMIT 5`
+  )
+    .bind(b.thisWeekStart.toISOString(), b.thisWeekEnd.toISOString())
+    .all();
+
+  const { results: topGenres } = await env.DB.prepare(
+    `SELECT je.value AS genre, COUNT(v.id) AS views
+     FROM posts p, json_each(p.genres) je
+     LEFT JOIN post_views v ON v.postId = p.id
+     GROUP BY je.value
+     ORDER BY views DESC
+     LIMIT 6`
+  ).all();
+
+  const pageLabels = {
+    tutorial: "Tutorial Main",
+    "cara-download": "Cara Download",
+    donasi: "Donasi",
+    tentang: "Tentang"
+  };
+  const { results: pageRows } = await env.DB.prepare(
+    `SELECT pageId, COUNT(*) AS views FROM page_views GROUP BY pageId ORDER BY views DESC`
+  ).all();
+  const topPages = pageRows.map((r) => ({ pageId: r.pageId, label: pageLabels[r.pageId] || r.pageId, views: r.views }));
+
+  return json({ popularThisWeek, topGenres, topPages });
 }
 
 /** Verifikasi tanda tangan HMAC-SHA256 dari GitHub webhook. */
@@ -429,6 +637,21 @@ async function handleGithubWebhook(request, env, method) {
     .bind(newId("srvnotif"), isSuccess ? "deploy_success" : "deploy_failed", text, new Date().toISOString())
     .run();
 
+  // Simpan status deploy terakhir (dipakai entri "Informasi Dasar" & status
+  // "Webhook GitHub" di "Performa Teknis") — di-update setiap kali webhook
+  // sinyal deploy diterima, apapun hasilnya (berhasil/gagal), supaya jadi
+  // indikator jujur "terakhir webhook aktif kapan".
+  const nowIso = new Date().toISOString();
+  const setSetting = async (key, value) =>
+    env.DB.prepare(
+      "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+    )
+      .bind(key, value)
+      .run();
+  await setSetting("last_deploy_sha", shortSha);
+  await setSetting("last_deploy_at", nowIso);
+  await setSetting("last_deploy_status", isSuccess ? "success" : "failed");
+
   return json({ ok: true });
 }
 
@@ -441,6 +664,74 @@ async function handleServerNotifications(request, env, method) {
     await env.DB.prepare("DELETE FROM server_notifications").run();
   }
   return json(results);
+}
+
+/** [ADMIN] Informasi dasar web: nama, link repo, link dashboard Worker,
+ * versi/commit live & status deploy terakhir. Ukuran data lokal dihitung
+ * di sisi klien (localStorage khusus per perangkat), tidak lewat sini. */
+async function handleInfoBasic(request, env, method) {
+  if (method !== "GET") return badRequest("Method tidak didukung");
+  if (!(await requireAdmin(request, env))) return unauthorized();
+
+  const getSetting = async (key) => {
+    const row = await env.DB.prepare("SELECT value FROM settings WHERE key = ?").bind(key).first();
+    return row ? row.value : null;
+  };
+
+  return json({
+    siteName: "Fueeru Game",
+    repoOwner: GITHUB_OWNER,
+    repoName: GITHUB_REPO,
+    repoUrl: `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}`,
+    workerName: "fueerugame",
+    workerDashboardUrl: "https://dash.cloudflare.com/?to=/:account/workers/services/view/fueerugame/production",
+    lastDeploySha: await getSetting("last_deploy_sha"),
+    lastDeployAt: await getSetting("last_deploy_at"),
+    lastDeployStatus: await getSetting("last_deploy_status")
+  });
+}
+
+/** [ADMIN] "Kesehatan Sistem" (bagian dari Performa Teknis): status terakhir
+ * webhook GitHub, terakhir kirim OTP, dan ukuran database D1. Ukuran D1
+ * butuh secret CF_API_TOKEN + CF_ACCOUNT_ID (lihat catatan di bawah); kalau
+ * belum diset, field d1Size dikembalikan null dan UI menampilkan pesan
+ * "belum dikonfigurasi" alih-alih error. */
+async function handleInfoHealth(request, env, method) {
+  if (method !== "GET") return badRequest("Method tidak didukung");
+  if (!(await requireAdmin(request, env))) return unauthorized();
+
+  const getSetting = async (key) => {
+    const row = await env.DB.prepare("SELECT value FROM settings WHERE key = ?").bind(key).first();
+    return row ? row.value : null;
+  };
+
+  let d1Size = null;
+  let d1Error = null;
+  if (env.CF_API_TOKEN && env.CF_ACCOUNT_ID) {
+    try {
+      const res = await fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/d1/database/${env.D1_DATABASE_ID || ""}`,
+        { headers: { authorization: "Bearer " + env.CF_API_TOKEN } }
+      );
+      const data = await res.json().catch(() => null);
+      if (res.ok && data && data.result) {
+        d1Size = data.result.file_size ?? (data.result.size || null);
+      } else {
+        d1Error = "Gagal ambil data dari Cloudflare API";
+      }
+    } catch (e) {
+      d1Error = "Gagal menghubungi Cloudflare API";
+    }
+  } else {
+    d1Error = "Belum dikonfigurasi (perlu secret CF_API_TOKEN, CF_ACCOUNT_ID, D1_DATABASE_ID)";
+  }
+
+  return json({
+    lastWebhookAt: await getSetting("last_deploy_at"),
+    lastOtpSentAt: await getSetting("last_otp_sent_at"),
+    d1SizeBytes: d1Size,
+    d1Error
+  });
 }
 
 
@@ -687,7 +978,14 @@ async function handleAuth(request, env, method) {
     if (!body || !body.password) return badRequest("Password tidak dikirim");
     const row = await env.DB.prepare("SELECT value FROM settings WHERE key = 'admin_password'").first();
     const current = row ? row.value : "admin123";
-    if (body.password !== current) return unauthorized();
+    if (body.password !== current) {
+      // Log percobaan login gagal — cuma timestamp, tanpa IP/device, demi
+      // privasi (dipakai entri "Keamanan" di Informasi Web).
+      await env.DB.prepare("INSERT INTO login_fail_attempts (id, date) VALUES (?, ?)")
+        .bind(newId("loginfail"), new Date().toISOString())
+        .run();
+      return unauthorized();
+    }
     return json({ ok: true });
   }
   if (method === "PUT") {
@@ -713,6 +1011,27 @@ async function handleAuth(request, env, method) {
     return json({ ok: true });
   }
   return badRequest("Method tidak didukung");
+}
+
+/** [ADMIN] Log percobaan login gagal (maks 20 terbaru ditampilkan). Baris
+ * lama otomatis dibuang biar tabel gak numpuk (cuma timestamp, ringan, tapi
+ * tetap dijaga rapi). */
+async function handleLoginFails(request, env, method) {
+  if (method !== "GET") return badRequest("Method tidak didukung");
+  if (!(await requireAdmin(request, env))) return unauthorized();
+
+  const { results } = await env.DB.prepare(
+    "SELECT date FROM login_fail_attempts ORDER BY date DESC LIMIT 20"
+  ).all();
+
+  // Beres-beres: simpan cuma 200 baris terakhir di database (kalau lebih).
+  await env.DB.prepare(
+    `DELETE FROM login_fail_attempts WHERE id NOT IN (
+       SELECT id FROM login_fail_attempts ORDER BY date DESC LIMIT 200
+     )`
+  ).run();
+
+  return json({ items: results.map((r) => r.date) });
 }
 
 async function sendOtpEmail(env, toEmail, code) {
@@ -848,8 +1167,14 @@ export default {
       if (path === "/api/files/tree") return await handleFilesTree(request, env, method);
       if (path === "/api/track/visit") return await handleTrackVisit(request, env, method);
       if (path === "/api/track/view") return await handleTrackView(request, env, method);
+      if (path === "/api/track/page") return await handleTrackPage(request, env, method);
       if (path === "/api/stats/visits") return await handleStatsVisits(request, env, method);
       if (path === "/api/stats/views") return await handleStatsViews(request, env, method);
+      if (path === "/api/stats/posts-halaman") return await handleStatsPostsHalaman(request, env, method);
+      if (path === "/api/info/basic") return await handleInfoBasic(request, env, method);
+      if (path === "/api/info/health") return await handleInfoHealth(request, env, method);
+      if (path === "/api/info/commits") return await handleCommitHistory(request, env, method);
+      if (path === "/api/info/login-fails") return await handleLoginFails(request, env, method);
       if (path === "/api/notifications") return await handleServerNotifications(request, env, method);
 
       if (path.startsWith("/api/")) return json({ error: "Endpoint tidak ditemukan" }, 404);

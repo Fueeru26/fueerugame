@@ -24,8 +24,16 @@ function resolveAsset(path) {
 }
 
 function initChrome() {
-  // Catat 1 kunjungan halaman publik (statistik lokal untuk Informasi Web di Admin Panel)
+  // Catat 1 kunjungan halaman publik (statistik server untuk Informasi Web di Admin Panel)
   if (typeof logVisit === "function") logVisit();
+
+  // Catat kunjungan ke halaman statis (Tutorial/Cara Download/Donasi/Tentang)
+  // secara spesifik -> "Halaman Paling Sering Dibuka" di Informasi Web.
+  if (typeof logPageView === "function") {
+    const path = (typeof location !== "undefined" && location.pathname) || "";
+    const pageMatch = path.match(/\/(tutorial|cara-download|donasi|tentang)\.html$/);
+    if (pageMatch) logPageView(pageMatch[1]);
+  }
 
   // ---------------- Dark mode toggle ----------------
   const THEME_KEY = "fueeru_theme";

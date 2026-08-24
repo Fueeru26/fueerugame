@@ -1498,6 +1498,112 @@ body.admin-body {
 }
 .info-text-input:focus { border-color: var(--sky-500); }
 
+/* Bar list sederhana (breakdown device/referrer/lokasi/genre/populer) */
+.info-bar-list { display: flex; flex-direction: column; gap: 12px; }
+.info-bar-row { display: flex; flex-direction: column; gap: 4px; }
+.info-bar-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.info-bar-label strong { color: var(--sky-700); font-weight: 800; flex: 0 0 auto; }
+.info-bar-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--sky-100);
+  overflow: hidden;
+}
+.info-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--sky-400), var(--sky-600));
+}
+
+/* Grafik jam ramai (24 bar vertikal) */
+.hourly-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 110px;
+  padding-top: 6px;
+}
+.hourly-bar-wrap {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 4px;
+}
+.hourly-bar {
+  width: 100%;
+  max-width: 10px;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(180deg, var(--sky-400), var(--sky-600));
+  min-height: 2px;
+}
+.hourly-bar-label { font-size: .62rem; color: var(--ink-soft); font-weight: 600; }
+
+/* Riwayat Commit */
+.commit-history-item {
+  display: block;
+  border: 1.5px solid var(--sky-150);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-top: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color .15s ease, background .15s ease;
+}
+.commit-history-item:first-child { margin-top: 4px; }
+.commit-history-item:hover { border-color: var(--sky-400); background: var(--sky-50); }
+.commit-history-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.commit-badge {
+  font-size: .7rem;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 999px;
+  color: #fff;
+  flex: 0 0 auto;
+}
+.commit-badge-success { background: #1f9d55; }
+.commit-badge-failed { background: #e0453a; }
+.commit-badge-running { background: #f0b41d; color: #3a2400; }
+.commit-sha {
+  font-family: monospace;
+  font-size: .82rem;
+  color: var(--sky-700);
+  font-weight: 700;
+}
+.commit-message { font-size: .88rem; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+.commit-date { font-size: .76rem; color: var(--ink-soft); }
+.commit-history-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 16px;
+}
+.commit-history-pagination span { font-size: .84rem; font-weight: 700; color: var(--ink-soft); flex: 0 0 auto; }
+.commit-history-pagination .btn-cancel { width: auto; flex: 1 1 0; }
+.commit-history-pagination .btn-cancel:disabled { opacity: .45; cursor: not-allowed; }
+
+/* Log percobaan login gagal */
+.login-fail-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.login-fail-list li {
+  font-size: .84rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--sky-150);
+}
+.login-fail-list li:last-child { border-bottom: none; }
+
 /* Modal Views Postingan: box dibatasi tingginya & hanya daftar postingan
  * yang scroll di dalam — judul, dropdown urutkan, dan pagination selalu
  * terlihat (tidak ikut ter-scroll keluar layar). */

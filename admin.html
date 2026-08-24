@@ -792,7 +792,7 @@
       </div>
     </div>
 
-    <!-- ===== VIEW: Informasi Web ===== -->
+    <!-- ===== VIEW: Informasi Web (pilih kategori) ===== -->
     <div id="viewInfo" class="admin-panel-card hidden">
       <div class="admin-subheader">
         <button type="button" class="btn-back-mini" id="btnBackFromInfo">
@@ -801,16 +801,142 @@
         <h1>Informasi Web</h1>
       </div>
 
+      <div class="admin-menu-grid">
+        <button type="button" class="admin-menu-card" id="menuInfoDasar">
+          <span class="amc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16.5"/><circle cx="12" cy="7.8" r="0.9" fill="currentColor" stroke="none"/></svg>
+          </span>
+          <span>
+            <div class="amc-title">Informasi Dasar</div>
+            <div class="amc-sub">Nama web, repo GitHub, Worker, &amp; versi live</div>
+          </span>
+        </button>
+        <button type="button" class="admin-menu-card" id="menuInfoStatistik">
+          <span class="amc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </span>
+          <span>
+            <div class="amc-title">Statistik Pengunjung</div>
+            <div class="amc-sub">Device, jam ramai, referrer, &amp; lokasi</div>
+          </span>
+        </button>
+        <button type="button" class="admin-menu-card" id="menuInfoPostinganHalaman">
+          <span class="amc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+          </span>
+          <span>
+            <div class="amc-title">Postingan &amp; Halaman</div>
+            <div class="amc-sub">Views, postingan populer, &amp; genre terpopuler</div>
+          </span>
+        </button>
+        <button type="button" class="admin-menu-card" id="menuInfoPerforma">
+          <span class="amc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4.5 8-11.5V5l-8-3-8 3v5.5C4 17.5 12 22 12 22z"/><path d="M9 12l2 2 4-4"/></svg>
+          </span>
+          <span>
+            <div class="amc-title">Performa Teknis</div>
+            <div class="amc-sub">Kesehatan sistem: webhook, OTP, &amp; database</div>
+          </span>
+        </button>
+        <button type="button" class="admin-menu-card" id="menuInfoRiwayatCommit">
+          <span class="amc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><line x1="3" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="21" y2="12"/></svg>
+          </span>
+          <span>
+            <div class="amc-title">Riwayat Commit</div>
+            <div class="amc-sub">Riwayat deploy langsung dari GitHub Actions</div>
+          </span>
+        </button>
+        <button type="button" class="admin-menu-card" id="menuInfoKeamanan">
+          <span class="amc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 5-3.2 7.8-7 9-3.8-1.2-7-4-7-9V6z"/><path d="M9.3 12.2l1.8 1.8 3.6-3.8"/></svg>
+          </span>
+          <span>
+            <div class="amc-title">Keamanan</div>
+            <div class="amc-sub">Kata sandi admin &amp; log percobaan login gagal</div>
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== VIEW: Informasi Web — Informasi Dasar ===== -->
+    <div id="viewInfoDasar" class="admin-panel-card hidden">
+      <div class="admin-subheader">
+        <button type="button" class="btn-back-mini" id="btnBackFromInfoDasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1>Informasi Dasar</h1>
+      </div>
+
+      <div class="info-box">
+        <div class="info-row"><span>Nama Web</span><strong id="infoSiteName">—</strong></div>
+        <div class="info-row"><span>Repositori GitHub</span><strong id="infoRepoName">—</strong></div>
+        <button type="button" class="btn-cancel" id="btnOpenRepo" style="width:100%;margin-top:4px;">Buka Repositori GitHub</button>
+        <div class="info-row" style="margin-top:14px;"><span>Worker Cloudflare</span><strong id="infoWorkerName">—</strong></div>
+        <button type="button" class="btn-cancel" id="btnOpenWorkerDashboard" style="width:100%;margin-top:4px;">Buka Dashboard Worker</button>
+      </div>
+
+      <div class="info-box">
+        <div class="info-box-title">Versi &amp; Deploy Terakhir</div>
+        <div class="info-row"><span>Commit Live Saat Ini</span><strong id="infoLastDeploySha">—</strong></div>
+        <div class="info-row"><span>Tanggal Deploy Terakhir</span><strong id="infoLastDeployAt">—</strong></div>
+        <div class="info-row"><span>Status GitHub Actions Terakhir</span><strong id="infoLastDeployStatus">—</strong></div>
+      </div>
+
+      <div class="info-box">
+        <div class="info-box-title">Ringkasan Konten</div>
+        <div class="info-row"><span>Total Postingan</span><strong id="infoTotalPosts">0</strong></div>
+        <div class="info-row"><span>Total Laporan</span><strong id="infoTotalReports">0</strong></div>
+        <div class="info-row"><span>Laporan Belum Ditangani</span><strong id="infoReportsPending">0</strong></div>
+        <div class="info-row"><span>Perkiraan Ukuran Data Lokal (Perangkat Ini)</span><strong id="infoStorageSize">0 KB</strong></div>
+      </div>
+    </div>
+
+    <!-- ===== VIEW: Informasi Web — Statistik Pengunjung ===== -->
+    <div id="viewInfoStatistik" class="admin-panel-card hidden">
+      <div class="admin-subheader">
+        <button type="button" class="btn-back-mini" id="btnBackFromInfoStatistik">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1>Statistik Pengunjung</h1>
+      </div>
+
       <div class="info-box">
         <div class="info-row"><span>Total Pengunjung</span><strong id="infoTotalVisits">0</strong></div>
         <div class="info-row"><span>Pengunjung Hari Ini</span><strong id="infoVisitsToday">0</strong></div>
         <div class="info-row"><span>Total Pengunjung Minggu ini</span><strong id="infoVisitsThisWeek">0</strong></div>
         <div class="info-row"><span>Total Pengunjung Minggu Lalu</span><strong id="infoVisitsLastWeek">0</strong></div>
         <div class="info-row"><span>Rata-rata Pengunjung/Hari (7 hari terakhir)</span><strong id="infoVisitsAvgDay">0</strong></div>
-        <div class="info-row"><span>Total Postingan</span><strong id="infoTotalPosts">0</strong></div>
-        <div class="info-row"><span>Total Laporan</span><strong id="infoTotalReports">0</strong></div>
-        <div class="info-row"><span>Laporan Belum Ditangani</span><strong id="infoReportsPending">0</strong></div>
-        <div class="info-row"><span>Perkiraan Ukuran Data Lokal (Perangkat Ini)</span><strong id="infoStorageSize">0 KB</strong></div>
+      </div>
+
+      <div class="info-box">
+        <div class="info-box-title">Jam Ramai (WIB, 30 hari terakhir)</div>
+        <div class="info-bar-chart" id="chartHourly"></div>
+      </div>
+
+      <div class="info-box">
+        <div class="info-box-title">Breakdown Device (30 hari terakhir)</div>
+        <div class="info-bar-list" id="chartDevice"></div>
+      </div>
+
+      <div class="info-box">
+        <div class="info-box-title">Referrer / Sumber Kunjungan (30 hari terakhir)</div>
+        <div class="info-bar-list" id="chartReferrer"></div>
+      </div>
+
+      <div class="info-box">
+        <div class="info-box-title">Negara / Kota Pengunjung (30 hari terakhir)</div>
+        <div class="info-bar-list" id="chartLocation"></div>
+      </div>
+    </div>
+
+    <!-- ===== VIEW: Informasi Web — Postingan & Halaman ===== -->
+    <div id="viewInfoPostinganHalaman" class="admin-panel-card hidden">
+      <div class="admin-subheader">
+        <button type="button" class="btn-back-mini" id="btnBackFromInfoPostinganHalaman">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1>Postingan &amp; Halaman</h1>
       </div>
 
       <div class="info-box">
@@ -823,6 +949,67 @@
       </div>
 
       <div class="info-box">
+        <div class="info-box-title">Postingan Populer Minggu Ini</div>
+        <div class="info-bar-list" id="listPopularPosts"><p class="backup-desc">Belum ada data.</p></div>
+      </div>
+
+      <div class="info-box">
+        <div class="info-box-title">Genre Terpopuler</div>
+        <div class="info-bar-list" id="listTopGenres"><p class="backup-desc">Belum ada data.</p></div>
+      </div>
+
+      <div class="info-box">
+        <div class="info-box-title">Halaman Paling Sering Dibuka</div>
+        <div class="info-bar-list" id="listTopPages"><p class="backup-desc">Belum ada data.</p></div>
+      </div>
+    </div>
+
+    <!-- ===== VIEW: Informasi Web — Performa Teknis ===== -->
+    <div id="viewInfoPerforma" class="admin-panel-card hidden">
+      <div class="admin-subheader">
+        <button type="button" class="btn-back-mini" id="btnBackFromInfoPerforma">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1>Performa Teknis</h1>
+      </div>
+
+      <div class="info-box">
+        <div class="info-box-title">Kesehatan Sistem</div>
+        <div class="info-row"><span>Webhook GitHub — Terakhir Menerima Sinyal Deploy</span><strong id="healthWebhook">—</strong></div>
+        <div class="info-row"><span>Email OTP — Terakhir Kirim Kode</span><strong id="healthOtp">—</strong></div>
+        <div class="info-row"><span>Ukuran Database D1</span><strong id="healthD1Size">—</strong></div>
+        <p class="backup-desc" id="healthD1Note" style="margin-top:10px;"></p>
+      </div>
+    </div>
+
+    <!-- ===== VIEW: Informasi Web — Riwayat Commit ===== -->
+    <div id="viewInfoRiwayatCommit" class="admin-panel-card hidden">
+      <div class="admin-subheader">
+        <button type="button" class="btn-back-mini" id="btnBackFromInfoRiwayatCommit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1>Riwayat Commit</h1>
+      </div>
+      <p class="backup-desc">Ditarik langsung dari GitHub Actions (workflow "Deploy to Cloudflare"), real-time. Riwayat lebih dari 30 hari otomatis disembunyikan dari daftar ini saja — histori aslinya tetap ada selamanya di GitHub.</p>
+
+      <div id="commitHistoryList"></div>
+      <div class="commit-history-pagination">
+        <button type="button" class="btn-cancel" id="btnCommitPrev">&larr; Sebelumnya</button>
+        <span id="commitPageLabel">Halaman 1</span>
+        <button type="button" class="btn-cancel" id="btnCommitNext">Berikutnya &rarr;</button>
+      </div>
+    </div>
+
+    <!-- ===== VIEW: Informasi Web — Keamanan ===== -->
+    <div id="viewInfoKeamanan" class="admin-panel-card hidden">
+      <div class="admin-subheader">
+        <button type="button" class="btn-back-mini" id="btnBackFromInfoKeamanan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1>Keamanan</h1>
+      </div>
+
+      <div class="info-box">
         <div class="info-box-title">Kata Sandi Admin</div>
         <p class="backup-desc" style="margin-top:2px;">Kata Sandi saat ini: <strong id="infoCurrentPassword" style="color:var(--ink);"></strong></p>
         <button type="button" class="btn-cancel" id="btnTogglePasswordVisibility" style="width:100%;margin-top:4px;">Lihat Kata Sandi</button>
@@ -830,6 +1017,12 @@
         <input type="text" id="newPasswordInput" class="info-text-input" placeholder="Kata sandi baru" autocomplete="off">
         <button type="button" class="btn-primary" id="btnSavePassword" style="width:100%;margin-top:12px;">Simpan</button>
         <div class="backup-status" id="passwordStatus"></div>
+      </div>
+
+      <div class="info-box">
+        <div class="info-box-title">Log Percobaan Login Gagal</div>
+        <p class="backup-desc" style="margin-top:2px;">Hanya waktu percobaan yang dicatat (tanpa IP/perangkat), demi privasi.</p>
+        <div class="info-bar-list" id="listLoginFails" style="margin-top:10px;"><p class="backup-desc">Belum ada percobaan gagal.</p></div>
       </div>
     </div>
 

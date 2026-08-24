@@ -270,12 +270,27 @@ function _saveLog(key, arr) {
 function logVisit() {
   // Tetap dicatat lokal (cadangan ringan, dipakai badge views per-postingan
   // di Admin Panel), DAN dikirim ke server (sumber utama, dipakai juga oleh
-  // widget "Game Populer" publik lewat /api/posts/popular).
+  // widget "Game Populer" publik lewat /api/posts/popular, dan statistik
+  // pengunjung — device/negara-kota/referrer — di Informasi Web).
   const arr = _loadLog(VISITS_KEY);
   arr.push(new Date().toISOString());
   _saveLog(VISITS_KEY, arr);
 
-  fetch("/api/track/visit", { method: "POST" }).catch(() => {});
+  fetch("/api/track/visit", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ referrer: (typeof document !== "undefined" && document.referrer) || "" })
+  }).catch(() => {});
+}
+
+/** [PUBLIK] Catat 1 kali halaman statis (Tutorial/Cara Download/Donasi/
+ * Tentang) dibuka — dipakai "Halaman Paling Sering Dibuka" di Informasi Web. */
+function logPageView(pageId) {
+  fetch("/api/track/page", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ pageId })
+  }).catch(() => {});
 }
 
 function logPostView(postId) {
@@ -335,6 +350,32 @@ async function getVisitStats() {
 /** [ADMIN] Statistik views postingan — akurat, gabungan semua pengunjung/device. */
 async function getPostViewStats() {
   return apiCall("GET", "/api/stats/views", undefined, true);
+}
+
+/** [ADMIN] Statistik lanjutan Postingan & Halaman (populer minggu ini,
+ * genre terpopuler, halaman statis paling sering dibuka). */
+async function getPostsHalamanStats() {
+  return apiCall("GET", "/api/stats/posts-halaman", undefined, true);
+}
+
+/** [ADMIN] Informasi dasar web (nama, link repo/worker, versi live). */
+async function getInfoBasic() {
+  return apiCall("GET", "/api/info/basic", undefined, true);
+}
+
+/** [ADMIN] Kesehatan sistem (webhook, OTP, ukuran D1). */
+async function getInfoHealth() {
+  return apiCall("GET", "/api/info/health", undefined, true);
+}
+
+/** [ADMIN] Riwayat commit/deploy langsung dari GitHub Actions (real-time). */
+async function getCommitHistory(page) {
+  return apiCall("GET", "/api/info/commits?page=" + encodeURIComponent(page || 1), undefined, true);
+}
+
+/** [ADMIN] Log percobaan login gagal (timestamp saja). */
+async function getLoginFails() {
+  return apiCall("GET", "/api/info/login-fails", undefined, true);
 }
 
 function getViewsForPost(postId) {

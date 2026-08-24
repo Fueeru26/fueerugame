@@ -248,6 +248,12 @@ const SUB_VIEWS = [
   "viewBackupWebsite",
   "viewDeployWebsite",
   "viewInfo",
+  "viewInfoDasar",
+  "viewInfoStatistik",
+  "viewInfoPostinganHalaman",
+  "viewInfoPerforma",
+  "viewInfoRiwayatCommit",
+  "viewInfoKeamanan",
   "viewRecycleBin",
   "viewRecycleBinList"
 ];
@@ -348,11 +354,47 @@ document.getElementById("menuLihatLaporan").addEventListener("click", () => {
   showSub("viewReports");
   renderReportsList();
 });
-document.getElementById("menuInformasiWeb").addEventListener("click", async () => {
+document.getElementById("menuInformasiWeb").addEventListener("click", () => {
   showSub("viewInfo");
-  await renderInfoView();
 });
 document.getElementById("btnBackFromInfo").addEventListener("click", () => showSub("viewMenu"));
+
+document.getElementById("menuInfoDasar").addEventListener("click", async () => {
+  showSub("viewInfoDasar");
+  await renderInfoDasar();
+});
+document.getElementById("btnBackFromInfoDasar").addEventListener("click", () => showSub("viewInfo"));
+
+document.getElementById("menuInfoStatistik").addEventListener("click", async () => {
+  showSub("viewInfoStatistik");
+  await renderInfoStatistik();
+});
+document.getElementById("btnBackFromInfoStatistik").addEventListener("click", () => showSub("viewInfo"));
+
+document.getElementById("menuInfoPostinganHalaman").addEventListener("click", async () => {
+  showSub("viewInfoPostinganHalaman");
+  await renderInfoPostinganHalaman();
+});
+document.getElementById("btnBackFromInfoPostinganHalaman").addEventListener("click", () => showSub("viewInfo"));
+
+document.getElementById("menuInfoPerforma").addEventListener("click", async () => {
+  showSub("viewInfoPerforma");
+  await renderInfoPerforma();
+});
+document.getElementById("btnBackFromInfoPerforma").addEventListener("click", () => showSub("viewInfo"));
+
+document.getElementById("menuInfoRiwayatCommit").addEventListener("click", async () => {
+  commitHistoryPage = 1;
+  showSub("viewInfoRiwayatCommit");
+  await renderCommitHistory();
+});
+document.getElementById("btnBackFromInfoRiwayatCommit").addEventListener("click", () => showSub("viewInfo"));
+
+document.getElementById("menuInfoKeamanan").addEventListener("click", async () => {
+  showSub("viewInfoKeamanan");
+  await renderInfoKeamanan();
+});
+document.getElementById("btnBackFromInfoKeamanan").addEventListener("click", () => showSub("viewInfo"));
 document.getElementById("menuManajemenFile").addEventListener("click", async () => {
   showSub("viewFiles");
   await loadFilesIfNeeded();
@@ -532,6 +574,19 @@ window.addEventListener("popstate", function () {
   if (current === "viewBackupPosts" || current === "viewBackupPages") {
     renderBackupDatesInfo();
     showSub("viewBackup");
+    pushBackTrap();
+    return;
+  }
+
+  if (
+    current === "viewInfoDasar" ||
+    current === "viewInfoStatistik" ||
+    current === "viewInfoPostinganHalaman" ||
+    current === "viewInfoPerforma" ||
+    current === "viewInfoRiwayatCommit" ||
+    current === "viewInfoKeamanan"
+  ) {
+    showSub("viewInfo");
     pushBackTrap();
     return;
   }
@@ -2991,36 +3046,289 @@ async function runDeploy() {
 }
 
 // =========================================================
-// Informasi Web (statistik + kata sandi admin)
+// Informasi Web — 6 sub-halaman
+// (Informasi Dasar, Statistik Pengunjung, Postingan & Halaman,
+//  Performa Teknis, Riwayat Commit, Keamanan)
 // =========================================================
-async function renderInfoView() {
-  const visitStats = await getVisitStats();
+
+/** Bar sederhana (CSS-only, tanpa library) untuk daftar breakdown
+ * berlabel + angka, mis. device/referrer/lokasi/genre/halaman populer. */
+function renderInfoBarList(containerEl, rows, opts) {
+  opts = opts || {};
+  if (!rows || rows.length === 0) {
+    containerEl.innerHTML = '<p class="backup-desc">' + (opts.emptyText || "Belum ada data.") + "</p>";
+    return;
+  }
+  const max = Math.max(...rows.map((r) => r.value)) || 1;
+  containerEl.innerHTML = rows
+    .map((r) => {
+      const pct = Math.max(4, Math.round((r.value / max) * 100));
+      return `
+        <div class="info-bar-row">
+          <div class="info-bar-label">
+            <span>${escapeHtmlAdmin(r.label)}</span>
+            <strong>${escapeHtmlAdmin(String(r.value))}</strong>
+          </div>
+          <div class="info-bar-track"><div class="info-bar-fill" style="width:${pct}%"></div></div>
+        </div>`;
+    })
+    .join("");
+}
+
+/** Grafik 24-jam (WIB) sederhana pakai bar vertikal CSS. */
+function renderHourlyChart(containerEl, hourly) {
+  const max = Math.max(...hourly.map((h) => h.count), 1);
+  containerEl.innerHTML =
+    '<div class="hourly-chart">' +
+    hourly
+      .map((h) => {
+        const pct = Math.max(3, Math.round((h.count / max) * 100));
+        return `<div class="hourly-bar-wrap" title="Jam ${h.hour}:00 — ${h.count} kunjungan">
+          <div class="hourly-bar" style="height:${pct}%"></div>
+          <span class="hourly-bar-label">${h.hour % 3 === 0 ? h.hour : ""}</span>
+        </div>`;
+      })
+      .join("") +
+    "</div>";
+}
+
+/** ---------------- Informasi Dasar ---------------- */
+let infoBasicCache = null;
+async function renderInfoDasar() {
+  document.getElementById("infoSiteName").textContent = "Memuat…";
   const posts = await loadPosts();
   const reports = await loadReports();
-  const viewStats = await getPostViewStats();
+  let basic;
+  try {
+    basic = await getInfoBasic();
+  } catch (e) {
+    basic = null;
+  }
+  infoBasicCache = basic;
 
-  document.getElementById("infoTotalVisits").textContent = visitStats.total;
-  document.getElementById("infoVisitsToday").textContent = visitStats.today;
-  document.getElementById("infoVisitsThisWeek").textContent = visitStats.thisWeek;
-  document.getElementById("infoVisitsLastWeek").textContent = visitStats.lastWeek;
-  document.getElementById("infoVisitsAvgDay").textContent = visitStats.avgPerDay7d;
+  if (basic) {
+    document.getElementById("infoSiteName").textContent = basic.siteName || "—";
+    document.getElementById("infoRepoName").textContent = basic.repoOwner + "/" + basic.repoName;
+    document.getElementById("infoWorkerName").textContent = basic.workerName || "—";
+    document.getElementById("infoLastDeploySha").textContent = basic.lastDeploySha || "Belum ada data";
+    document.getElementById("infoLastDeployAt").textContent = basic.lastDeployAt
+      ? formatReportDate(basic.lastDeployAt)
+      : "Belum ada data";
+    const statusEl = document.getElementById("infoLastDeployStatus");
+    if (basic.lastDeployStatus === "success") {
+      statusEl.textContent = "Berhasil";
+      statusEl.style.color = "#1f9d55";
+    } else if (basic.lastDeployStatus === "failed") {
+      statusEl.textContent = "Gagal";
+      statusEl.style.color = "#e0453a";
+    } else {
+      statusEl.textContent = "Belum ada data";
+      statusEl.style.color = "";
+    }
+  } else {
+    document.getElementById("infoSiteName").textContent = "Gagal memuat";
+  }
+
   document.getElementById("infoTotalPosts").textContent = posts.length;
   document.getElementById("infoTotalReports").textContent = reports.length;
   document.getElementById("infoReportsPending").textContent = reports.filter(
     (r) => (r.status || "belum") === "belum"
   ).length;
   document.getElementById("infoStorageSize").textContent = formatBytes(getStorageSizeEstimate());
+}
+document.getElementById("btnOpenRepo").addEventListener("click", () => {
+  if (infoBasicCache && infoBasicCache.repoUrl) window.open(infoBasicCache.repoUrl, "_blank", "noopener");
+});
+document.getElementById("btnOpenWorkerDashboard").addEventListener("click", () => {
+  if (infoBasicCache && infoBasicCache.workerDashboardUrl) {
+    window.open(infoBasicCache.workerDashboardUrl, "_blank", "noopener");
+  }
+});
 
+/** ---------------- Statistik Pengunjung ---------------- */
+async function renderInfoStatistik() {
+  const visitStats = await getVisitStats();
+
+  document.getElementById("infoTotalVisits").textContent = visitStats.total;
+  document.getElementById("infoVisitsToday").textContent = visitStats.today;
+  document.getElementById("infoVisitsThisWeek").textContent = visitStats.thisWeek;
+  document.getElementById("infoVisitsLastWeek").textContent = visitStats.lastWeek;
+  document.getElementById("infoVisitsAvgDay").textContent = visitStats.avgPerDay7d;
+
+  renderHourlyChart(document.getElementById("chartHourly"), visitStats.hourly || []);
+
+  renderInfoBarList(
+    document.getElementById("chartDevice"),
+    (visitStats.deviceBreakdown || []).map((r) => ({
+      label: r.device === "mobile" ? "Mobile" : r.device === "desktop" ? "Desktop" : "Tidak diketahui",
+      value: r.c
+    }))
+  );
+  renderInfoBarList(
+    document.getElementById("chartReferrer"),
+    (visitStats.referrerBreakdown || []).map((r) => ({ label: r.referrer, value: r.c }))
+  );
+  renderInfoBarList(
+    document.getElementById("chartLocation"),
+    (visitStats.locationBreakdown || []).map((r) => ({
+      label: r.city ? r.country + " — " + r.city : r.country,
+      value: r.c
+    }))
+  );
+}
+
+/** ---------------- Postingan & Halaman ---------------- */
+async function renderInfoPostinganHalaman() {
+  const viewStats = await getPostViewStats();
   document.getElementById("infoViewsTotal").textContent = viewStats.total;
   document.getElementById("infoViewsToday").textContent = viewStats.today;
   document.getElementById("infoViewsThisWeek").textContent = viewStats.thisWeek;
   document.getElementById("infoViewsLastWeek").textContent = viewStats.lastWeek;
 
+  let extra;
+  try {
+    extra = await getPostsHalamanStats();
+  } catch (e) {
+    extra = { popularThisWeek: [], topGenres: [], topPages: [] };
+  }
+
+  renderInfoBarList(
+    document.getElementById("listPopularPosts"),
+    extra.popularThisWeek.map((p) => ({ label: p.title, value: p.views })),
+    { emptyText: "Belum ada views postingan minggu ini." }
+  );
+  renderInfoBarList(
+    document.getElementById("listTopGenres"),
+    extra.topGenres.filter((g) => g.genre).map((g) => ({ label: g.genre, value: g.views })),
+    { emptyText: "Belum ada data genre." }
+  );
+  renderInfoBarList(
+    document.getElementById("listTopPages"),
+    extra.topPages.map((p) => ({ label: p.label, value: p.views })),
+    { emptyText: "Belum ada data halaman." }
+  );
+}
+
+/** ---------------- Performa Teknis (Kesehatan Sistem) ---------------- */
+async function renderInfoPerforma() {
+  document.getElementById("healthWebhook").textContent = "Memuat…";
+  document.getElementById("healthOtp").textContent = "Memuat…";
+  document.getElementById("healthD1Size").textContent = "Memuat…";
+  document.getElementById("healthD1Note").textContent = "";
+
+  let health;
+  try {
+    health = await getInfoHealth();
+  } catch (e) {
+    document.getElementById("healthWebhook").textContent = "Gagal memuat";
+    document.getElementById("healthOtp").textContent = "Gagal memuat";
+    document.getElementById("healthD1Size").textContent = "Gagal memuat";
+    return;
+  }
+
+  document.getElementById("healthWebhook").textContent = health.lastWebhookAt
+    ? formatReportDate(health.lastWebhookAt)
+    : "Belum pernah menerima sinyal";
+  document.getElementById("healthOtp").textContent = health.lastOtpSentAt
+    ? formatReportDate(health.lastOtpSentAt)
+    : "Belum pernah mengirim OTP";
+
+  if (health.d1SizeBytes != null) {
+    document.getElementById("healthD1Size").textContent = formatBytes(health.d1SizeBytes) + " / 5 GB gratis";
+  } else {
+    document.getElementById("healthD1Size").textContent = "Tidak tersedia";
+    document.getElementById("healthD1Note").textContent = health.d1Error || "";
+  }
+}
+
+/** ---------------- Riwayat Commit ---------------- */
+let commitHistoryPage = 1;
+async function renderCommitHistory() {
+  const listEl = document.getElementById("commitHistoryList");
+  const prevBtn = document.getElementById("btnCommitPrev");
+  const nextBtn = document.getElementById("btnCommitNext");
+  document.getElementById("commitPageLabel").textContent = "Halaman " + commitHistoryPage;
+  listEl.innerHTML = '<p class="backup-desc">Memuat riwayat dari GitHub…</p>';
+  prevBtn.disabled = commitHistoryPage <= 1;
+  nextBtn.disabled = true;
+
+  let data;
+  try {
+    data = await getCommitHistory(commitHistoryPage);
+  } catch (e) {
+    listEl.innerHTML = '<p class="backup-desc">Gagal memuat riwayat: ' + escapeHtmlAdmin(e.message) + "</p>";
+    return;
+  }
+
+  if (data.error) {
+    listEl.innerHTML = '<p class="backup-desc">' + escapeHtmlAdmin(data.error) + "</p>";
+    return;
+  }
+
+  if (!data.items || data.items.length === 0) {
+    listEl.innerHTML =
+      '<p class="backup-desc">' +
+      (commitHistoryPage === 1
+        ? "Belum ada riwayat deploy."
+        : "Tidak ada riwayat lagi dalam 30 hari terakhir.") +
+      "</p>";
+    nextBtn.disabled = true;
+    return;
+  }
+
+  listEl.innerHTML = data.items
+    .map((r) => {
+      const isSuccess = r.conclusion === "success";
+      const isRunning = r.status !== "completed";
+      const badgeClass = isRunning ? "commit-badge-running" : isSuccess ? "commit-badge-success" : "commit-badge-failed";
+      const badgeText = isRunning ? "Berjalan" : isSuccess ? "Berhasil" : "Gagal";
+      return `
+        <a class="commit-history-item" href="${escapeHtmlAdmin(r.htmlUrl)}" target="_blank" rel="noopener">
+          <div class="commit-history-top">
+            <span class="commit-badge ${badgeClass}">${badgeText}</span>
+            <span class="commit-sha">${escapeHtmlAdmin(r.headSha)}</span>
+          </div>
+          <div class="commit-message">${escapeHtmlAdmin(r.commitMessage || "(tanpa pesan commit)")}</div>
+          <div class="commit-date">${formatReportDate(r.createdAt)}</div>
+        </a>`;
+    })
+    .join("");
+
+  nextBtn.disabled = !data.hasMore;
+}
+document.getElementById("btnCommitPrev").addEventListener("click", async () => {
+  if (commitHistoryPage <= 1) return;
+  commitHistoryPage -= 1;
+  await renderCommitHistory();
+});
+document.getElementById("btnCommitNext").addEventListener("click", async () => {
+  commitHistoryPage += 1;
+  await renderCommitHistory();
+});
+
+/** ---------------- Keamanan ---------------- */
+async function renderInfoKeamanan() {
   document.getElementById("infoCurrentPassword").textContent = "••••••••";
   document.getElementById("btnTogglePasswordVisibility").textContent = "Lihat Kata Sandi";
   document.getElementById("newPasswordInput").value = "";
   document.getElementById("passwordStatus").textContent = "";
   document.getElementById("passwordStatus").className = "backup-status";
+
+  const listEl = document.getElementById("listLoginFails");
+  listEl.innerHTML = '<p class="backup-desc">Memuat…</p>';
+  try {
+    const data = await getLoginFails();
+    if (!data.items || data.items.length === 0) {
+      listEl.innerHTML = '<p class="backup-desc">Belum ada percobaan login gagal.</p>';
+    } else {
+      listEl.innerHTML =
+        '<ul class="login-fail-list">' +
+        data.items.map((d) => `<li>${formatReportDate(d)}</li>`).join("") +
+        "</ul>";
+    }
+  } catch (e) {
+    listEl.innerHTML = '<p class="backup-desc">Gagal memuat log.</p>';
+  }
 }
 
 document.getElementById("btnTogglePasswordVisibility").addEventListener("click", function () {
@@ -3058,6 +3366,7 @@ document.getElementById("btnSavePassword").addEventListener("click", async funct
   statusEl.className = "backup-status success";
   showToast("Kata sandi admin diperbarui");
 });
+
 
 // ---------- Modal: Notifikasi ----------
 const notifModalBackdrop = document.getElementById("notifModalBackdrop");

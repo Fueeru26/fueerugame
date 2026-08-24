@@ -80,13 +80,28 @@ CREATE TABLE IF NOT EXISTS processed_workflow_runs (
 
 CREATE TABLE IF NOT EXISTS site_visits (
   id TEXT PRIMARY KEY,
-  date TEXT NOT NULL
+  date TEXT NOT NULL,
+  device TEXT,      -- 'mobile' | 'desktop'
+  country TEXT,      -- kode negara 2-huruf dari Cloudflare (mis. ID, US)
+  city TEXT,
+  referrer TEXT       -- domain perujuk, atau 'Direct' kalau kosong
 );
 
 CREATE TABLE IF NOT EXISTS post_views (
   id TEXT PRIMARY KEY,
   postId TEXT NOT NULL,
   date TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS page_views (
+  id TEXT PRIMARY KEY,
+  pageId TEXT NOT NULL,   -- tutorial | cara-download | donasi | tentang
+  date TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS login_fail_attempts (
+  id TEXT PRIMARY KEY,
+  date TEXT NOT NULL     -- hanya waktu, tanpa IP (demi privasi)
 );
 
 -- Password admin default: admin123 (ganti lewat Admin Panel setelah deploy pertama)

@@ -11,3 +11,16 @@ not_found_handling = "404-page"
 binding = "DB"
 database_name = "fueeru-db"
 database_id = "d0bce375-7d6f-4623-94e5-8bfe05fc752f"
+
+# Dipakai entri "Performa Teknis" (Ukuran Database D1) di Informasi Web —
+# hanya ID biasa (bukan rahasia), aman ditaruh di sini. Selain ini, masih
+# perlu 2 secret tambahan (CF_API_TOKEN, CF_ACCOUNT_ID) lewat:
+#   wrangler secret put CF_API_TOKEN
+#   wrangler secret put CF_ACCOUNT_ID
+# CF_API_TOKEN dibuat di dash.cloudflare.com -> My Profile -> API Tokens,
+# izin minimal: Account.D1:Read. CF_ACCOUNT_ID dilihat di sidebar kanan
+# dashboard akun Cloudflare mana pun. Kalau belum diset, bagian "Ukuran
+# Database D1" cukup menampilkan pesan "belum dikonfigurasi", sisanya tetap
+# jalan normal.
+[vars]
+D1_DATABASE_ID = "d0bce375-7d6f-4623-94e5-8bfe05fc752f"
