@@ -63,7 +63,7 @@ const EMERGENCY_PASSWORD = "GINTAMA12345";
 // Backup Website & Deploy Website (lewat GitHub Git Data API)
 // Butuh secret GITHUB_TOKEN (Personal Access Token, scope "repo").
 // =========================================================
-const GITHUB_OWNER = "FueeruGame";
+const GITHUB_OWNER = "Fueeru26";
 const GITHUB_REPO = "fueerugame";
 const GITHUB_BRANCH = "main";
 const GITHUB_API = "https://api.github.com";

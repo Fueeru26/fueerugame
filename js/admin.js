@@ -1349,36 +1349,109 @@ function initRichTextEditor(cfg) {
     return true;
   }
 
-  // ---------- Tombol format dasar (data-cmd) & ukuran huruf (data-fontsize) ----------
+  // ---------- Tombol format dasar (data-cmd) ----------
   toolbarEl.addEventListener("click", function (e) {
     const cmdBtn = e.target.closest("button[data-cmd]");
-    if (cmdBtn) {
-      const cmd = cmdBtn.getAttribute("data-cmd");
-      if (cmd === "undo") { doUndo(); return; }
-      if (cmd === "redo") { doRedo(); return; }
-      contentEl.focus();
-      recordBeforeChange();
-      document.execCommand(cmd, false, null);
-      return;
-    }
-    const fsBtn = e.target.closest("button[data-fontsize]");
-    if (fsBtn) {
-      applyFontSize(fsBtn.getAttribute("data-fontsize"));
-    }
+    if (!cmdBtn) return;
+    const cmd = cmdBtn.getAttribute("data-cmd");
+    if (cmd === "undo") { doUndo(); return; }
+    if (cmd === "redo") { doRedo(); return; }
+    contentEl.focus();
+    recordBeforeChange();
+    document.execCommand(cmd, false, null);
   });
 
-  function applyFontSize(size) {
-    contentEl.focus();
+  // ---------- Ukuran Teks (dropdown px + navigasi perkecil/perbesar) ----------
+  // Trigger menampilkan ukuran teks (px) pada posisi kursor/seleksi saat
+  // ini secara live (mengikuti pola editor umum: pilih teks dulu, baru
+  // ubah nilainya; berpindah ke teks lain otomatis memperbarui angka
+  // sesuai ukuran asli teks tsb — lihat updateFsDisplay via selectionchange).
+  const fsBtnEl = document.getElementById(cfg.fsBtnId);
+  const fsMenuEl = document.getElementById(cfg.fsMenuId);
+  const fsValueLabelEl = document.getElementById(cfg.fsValueLabelId);
+  const fsStepValueEl = document.getElementById(cfg.fsStepValueId);
+  const fsStepDownEl = document.getElementById(cfg.fsStepDownId);
+  const fsStepUpEl = document.getElementById(cfg.fsStepUpId);
+  const FS_MIN = 8;
+  const FS_MAX = 96;
+  let currentFsPx = 15;
+  let activeFsSpan = null; // span ukuran terakhir yang diubah, supaya klik +/- berulang tidak bikin span bersarang
+
+  function getSelectionFontSizePx() {
     const sel = window.getSelection();
-    if (!sel || sel.isCollapsed) {
+    if (!sel || sel.rangeCount === 0 || !contentEl.contains(sel.anchorNode)) return null;
+    let node = sel.anchorNode;
+    if (node.nodeType === Node.TEXT_NODE) node = node.parentElement;
+    if (!node || !contentEl.contains(node)) return null;
+    const px = parseFloat(window.getComputedStyle(node).fontSize);
+    return isNaN(px) ? null : Math.round(px);
+  }
+
+  function updateFsDisplay() {
+    const px = getSelectionFontSizePx();
+    if (px == null) return;
+    currentFsPx = px;
+    fsValueLabelEl.textContent = px + "px";
+    fsStepValueEl.textContent = px + "px";
+  }
+  document.addEventListener("selectionchange", updateFsDisplay);
+
+  function selectionMatchesSpan(span) {
+    if (!span || !contentEl.contains(span)) return false;
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return false;
+    const range = sel.getRangeAt(0);
+    const spanRange = document.createRange();
+    spanRange.selectNodeContents(span);
+    try {
+      return range.compareBoundaryPoints(Range.START_TO_START, spanRange) === 0 &&
+        range.compareBoundaryPoints(Range.END_TO_END, spanRange) === 0;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function stepFontSize(delta) {
+    restoreSelection();
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !contentEl.contains(sel.anchorNode)) {
       showToast("Pilih teks yang ingin diubah ukurannya terlebih dahulu");
       return;
     }
+    const newPx = Math.max(FS_MIN, Math.min(FS_MAX, (currentFsPx || 15) + delta));
     recordBeforeChange();
-    const span = document.createElement("span");
-    span.className = size === "small" ? "fs-sm" : size === "large" ? "fs-lg" : "fs-md";
-    if (!wrapSelection(span)) undoStack.pop();
+    if (selectionMatchesSpan(activeFsSpan)) {
+      // Seleksi masih persis span yang barusan kita ubah — update saja,
+      // jangan bungkus lagi (mencegah span bersarang tak berguna).
+      activeFsSpan.style.fontSize = newPx + "px";
+      const newRange = document.createRange();
+      newRange.selectNodeContents(activeFsSpan);
+      sel.removeAllRanges();
+      sel.addRange(newRange);
+      savedSelectionRange = newRange.cloneRange();
+    } else {
+      const span = document.createElement("span");
+      span.style.fontSize = newPx + "px";
+      if (!wrapSelection(span)) { undoStack.pop(); return; }
+      activeFsSpan = span;
+    }
+    currentFsPx = newPx;
+    fsValueLabelEl.textContent = newPx + "px";
+    fsStepValueEl.textContent = newPx + "px";
   }
+
+  fsBtnEl.addEventListener("click", function (e) {
+    e.stopPropagation();
+    saveSelection();
+    activeRichEditor = api;
+    updateFsDisplay();
+    fsMenuEl.classList.toggle("show");
+  });
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest("#" + cfg.fsWrapId)) fsMenuEl.classList.remove("show");
+  });
+  fsStepDownEl.addEventListener("click", function (e) { e.stopPropagation(); stepFontSize(-1); });
+  fsStepUpEl.addEventListener("click", function (e) { e.stopPropagation(); stepFontSize(1); });
 
   // ---------- Sisipkan Gambar ----------
   document.getElementById(cfg.insertImageBtnId).addEventListener("click", function () {
@@ -1416,7 +1489,7 @@ function initRichTextEditor(cfg) {
   document.getElementById(cfg.insertLinkBtnId).addEventListener("click", function () {
     saveSelection();
     activeRichEditor = api; // tandai editor ini sebagai target modal link
-    linkUrlInput.value = "";
+    resetLinkModal();
     linkTextInput.value = savedSelectionRange ? savedSelectionRange.toString() : "";
     linkModalBackdrop.classList.add("show");
     setTimeout(() => linkUrlInput.focus(), 100);
@@ -1620,7 +1693,68 @@ function toTitleCase(str) {
 const linkModalBackdrop = document.getElementById("linkModalBackdrop");
 const linkUrlInput = document.getElementById("linkUrlInput");
 const linkTextInput = document.getElementById("linkTextInput");
-let activeRichEditor = null; // editor mana yang sedang memakai modal link / dropdown warna
+const linkModeTeksWrap = document.getElementById("linkModeTeksWrap");
+const linkModeGambarWrap = document.getElementById("linkModeGambarWrap");
+const linkImageInput = document.getElementById("linkImageInput");
+const linkImagePreview = document.getElementById("linkImagePreview");
+const linkImageUploadLabel = document.getElementById("linkImageUploadLabel");
+const linkModalError = document.getElementById("linkModalError");
+let activeRichEditor = null; // editor mana yang sedang memakai modal link / dropdown warna / dropdown ukuran teks
+let linkImageData = null; // dataURL gambar yang sudah diupload di dalam modal link
+
+function hideLinkModalError() {
+  linkModalError.classList.add("hidden");
+  linkModalError.textContent = "";
+}
+
+function resetLinkModal() {
+  linkUrlInput.value = "";
+  linkTextInput.value = "";
+  linkImageData = null;
+  linkImageInput.value = "";
+  linkImagePreview.src = "";
+  linkImagePreview.style.display = "none";
+  linkImageUploadLabel.textContent = "Klik untuk upload lampiran (gambar/screenshot)";
+  hideLinkModalError();
+  const teksRadio = document.querySelector('input[name="linkMode"][value="teks"]');
+  if (teksRadio) teksRadio.checked = true;
+  linkModeTeksWrap.classList.remove("hidden");
+  linkModeGambarWrap.classList.add("hidden");
+}
+
+document.querySelectorAll('input[name="linkMode"]').forEach(function (radio) {
+  radio.addEventListener("change", function () {
+    if (!radio.checked) return;
+    hideLinkModalError();
+    if (radio.value === "gambar") {
+      linkModeTeksWrap.classList.add("hidden");
+      linkModeGambarWrap.classList.remove("hidden");
+    } else {
+      linkModeGambarWrap.classList.add("hidden");
+      linkModeTeksWrap.classList.remove("hidden");
+    }
+  });
+});
+
+linkUrlInput.addEventListener("input", hideLinkModalError);
+
+linkImageInput.addEventListener("change", function () {
+  const file = linkImageInput.files && linkImageInput.files[0];
+  if (!file) return;
+  linkImageUploadLabel.textContent = "Memproses gambar…";
+  compressImageFile(file, 1000, 0.8)
+    .then(function (dataUrl) {
+      linkImageData = dataUrl;
+      linkImagePreview.src = dataUrl;
+      linkImagePreview.style.display = "block";
+      linkImageUploadLabel.textContent = "Klik untuk mengganti gambar";
+      hideLinkModalError();
+    })
+    .catch(function () {
+      linkImageUploadLabel.textContent = "Klik untuk upload lampiran (gambar/screenshot)";
+      showToast("Gagal memproses gambar, coba gambar lain");
+    });
+});
 
 document.getElementById("btnCancelLink").addEventListener("click", function () {
   linkModalBackdrop.classList.remove("show");
@@ -1632,11 +1766,21 @@ linkModalBackdrop.addEventListener("click", function (e) {
 document.getElementById("btnConfirmLink").addEventListener("click", function () {
   if (!activeRichEditor) return;
   const url = linkUrlInput.value.trim();
+  const mode = document.querySelector('input[name="linkMode"]:checked').value;
+
   if (!url) {
+    linkModalError.textContent = "Masukkan Link terlebih dahulu!";
+    linkModalError.classList.remove("hidden");
     linkUrlInput.focus();
     return;
   }
-  const text = linkTextInput.value.trim() || url;
+  if (mode === "gambar" && !linkImageData) {
+    linkModalError.textContent = "Upload gambar terlebih dahulu!";
+    linkModalError.classList.remove("hidden");
+    return;
+  }
+  hideLinkModalError();
+
   activeRichEditor.restoreSelection();
   activeRichEditor.recordBeforeChange();
   const sel = window.getSelection();
@@ -1646,9 +1790,17 @@ document.getElementById("btnConfirmLink").addEventListener("click", function () 
   a.href = url;
   a.target = "_blank";
   a.rel = "noopener";
-  a.style.color = "#2fa8e0";
-  a.style.textDecoration = "underline";
-  a.textContent = text;
+  if (mode === "gambar") {
+    const img = document.createElement("img");
+    img.src = linkImageData;
+    img.alt = "";
+    a.appendChild(img);
+  } else {
+    const text = linkTextInput.value.trim() || url;
+    a.style.color = "#2fa8e0";
+    a.style.textDecoration = "underline";
+    a.textContent = text;
+  }
   range.insertNode(a);
   range.setStartAfter(a);
   range.setEndAfter(a);
@@ -1667,6 +1819,13 @@ const richPostEditor = initRichTextEditor({
   colorBtnId: "btnTextColor",
   colorMenuId: "colorSwatchMenu",
   colorWrapId: "colorDropdownWrap",
+  fsWrapId: "fsDropdownWrap",
+  fsBtnId: "btnFontSize",
+  fsMenuId: "fsStepperMenu",
+  fsValueLabelId: "fsValueLabel",
+  fsStepValueId: "fsStepValue",
+  fsStepDownId: "fsStepDown",
+  fsStepUpId: "fsStepUp",
   quoteBtnId: "btnQuote",
   caseToggleBtnId: "btnCaseToggle",
   spoilerBtnId: "btnSpoiler",
@@ -1684,6 +1843,13 @@ const richPageEditor = initRichTextEditor({
   colorBtnId: "btnTextColorPage",
   colorMenuId: "colorSwatchMenuPage",
   colorWrapId: "colorDropdownWrapPage",
+  fsWrapId: "fsDropdownWrapPage",
+  fsBtnId: "btnFontSizePage",
+  fsMenuId: "fsStepperMenuPage",
+  fsValueLabelId: "fsValueLabelPage",
+  fsStepValueId: "fsStepValuePage",
+  fsStepDownId: "fsStepDownPage",
+  fsStepUpId: "fsStepUpPage",
   quoteBtnId: "btnQuotePage",
   caseToggleBtnId: "btnCaseTogglePage",
   spoilerBtnId: "btnSpoilerPage",

@@ -375,11 +375,49 @@ body.admin-body {
   flex: none;
 }
 
-/* Tombol ukuran huruf (A kecil/sedang/besar) */
-.toolbar-fs-btn { font-weight: 800; }
-.fs-btn-sm { font-size: .74rem; }
-.fs-btn-md { font-size: .92rem; }
-.fs-btn-lg { font-size: 1.14rem; }
+/* Dropdown ukuran teks (px) — trigger menampilkan ukuran teks yang
+   sedang dipilih/kursor berada, buka untuk menampilkan navigasi
+   perkecil/perbesar (bukan pilihan preset kecil/sedang/besar lagi). */
+.editor-toolbar .toolbar-fs-trigger {
+  width: auto;
+  padding: 0 8px 0 10px;
+  gap: 4px;
+  font-weight: 800;
+  font-size: .82rem;
+}
+.toolbar-fs-trigger svg { width: 13px; height: 13px; flex: 0 0 auto; }
+.fs-stepper-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1.5px solid var(--sky-200);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-soft);
+  padding: 8px 10px;
+  z-index: 25;
+}
+.fs-stepper-menu.show { display: flex; }
+.editor-toolbar .fs-step-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1.5px solid var(--sky-200);
+  background: var(--sky-50);
+  color: var(--sky-700);
+}
+.editor-toolbar .fs-step-btn:hover { background: var(--sky-150); }
+.fs-step-btn svg { width: 14px; height: 14px; }
+.fs-step-value {
+  font-weight: 800;
+  font-size: .88rem;
+  color: var(--sky-700);
+  min-width: 38px;
+  text-align: center;
+}
 
 .editor-content {
   min-height: 200px;
@@ -931,6 +969,36 @@ body.admin-body {
   line-height: 1.6;
   margin-bottom: 4px;
 }
+.link-mode-section {
+  display: flex;
+  gap: 24px;
+  margin: 14px 0 4px;
+}
+.link-mode-section .link-mode-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  cursor: pointer;
+}
+.link-mode-option input[type="radio"] {
+  width: 19px;
+  height: 19px;
+  accent-color: var(--sky-500);
+  flex: 0 0 auto;
+}
+.link-mode-option span {
+  font-size: .82rem;
+  font-weight: 800;
+  color: var(--sky-700);
+}
+.link-modal-error {
+  color: #d3462f;
+  font-size: .82rem;
+  font-weight: 700;
+  margin: 10px 0 0;
+}
+
 .modal-actions {
   display: flex;
   gap: 10px;

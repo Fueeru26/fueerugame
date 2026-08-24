@@ -48,7 +48,7 @@
       </span>
       <span>
         <div class="amc-title">Halaman</div>
-        <div class="amc-sub">Edit isi Tutorial Main, Cara Download, Donasi &amp; Tentang</div>
+        <div class="amc-sub">Edit isi Halaman pada Navigasi situs website</div>
       </span>
     </button>
     <button type="button" class="admin-menu-card" data-target="menuLihatLaporan">
@@ -66,7 +66,7 @@
       </span>
       <span>
         <div class="amc-title">Informasi Web</div>
-        <div class="amc-sub">Statistik pengunjung, postingan, &amp; kata sandi admin</div>
+        <div class="amc-sub">Lihat informasi-informasi seputar situs website</div>
       </span>
     </button>
     <button type="button" class="admin-menu-card" data-target="menuManajemenFile">
@@ -93,7 +93,7 @@
       </span>
       <span>
         <div class="amc-title">Backup &amp; Restore</div>
-        <div class="amc-sub">Unduh cadangan &amp; pulihkan data postingan/halaman</div>
+        <div class="amc-sub">Unduh cadangan dan restore data, serta deploy situs website</div>
       </span>
     </button>
     <button type="button" id="sidebarInstallPWA" class="btn-back-to-site">
@@ -200,7 +200,7 @@
           </span>
           <span>
             <div class="amc-title">Halaman</div>
-            <div class="amc-sub">Edit isi Tutorial Main, Cara Download, Donasi &amp; Tentang</div>
+            <div class="amc-sub">Edit isi Halaman pada Navigasi situs website</div>
           </span>
         </button>
         <button type="button" class="admin-menu-card" id="menuLihatLaporan">
@@ -218,7 +218,7 @@
           </span>
           <span>
             <div class="amc-title">Informasi Web</div>
-            <div class="amc-sub">Statistik pengunjung, postingan, &amp; kata sandi admin</div>
+            <div class="amc-sub">Lihat informasi-informasi seputar situs website</div>
           </span>
         </button>
         <button type="button" class="admin-menu-card" id="menuManajemenFile">
@@ -245,7 +245,7 @@
           </span>
           <span>
             <div class="amc-title">Backup &amp; Restore</div>
-            <div class="amc-sub">Unduh cadangan &amp; pulihkan data postingan/halaman</div>
+            <div class="amc-sub">Unduh cadangan dan restore data, serta deploy situs website</div>
           </span>
         </button>
       </div>
@@ -390,9 +390,21 @@
               <button type="button" class="color-swatch" data-color="#ffffff" style="background:#ffffff;border:1.5px solid var(--sky-200);" title="Putih"></button>
             </div>
           </div>
-          <button type="button" data-fontsize="small" title="Ukuran kecil" class="toolbar-fs-btn fs-btn-sm">A</button>
-          <button type="button" data-fontsize="medium" title="Ukuran sedang" class="toolbar-fs-btn fs-btn-md">A</button>
-          <button type="button" data-fontsize="large" title="Ukuran besar" class="toolbar-fs-btn fs-btn-lg">A</button>
+          <div class="vfs-dropdown" id="fsDropdownWrap" style="flex:0 0 auto;">
+            <button type="button" id="btnFontSize" class="toolbar-fs-trigger" title="Ukuran teks">
+              <span id="fsValueLabel">15px</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="fs-stepper-menu" id="fsStepperMenu">
+              <button type="button" class="fs-step-btn" id="fsStepDown" title="Perkecil ukuran">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <span class="fs-step-value" id="fsStepValue">15px</span>
+              <button type="button" class="fs-step-btn" id="fsStepUp" title="Perbesar ukuran">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+          </div>
           <div class="sep"></div>
           <button type="button" id="btnQuote" title="Kutipan">
             <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M7 7c-2.5 0-4.2 2-4.2 4.6 0 2.3 1.6 4.1 3.8 4.1.4 2-1 3.5-2.9 3.9l.4 1.4c3.3-.6 5.6-3 5.6-6.6C9.7 10.9 8.7 7 7 7zm10 0c-2.5 0-4.2 2-4.2 4.6 0 2.3 1.6 4.1 3.8 4.1.4 2-1 3.5-2.9 3.9l.4 1.4c3.3-.6 5.6-3 5.6-6.6C19.7 10.9 18.7 7 17 7z"/></svg>
@@ -536,9 +548,21 @@
               <button type="button" class="color-swatch" data-color="#ffffff" style="background:#ffffff;border:1.5px solid var(--sky-200);" title="Putih"></button>
             </div>
           </div>
-          <button type="button" data-fontsize="small" title="Ukuran kecil" class="toolbar-fs-btn fs-btn-sm">A</button>
-          <button type="button" data-fontsize="medium" title="Ukuran sedang" class="toolbar-fs-btn fs-btn-md">A</button>
-          <button type="button" data-fontsize="large" title="Ukuran besar" class="toolbar-fs-btn fs-btn-lg">A</button>
+          <div class="vfs-dropdown" id="fsDropdownWrapPage" style="flex:0 0 auto;">
+            <button type="button" id="btnFontSizePage" class="toolbar-fs-trigger" title="Ukuran teks">
+              <span id="fsValueLabelPage">15px</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="fs-stepper-menu" id="fsStepperMenuPage">
+              <button type="button" class="fs-step-btn" id="fsStepDownPage" title="Perkecil ukuran">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <span class="fs-step-value" id="fsStepValuePage">15px</span>
+              <button type="button" class="fs-step-btn" id="fsStepUpPage" title="Perbesar ukuran">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+          </div>
           <div class="sep"></div>
           <button type="button" id="btnQuotePage" title="Kutipan">
             <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M7 7c-2.5 0-4.2 2-4.2 4.6 0 2.3 1.6 4.1 3.8 4.1.4 2-1 3.5-2.9 3.9l.4 1.4c3.3-.6 5.6-3 5.6-6.6C9.7 10.9 8.7 7 7 7zm10 0c-2.5 0-4.2 2-4.2 4.6 0 2.3 1.6 4.1 3.8 4.1.4 2-1 3.5-2.9 3.9l.4 1.4c3.3-.6 5.6-3 5.6-6.6C19.7 10.9 18.7 7 17 7z"/></svg>
@@ -1173,8 +1197,35 @@
     <h3>Sisipkan Link</h3>
     <label for="linkUrlInput">Masukkan Link</label>
     <input type="url" id="linkUrlInput" placeholder="https://">
-    <label for="linkTextInput">Masukkan Teks</label>
-    <input type="text" id="linkTextInput" placeholder="(opsional — jika kosong, link yang tampil)">
+
+    <div class="link-mode-section" id="linkModeSection">
+      <label class="link-mode-option">
+        <input type="radio" name="linkMode" value="teks" checked>
+        <span>Teks</span>
+      </label>
+      <label class="link-mode-option">
+        <input type="radio" name="linkMode" value="gambar">
+        <span>Gambar</span>
+      </label>
+    </div>
+
+    <div id="linkModeTeksWrap">
+      <label for="linkTextInput">Masukkan Teks</label>
+      <input type="text" id="linkTextInput" placeholder="(opsional — jika kosong, link yang tampil)">
+    </div>
+
+    <div id="linkModeGambarWrap" class="hidden">
+      <label>Upload Gambar</label>
+      <div class="upload-box" id="linkImageUploadBox">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <div id="linkImageUploadLabel">Klik untuk upload lampiran (gambar/screenshot)</div>
+        <input type="file" id="linkImageInput" accept="image/*">
+        <img id="linkImagePreview" class="upload-preview" alt="Pratinjau gambar">
+      </div>
+    </div>
+
+    <p class="link-modal-error hidden" id="linkModalError"></p>
+
     <div class="modal-actions">
       <button type="button" class="btn-cancel" id="btnCancelLink">Batal</button>
       <button type="button" class="btn-primary" id="btnConfirmLink">Sisipkan</button>
