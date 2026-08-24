@@ -739,9 +739,10 @@ body.admin-body {
 
 /* Baris "Kembali ke Website" + toggle mode tampilan (terhubung dengan
    toggle di sidebar website publik lewat localStorage bersama). */
-.admin-back-row { display: flex; align-items: center; gap: 10px; margin-top: 20px; }
-.admin-back-row .btn-back-to-site { margin-top: 0; flex: 1 1 auto; }
+.admin-back-row { display: flex; flex-direction: column; align-items: stretch; gap: 10px; margin-top: 20px; }
+.admin-back-row .btn-back-to-site { margin-top: 0; }
 .admin-theme-toggle {
+  align-self: center;
   display: flex;
   align-items: center;
   gap: 3px;
