@@ -855,7 +855,7 @@
         </button>
         <button type="button" class="admin-menu-card" id="menuInfoPerforma">
           <span class="amc-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4.5 8-11.5V5l-8-3-8 3v5.5C4 17.5 12 22 12 22z"/><path d="M9 12l2 2 4-4"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
           </span>
           <span>
             <div class="amc-title">Performa Teknis</div>
@@ -881,6 +881,11 @@
           </span>
         </button>
       </div>
+
+      <button type="button" class="btn-refresh-all" id="btnRefreshAllInfo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        <span>Refresh semua informasi</span>
+      </button>
     </div>
 
     <!-- ===== VIEW: Informasi Web — Informasi Dasar ===== -->
@@ -1218,7 +1223,7 @@
       <label>Upload Gambar</label>
       <div class="upload-box" id="linkImageUploadBox">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        <div id="linkImageUploadLabel">Klik untuk upload lampiran (gambar/screenshot)</div>
+        <div id="linkImageUploadLabel">Klik untuk upload gambar</div>
         <input type="file" id="linkImageInput" accept="image/*">
         <img id="linkImagePreview" class="upload-preview" alt="Pratinjau gambar">
       </div>

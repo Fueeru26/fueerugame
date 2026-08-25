@@ -395,6 +395,33 @@ document.getElementById("menuInfoKeamanan").addEventListener("click", async () =
   await renderInfoKeamanan();
 });
 document.getElementById("btnBackFromInfoKeamanan").addEventListener("click", () => showSub("viewInfo"));
+
+document.getElementById("btnRefreshAllInfo").addEventListener("click", async function () {
+  const btn = this;
+  btn.classList.remove("is-spinning");
+  void btn.offsetWidth; // restart animasi kalau diklik berkali-kali
+  btn.classList.add("is-spinning");
+  btn.disabled = true;
+
+  commitHistoryPage = 1;
+  const results = await Promise.allSettled([
+    renderInfoDasar(),
+    renderInfoStatistik(),
+    renderInfoPostinganHalaman(),
+    renderInfoPerforma(),
+    renderCommitHistory(),
+    renderInfoKeamanan()
+  ]);
+  const failed = results.filter((r) => r.status === "rejected").length;
+
+  btn.disabled = false;
+  setTimeout(() => btn.classList.remove("is-spinning"), 650);
+  showToast(
+    failed === 0
+      ? "Semua informasi berhasil diperbarui"
+      : `Sebagian informasi gagal diperbarui (${failed}/${results.length})`
+  );
+});
 document.getElementById("menuManajemenFile").addEventListener("click", async () => {
   showSub("viewFiles");
   await loadFilesIfNeeded();
@@ -1714,7 +1741,7 @@ function resetLinkModal() {
   linkImageInput.value = "";
   linkImagePreview.src = "";
   linkImagePreview.style.display = "none";
-  linkImageUploadLabel.textContent = "Klik untuk upload lampiran (gambar/screenshot)";
+  linkImageUploadLabel.textContent = "Klik untuk upload gambar";
   hideLinkModalError();
   const teksRadio = document.querySelector('input[name="linkMode"][value="teks"]');
   if (teksRadio) teksRadio.checked = true;
@@ -1751,7 +1778,7 @@ linkImageInput.addEventListener("change", function () {
       hideLinkModalError();
     })
     .catch(function () {
-      linkImageUploadLabel.textContent = "Klik untuk upload lampiran (gambar/screenshot)";
+      linkImageUploadLabel.textContent = "Klik untuk upload gambar";
       showToast("Gagal memproses gambar, coba gambar lain");
     });
 });
