@@ -1927,6 +1927,35 @@ body.admin-body {
   border-radius: 999px;
   margin-bottom: 14px;
 }
+.preview-device-toggle {
+  display: flex;
+  gap: 10px;
+  padding: 0 22px 14px;
+  flex: 0 0 auto;
+}
+.preview-device-btn {
+  flex: 1;
+  padding: 11px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--sky-300);
+  background: var(--surface);
+  color: var(--sky-700);
+  font-weight: 800;
+  font-size: .92rem;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.preview-device-btn.active {
+  background: var(--sky-500);
+  border-color: var(--sky-500);
+  color: #fff;
+}
+.preview-viewport {
+  overflow: hidden;
+  position: relative;
+}
+.preview-viewport-inner {
+  transform-origin: top left;
+}
 
 /* ---------------- View Report modal body ---------------- */
 .view-report-body {

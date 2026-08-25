@@ -917,6 +917,8 @@
         <div class="info-row"><span>Total Postingan</span><strong id="infoTotalPosts">0</strong></div>
         <div class="info-row"><span>Total Laporan</span><strong id="infoTotalReports">0</strong></div>
         <div class="info-row"><span>Laporan Belum Ditangani</span><strong id="infoReportsPending">0</strong></div>
+        <div class="info-row"><span>Laporan Sedang Diproses</span><strong id="infoReportsSedang">0</strong></div>
+        <div class="info-row"><span>Laporan Selesai</span><strong id="infoReportsSelesai">0</strong></div>
         <div class="info-row"><span>Perkiraan Ukuran Data Lokal (Perangkat Ini)</span><strong id="infoStorageSize">0 KB</strong></div>
       </div>
     </div>
@@ -991,6 +993,23 @@
         <div class="info-box-title">Halaman Paling Sering Dibuka</div>
         <div class="info-bar-list" id="listTopPages"><p class="backup-desc">Belum ada data.</p></div>
       </div>
+
+      <div class="info-box">
+        <div class="info-box-title">Postingan per Jenis</div>
+        <div class="info-bar-list" id="listPostsByJenis"><p class="backup-desc">Belum ada data.</p></div>
+      </div>
+
+      <div class="info-box">
+        <div class="info-box-title">Postingan per Platform</div>
+        <div class="info-bar-list" id="listPostsByPlatform"><p class="backup-desc">Belum ada data.</p></div>
+      </div>
+
+      <div class="info-box">
+        <div class="info-box-title">Status Publish Postingan</div>
+        <div class="info-row"><span>Published</span><strong id="infoStatusPublished">0</strong></div>
+        <div class="info-row"><span>Draft</span><strong id="infoStatusDraft">0</strong></div>
+        <div class="info-row"><span>Terjadwal</span><strong id="infoStatusScheduled">0</strong></div>
+      </div>
     </div>
 
     <!-- ===== VIEW: Informasi Web — Performa Teknis ===== -->
@@ -1008,6 +1027,19 @@
         <div class="info-row"><span>Email OTP — Terakhir Kirim Kode</span><strong id="healthOtp">—</strong></div>
         <div class="info-row"><span>Ukuran Database D1</span><strong id="healthD1Size">—</strong></div>
         <p class="backup-desc" id="healthD1Note" style="margin-top:10px;"></p>
+      </div>
+
+      <div class="info-box">
+        <div class="info-box-title">Statistik OTP (7 Hari Terakhir)</div>
+        <div class="info-row"><span>Total OTP Terkirim</span><strong id="healthOtpTotal">0</strong></div>
+        <div class="info-row"><span>Berhasil Dipakai</span><strong id="healthOtpUsed">0</strong></div>
+        <div class="info-row"><span>Kadaluarsa Tanpa Dipakai</span><strong id="healthOtpExpired">0</strong></div>
+      </div>
+
+      <div class="info-box">
+        <div class="info-box-title">Sesi Deploy Menggantung</div>
+        <div class="info-row"><span>Sesi Belum Selesai (&gt;2 Jam)</span><strong id="healthStaleDeployCount">0</strong></div>
+        <p class="backup-desc" id="healthStaleDeployNote" style="margin-top:10px;"></p>
       </div>
     </div>
 
@@ -1042,6 +1074,7 @@
         <div class="info-box-title">Kata Sandi Admin</div>
         <p class="backup-desc" style="margin-top:2px;">Kata Sandi saat ini: <strong id="infoCurrentPassword" style="color:var(--ink);"></strong></p>
         <button type="button" class="btn-cancel" id="btnTogglePasswordVisibility" style="width:100%;margin-top:4px;">Lihat Kata Sandi</button>
+        <div class="info-row" style="margin-top:14px;"><span>Terakhir Kali Diganti</span><strong id="infoPasswordChangedAt">—</strong></div>
         <div class="subsection-title" style="margin-top:14px;">Ganti Kata Sandi</div>
         <input type="text" id="newPasswordInput" class="info-text-input" placeholder="Kata sandi baru" autocomplete="off">
         <button type="button" class="btn-primary" id="btnSavePassword" style="width:100%;margin-top:12px;">Simpan</button>
@@ -1244,7 +1277,15 @@
     <div class="preview-modal-head">
       <h3>Preview Postingan</h3>
     </div>
-    <div id="previewModalBody" class="preview-modal-body"></div>
+    <div class="preview-device-toggle">
+      <button type="button" class="preview-device-btn active" id="btnPreviewMobile">Mobile</button>
+      <button type="button" class="preview-device-btn" id="btnPreviewDesktop">Desktop</button>
+    </div>
+    <div id="previewModalBody" class="preview-modal-body">
+      <div class="preview-viewport" id="previewViewport">
+        <div class="preview-viewport-inner" id="previewViewportInner"></div>
+      </div>
+    </div>
     <div class="modal-actions">
       <button type="button" class="btn-cancel" id="btnClosePreviewForm2" style="flex:1;">Tutup Preview</button>
     </div>

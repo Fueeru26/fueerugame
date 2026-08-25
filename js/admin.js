@@ -313,13 +313,14 @@ document.getElementById("btnSavePage").addEventListener("click", async function 
 
 document.getElementById("btnPreviewPage").addEventListener("click", function () {
   const content = editorContentPageEl.innerHTML.trim() || "<p><em>(Isi halaman masih kosong)</em></p>";
-  previewModalBody.innerHTML = `
+  previewViewportInner.innerHTML = `
     <div class="preview-badge">Pratinjau — belum disimpan</div>
     <h1 class="post-detail-title">${escapeHtmlAdmin(document.getElementById("pageEditHeading").textContent)}</h1>
     <div class="post-detail-content">${content}</div>
   `;
-  initSpoilersAdmin(previewModalBody);
+  initSpoilersAdmin(previewViewportInner);
   previewModalBackdrop.classList.add("show");
+  applyPreviewDeviceMode("mobile");
 });
 
 // ---------- Deteksi perubahan yang belum disimpan (Edit Halaman) ----------
@@ -1889,6 +1890,36 @@ const richPageEditor = initRichTextEditor({
 // =========================================================
 const previewModalBackdrop = document.getElementById("previewModalBackdrop");
 const previewModalBody = document.getElementById("previewModalBody");
+const previewViewport = document.getElementById("previewViewport");
+const previewViewportInner = document.getElementById("previewViewportInner");
+const btnPreviewMobile = document.getElementById("btnPreviewMobile");
+const btnPreviewDesktop = document.getElementById("btnPreviewDesktop");
+const PREVIEW_DESKTOP_WIDTH = 900; // lebar simulasi kolom konten desktop (px)
+let previewDeviceMode = "mobile";
+
+/** Render ulang tampilan preview sesuai mode aktif (Mobile/Desktop).
+ * Mode Desktop me-render konten pada lebar 900px lalu diperkecil (transform
+ * scale) supaya pas di dalam modal — sehingga reflow teksnya otentik sama
+ * seperti dilihat di layar lebar, bukan sekadar font yang diperkecil. */
+function applyPreviewDeviceMode(mode) {
+  previewDeviceMode = mode;
+  btnPreviewMobile.classList.toggle("active", mode === "mobile");
+  btnPreviewDesktop.classList.toggle("active", mode === "desktop");
+
+  if (mode === "desktop") {
+    previewViewportInner.style.width = PREVIEW_DESKTOP_WIDTH + "px";
+    const paneWidth = previewViewport.clientWidth;
+    const scale = paneWidth / PREVIEW_DESKTOP_WIDTH;
+    previewViewportInner.style.transform = `scale(${scale})`;
+    previewViewport.style.height = (previewViewportInner.scrollHeight * scale) + "px";
+  } else {
+    previewViewportInner.style.width = "";
+    previewViewportInner.style.transform = "";
+    previewViewport.style.height = "";
+  }
+}
+btnPreviewMobile.addEventListener("click", () => applyPreviewDeviceMode("mobile"));
+btnPreviewDesktop.addEventListener("click", () => applyPreviewDeviceMode("desktop"));
 
 function closePreviewModal() {
   previewModalBackdrop.classList.remove("show");
@@ -1910,7 +1941,7 @@ document.getElementById("btnPreviewForm").addEventListener("click", async functi
     (editingId ? ((await getPostById(editingId)) || {}).thumbnail : null) ||
     "webpictures/postplaceholder.webp";
 
-  previewModalBody.innerHTML = `
+  previewViewportInner.innerHTML = `
     <div class="preview-badge">Pratinjau — belum dipublikasikan</div>
     <h1 class="post-detail-title">${escapeHtmlAdmin(title)}</h1>
     <img class="post-detail-img" src="${resolveAdminAsset(thumbnail)}" alt="" ${adminThumbFallbackAttr()}>
@@ -1925,8 +1956,9 @@ document.getElementById("btnPreviewForm").addEventListener("click", async functi
   `;
   // Spoiler di preview sebelumnya tidak berfungsi sama sekali —
   // pasang handler toggle yang sama seperti di halaman publik.
-  initSpoilersAdmin(previewModalBody);
+  initSpoilersAdmin(previewViewportInner);
   previewModalBackdrop.classList.add("show");
+  applyPreviewDeviceMode("mobile");
 });
 
 // ---------- Simpan (draft) / Publish ----------
@@ -3327,6 +3359,12 @@ async function renderInfoDasar() {
   document.getElementById("infoReportsPending").textContent = reports.filter(
     (r) => (r.status || "belum") === "belum"
   ).length;
+  document.getElementById("infoReportsSedang").textContent = reports.filter(
+    (r) => (r.status || "belum") === "sedang"
+  ).length;
+  document.getElementById("infoReportsSelesai").textContent = reports.filter(
+    (r) => (r.status || "belum") === "selesai"
+  ).length;
   document.getElementById("infoStorageSize").textContent = formatBytes(getStorageSizeEstimate());
 }
 document.getElementById("btnOpenRepo").addEventListener("click", () => {
@@ -3400,6 +3438,39 @@ async function renderInfoPostinganHalaman() {
     extra.topPages.map((p) => ({ label: p.label, value: p.views })),
     { emptyText: "Belum ada data halaman." }
   );
+
+  // Breakdown Jenis / Platform / Status publish — dihitung langsung dari
+  // daftar postingan (tanpa endpoint tambahan).
+  const posts = await loadPosts();
+
+  const jenisCounts = {};
+  JENIS_LIST.forEach((j) => (jenisCounts[j] = 0));
+  posts.forEach((p) => {
+    if (jenisCounts[p.jenis] !== undefined) jenisCounts[p.jenis]++;
+  });
+  renderInfoBarList(
+    document.getElementById("listPostsByJenis"),
+    JENIS_LIST.map((j) => ({ label: j, value: jenisCounts[j] })),
+    { emptyText: "Belum ada postingan." }
+  );
+
+  const platformCounts = {};
+  PLATFORM_OPTIONS.forEach((opt) => (platformCounts[opt] = 0));
+  posts.forEach((p) => {
+    const opt = platformTagsToOption(p.platform);
+    if (platformCounts[opt] !== undefined) platformCounts[opt]++;
+  });
+  renderInfoBarList(
+    document.getElementById("listPostsByPlatform"),
+    PLATFORM_OPTIONS.map((opt) => ({ label: opt, value: platformCounts[opt] })),
+    { emptyText: "Belum ada postingan." }
+  );
+
+  const statusCounts = { published: 0, draft: 0, scheduled: 0 };
+  posts.forEach((p) => { statusCounts[getPostStatus(p)]++; });
+  document.getElementById("infoStatusPublished").textContent = statusCounts.published;
+  document.getElementById("infoStatusDraft").textContent = statusCounts.draft;
+  document.getElementById("infoStatusScheduled").textContent = statusCounts.scheduled;
 }
 
 /** ---------------- Performa Teknis (Kesehatan Sistem) ---------------- */
@@ -3408,6 +3479,11 @@ async function renderInfoPerforma() {
   document.getElementById("healthOtp").textContent = "Memuat…";
   document.getElementById("healthD1Size").textContent = "Memuat…";
   document.getElementById("healthD1Note").textContent = "";
+  document.getElementById("healthOtpTotal").textContent = "…";
+  document.getElementById("healthOtpUsed").textContent = "…";
+  document.getElementById("healthOtpExpired").textContent = "…";
+  document.getElementById("healthStaleDeployCount").textContent = "…";
+  document.getElementById("healthStaleDeployNote").textContent = "";
 
   let health;
   try {
@@ -3416,6 +3492,10 @@ async function renderInfoPerforma() {
     document.getElementById("healthWebhook").textContent = "Gagal memuat";
     document.getElementById("healthOtp").textContent = "Gagal memuat";
     document.getElementById("healthD1Size").textContent = "Gagal memuat";
+    document.getElementById("healthOtpTotal").textContent = "—";
+    document.getElementById("healthOtpUsed").textContent = "—";
+    document.getElementById("healthOtpExpired").textContent = "—";
+    document.getElementById("healthStaleDeployCount").textContent = "—";
     return;
   }
 
@@ -3432,6 +3512,18 @@ async function renderInfoPerforma() {
     document.getElementById("healthD1Size").textContent = "Tidak tersedia";
     document.getElementById("healthD1Note").textContent = health.d1Error || "";
   }
+
+  const otp = health.otpStats || { total: 0, used: 0, expiredUnused: 0 };
+  document.getElementById("healthOtpTotal").textContent = otp.total;
+  document.getElementById("healthOtpUsed").textContent = otp.used;
+  document.getElementById("healthOtpExpired").textContent = otp.expiredUnused;
+
+  const stale = health.staleDeploySessions || { count: 0, oldest: null };
+  document.getElementById("healthStaleDeployCount").textContent = stale.count;
+  document.getElementById("healthStaleDeployNote").textContent =
+    stale.count > 0
+      ? "Sesi tertua sejak " + formatReportDate(stale.oldest) + " — otomatis dibersihkan saat deploy berikutnya dimulai."
+      : "Tidak ada sesi deploy yang menggantung.";
 }
 
 /** ---------------- Riwayat Commit ---------------- */
@@ -3506,11 +3598,15 @@ async function renderInfoKeamanan() {
   document.getElementById("newPasswordInput").value = "";
   document.getElementById("passwordStatus").textContent = "";
   document.getElementById("passwordStatus").className = "backup-status";
+  document.getElementById("infoPasswordChangedAt").textContent = "Memuat…";
 
   const listEl = document.getElementById("listLoginFails");
   listEl.innerHTML = '<p class="backup-desc">Memuat…</p>';
   try {
     const data = await getLoginFails();
+    document.getElementById("infoPasswordChangedAt").textContent = data.passwordChangedAt
+      ? formatReportDate(data.passwordChangedAt)
+      : "Belum pernah diganti sejak awal";
     if (!data.items || data.items.length === 0) {
       listEl.innerHTML = '<p class="backup-desc">Belum ada percobaan login gagal.</p>';
     } else {
@@ -3520,6 +3616,7 @@ async function renderInfoKeamanan() {
         "</ul>";
     }
   } catch (e) {
+    document.getElementById("infoPasswordChangedAt").textContent = "Gagal memuat";
     listEl.innerHTML = '<p class="backup-desc">Gagal memuat log.</p>';
   }
 }

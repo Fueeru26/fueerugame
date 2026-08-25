@@ -312,7 +312,7 @@ async function handleCommitHistory(request, env, method) {
   }
 
   const res = await fetch(
-    `${GITHUB_API}/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${workflowId}/runs?per_page=20&page=${page}`,
+    `${GITHUB_API}/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${workflowId}/runs?per_page=10&page=${page}`,
     { headers: githubHeaders(env) }
   );
   if (!res.ok) {
@@ -337,7 +337,7 @@ async function handleCommitHistory(request, env, method) {
       htmlUrl: r.html_url
     }));
 
-  const hasMore = items.length > 0 && rawRuns.length === 20;
+  const hasMore = items.length > 0 && rawRuns.length === 10;
 
   return json({ items, page, hasMore });
 }
@@ -726,11 +726,38 @@ async function handleInfoHealth(request, env, method) {
     d1Error = "Belum dikonfigurasi (perlu secret CF_API_TOKEN, CF_ACCOUNT_ID, D1_DATABASE_ID)";
   }
 
+  const now = new Date();
+  const otpSince = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const otpRow = await env.DB.prepare(
+    `SELECT COUNT(*) as total,
+            SUM(CASE WHEN used = 1 THEN 1 ELSE 0 END) as usedCount,
+            SUM(CASE WHEN used = 0 AND expiresAt < ? THEN 1 ELSE 0 END) as expiredUnused
+     FROM otp_codes WHERE createdAt >= ?`
+  )
+    .bind(now.toISOString(), otpSince)
+    .first();
+
+  const deploySessionCutoff = new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString();
+  const staleDeployRow = await env.DB.prepare(
+    "SELECT COUNT(*) as c, MIN(createdAt) as oldest FROM deploy_sessions WHERE createdAt < ?"
+  )
+    .bind(deploySessionCutoff)
+    .first();
+
   return json({
     lastWebhookAt: await getSetting("last_deploy_at"),
     lastOtpSentAt: await getSetting("last_otp_sent_at"),
     d1SizeBytes: d1Size,
-    d1Error
+    d1Error,
+    otpStats: {
+      total: (otpRow && otpRow.total) || 0,
+      used: (otpRow && otpRow.usedCount) || 0,
+      expiredUnused: (otpRow && otpRow.expiredUnused) || 0
+    },
+    staleDeploySessions: {
+      count: (staleDeployRow && staleDeployRow.c) || 0,
+      oldest: (staleDeployRow && staleDeployRow.oldest) || null
+    }
   });
 }
 
@@ -997,6 +1024,11 @@ async function handleAuth(request, env, method) {
     )
       .bind(body.newPassword)
       .run();
+    await env.DB.prepare(
+      "INSERT INTO settings (key, value) VALUES ('password_changed_at', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+    )
+      .bind(new Date().toISOString())
+      .run();
     return json({ ok: true });
   }
   if (method === "PATCH") {
@@ -1007,6 +1039,11 @@ async function handleAuth(request, env, method) {
       "INSERT INTO settings (key, value) VALUES ('admin_password', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
     )
       .bind(body.newPassword)
+      .run();
+    await env.DB.prepare(
+      "INSERT INTO settings (key, value) VALUES ('password_changed_at', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+    )
+      .bind(new Date().toISOString())
       .run();
     return json({ ok: true });
   }
@@ -1031,7 +1068,9 @@ async function handleLoginFails(request, env, method) {
      )`
   ).run();
 
-  return json({ items: results.map((r) => r.date) });
+  const pwRow = await env.DB.prepare("SELECT value FROM settings WHERE key = 'password_changed_at'").first();
+
+  return json({ items: results.map((r) => r.date), passwordChangedAt: pwRow ? pwRow.value : null });
 }
 
 async function sendOtpEmail(env, toEmail, code) {
@@ -1122,6 +1161,11 @@ async function handleOtpVerify(request, env, method) {
     "INSERT INTO settings (key, value) VALUES ('admin_password', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
   )
     .bind(body.newPassword)
+    .run();
+  await env.DB.prepare(
+    "INSERT INTO settings (key, value) VALUES ('password_changed_at', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+  )
+    .bind(new Date().toISOString())
     .run();
 
   return json({ ok: true });
