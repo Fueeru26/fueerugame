@@ -10,7 +10,7 @@
    belakang layar.
    ========================================================= */
 
-const CACHE_NAME = "fueeru-game-cache-v4";
+const CACHE_NAME = "fueeru-game-cache-v5";
 
 const PRECACHE_URLS = [
   "./",
@@ -87,6 +87,13 @@ self.addEventListener("fetch", (event) => {
   // Cakup semua aset Admin Panel (admin.html, js/admin.js, css/admin.css,
   // admin-manifest.json, ikon admin), bukan cuma admin.html saja.
   if (req.url.indexOf("admin") !== -1) return;
+  // Jangan cache endpoint API (/api/...) — datanya dinamis (postingan,
+  // link redirect, laporan, dll) dan harus selalu diambil langsung dari
+  // server, bukan versi lama dari cache. Tanpa ini, aksi di Admin Panel
+  // (publish/hapus/edit) tidak langsung terlihat sampai halaman dibuka
+  // ulang, karena stale-while-revalidate di bawah akan membalas cache
+  // lama duluan sebelum sempat memperbarui dirinya sendiri.
+  if (new URL(req.url).pathname.startsWith("/api/")) return;
 
   event.respondWith(
     caches.match(req).then((cached) => {
