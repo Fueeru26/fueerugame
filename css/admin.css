@@ -698,10 +698,8 @@ body.admin-body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 14px;
   min-height: 168px;
-  padding: 22px 14px;
+  padding: 26px 14px 20px;
   border-radius: var(--radius-md);
   background: linear-gradient(135deg, var(--sky-400), var(--navy-700));
   color: #fff;
@@ -718,6 +716,9 @@ body.admin-body {
 .gradient-menu-card:nth-child(5) { background: linear-gradient(135deg, #8f9bd6, var(--navy-700)); }
 .gradient-menu-card:nth-child(6) { background: linear-gradient(135deg, #b79cf0, var(--navy-700)); }
 .gradient-menu-card:nth-child(7) { background: linear-gradient(135deg, #4fb8a8, var(--navy-700)); }
+/* Ikon punya posisi TETAP (margin-bottom fixed), tidak ikut center bareng
+   judul — supaya posisi ikon selalu sama persis di semua kartu, baik
+   judulnya 1 baris maupun 2 baris. */
 .gradient-menu-card .gmc-icon {
   width: 60px;
   height: 60px;
@@ -727,9 +728,18 @@ body.admin-body {
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
+  margin-bottom: 14px;
 }
 .gradient-menu-card .gmc-icon svg { width: 28px; height: 28px; }
+/* Area judul mengisi sisa ruang di bawah ikon, dan teksnya di-center
+   vertikal DI DALAM area itu — jadi judul 1 baris maupun 2 baris sama-sama
+   simetris di ruang sisanya, tanpa menggeser posisi ikon di atasnya. */
 .gradient-menu-card .gmc-title {
+  flex: 1 1 auto;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: 'Poppins', sans-serif;
   font-weight: 800;
   font-size: 1.05rem;
