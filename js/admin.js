@@ -289,10 +289,10 @@ document.getElementById("btnBackFromPageEdit").addEventListener("click", () => {
 let currentEditingPageId = null;
 const editorContentPageEl = document.getElementById("editorContentPage");
 
-document.querySelectorAll(".page-picker-btn").forEach((btn) => {
+document.querySelectorAll("#viewPages .gradient-menu-card").forEach((btn) => {
   btn.addEventListener("click", async () => {
     const pageId = btn.getAttribute("data-page-id");
-    const pageLabel = btn.querySelector("span").textContent;
+    const pageLabel = btn.querySelector(".gmc-title").textContent;
     currentEditingPageId = pageId;
     document.getElementById("pageEditHeading").textContent = pageLabel;
     const pc = await getPageContent(pageId);
