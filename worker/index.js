@@ -1448,8 +1448,14 @@ export default {
       // kode di path dibaca sendiri oleh js/redirect.js di sisi klien.
       m = path.match(/^\/redirect([A-Za-z0-9]+)$/);
       if (m) {
+        // PENTING: minta "/redirect" (tanpa .html). Cloudflare Static Assets
+        // default-nya (html_handling="auto-trailing-slash") akan membalas
+        // 307 redirect kalau kita minta "/redirect.html" secara langsung —
+        // itu akan membuang kode di path saat diteruskan ke browser.
+        // Minta path kanonik tanpa ekstensi supaya langsung 200 + isi file,
+        // tanpa redirect apapun.
         const assetUrl = new URL(request.url);
-        assetUrl.pathname = "/redirect.html";
+        assetUrl.pathname = "/redirect";
         return env.ASSETS.fetch(new Request(assetUrl.toString(), request));
       }
 
