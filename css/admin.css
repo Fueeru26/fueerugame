@@ -746,6 +746,52 @@ body.admin-body {
   line-height: 1.3;
 }
 
+/* ---------------- Mode gelap: Menu Utama & submenu kolom ----------------
+   Struktur kartu tetap identik dengan mode terang — yang berubah cuma
+   warnanya: kartu jadi datar (bukan gradien) memakai warna permukaan
+   gelap situs, judul & deskripsi memakai warna teks mode gelap, dan
+   ikon tetap berwarna mengikuti warna utama gradien masing-masing di
+   mode terang (supaya identitas warna tiap entry tetap kebaca). */
+:root.dark .admin-menu-card,
+:root.dark .gradient-menu-card {
+  background: var(--surface-alt);
+  border: 1.5px solid var(--card-border-color);
+  box-shadow: var(--shadow-card);
+}
+:root.dark .admin-menu-card:hover,
+:root.dark .gradient-menu-card:hover {
+  box-shadow: var(--shadow-soft);
+}
+:root.dark .admin-menu-card .amc-icon,
+:root.dark .gradient-menu-card .gmc-icon {
+  background: var(--sky-100);
+}
+:root.dark .admin-menu-card .amc-title,
+:root.dark .gradient-menu-card .gmc-title {
+  color: var(--sky-700);
+  text-shadow: none;
+}
+:root.dark .admin-menu-card .amc-sub {
+  color: var(--ink-soft);
+  opacity: 1;
+}
+/* Warna ikon per kartu — mengikuti warna utama gradien di mode terang
+   (kartu ke-1/default = biru, lalu berputar sama seperti urutan gradien). */
+:root.dark .admin-menu-card .amc-icon svg,
+:root.dark .gradient-menu-card .gmc-icon svg { color: #4fa3f0; }
+:root.dark .admin-menu-card:nth-child(2) .amc-icon svg,
+:root.dark .gradient-menu-card:nth-child(2) .gmc-icon svg { color: #2ee6a8; }
+:root.dark .admin-menu-card:nth-child(3) .amc-icon svg,
+:root.dark .gradient-menu-card:nth-child(3) .gmc-icon svg { color: #ff5f96; }
+:root.dark .admin-menu-card:nth-child(4) .amc-icon svg,
+:root.dark .gradient-menu-card:nth-child(4) .gmc-icon svg { color: #ffb66b; }
+:root.dark .admin-menu-card:nth-child(5) .amc-icon svg,
+:root.dark .gradient-menu-card:nth-child(5) .gmc-icon svg { color: #9aa6f5; }
+:root.dark .admin-menu-card:nth-child(6) .amc-icon svg,
+:root.dark .gradient-menu-card:nth-child(6) .gmc-icon svg { color: #c39af7; }
+:root.dark .admin-menu-card:nth-child(7) .amc-icon svg,
+:root.dark .gradient-menu-card:nth-child(7) .gmc-icon svg { color: #3ddbc4; }
+
 .admin-subheader {
   display: flex;
   align-items: center;
