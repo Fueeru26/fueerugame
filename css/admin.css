@@ -1985,6 +1985,22 @@ body.admin-body {
   word-break: break-word;
 }
 .vrb-value.empty { color: var(--ink-soft); font-style: italic; }
+.vrb-value-copy-row { display: flex; align-items: flex-start; gap: 8px; }
+.vrb-value-copy-row .vrb-value { flex: 1; margin-bottom: 0; }
+.vrb-copy-btn {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: none;
+  background: var(--sky-100);
+  color: var(--sky-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.vrb-copy-btn:hover { background: var(--sky-200); }
+.vrb-copy-btn svg { width: 14px; height: 14px; }
 
 /* ---------------- Recycle Bin ---------------- */
 .btn-danger-solid { background: #e0453a; }
@@ -2207,3 +2223,189 @@ body.admin-body {
   border-radius: 999px;
   transition: width .3s ease;
 }
+
+/* ================= Redirect Page (Admin) ================= */
+.redirect-explainer {
+  margin-top: 20px;
+  font-size: .88rem;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+.redirect-explainer strong { color: var(--sky-700); }
+
+.modal-box textarea {
+  width: 100%;
+  padding: 11px 13px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--sky-200);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: .86rem;
+  font-family: 'Courier New', monospace;
+  line-height: 1.5;
+  outline: none;
+  resize: vertical;
+  min-height: 160px;
+}
+.modal-box textarea:focus { border-color: var(--sky-500); }
+
+/* Toggle Tipe Link (Android/PC) — bahasa visual sama seperti toggle Mobile/Desktop di Preview */
+.link-type-toggle {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.link-type-btn {
+  flex: 1;
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--sky-300);
+  background: var(--surface);
+  color: var(--sky-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.link-type-btn svg { width: 24px; height: 24px; }
+.link-type-btn.active {
+  background: var(--sky-500);
+  border-color: var(--sky-500);
+  color: #fff;
+}
+.link-type-btn:disabled, .modal-box input:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+/* Kolom Link Redirect dengan tombol salin di kanan */
+.copy-field { position: relative; display: flex; align-items: center; }
+.copy-field input {
+  width: 100%;
+  padding: 11px 44px 11px 13px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--sky-200);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: .84rem;
+  font-family: inherit;
+  outline: none;
+}
+.copy-field input:focus { border-color: var(--sky-500); }
+.copy-field-btn {
+  position: absolute;
+  right: 6px;
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  border: none;
+  background: var(--sky-100);
+  color: var(--sky-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.copy-field-btn:hover { background: var(--sky-200); }
+.copy-field-btn svg { width: 16px; height: 16px; }
+
+.link-success-msg {
+  color: #1b8f5c;
+  font-size: .82rem;
+  font-weight: 700;
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* ---------- Tampilan Redirect: daftar bagian ---------- */
+.redirect-section-row {
+  position: relative;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--sky-150);
+  background: var(--surface-alt);
+  margin-bottom: 10px;
+  transition: border-color .15s ease, opacity .15s ease;
+}
+.redirect-section-row.locked { background: var(--sky-50); }
+.redirect-section-row.reorder-mode {
+  border-left: 4px solid var(--sky-500);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.redirect-section-row.dragging { opacity: .45; }
+.redirect-section-row.drag-over { border-color: var(--sky-500); }
+.rs-row-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.rs-row-name { font-size: .96rem; font-weight: 800; color: var(--ink); }
+.rs-row-desc { font-size: .8rem; color: var(--ink-soft); margin-top: 3px; }
+.rs-row-locked-note { font-size: .8rem; color: var(--ink-soft); font-style: italic; margin-top: 3px; }
+.rs-row-actions { display: flex; gap: 8px; flex: 0 0 auto; }
+.rs-action-btn { padding: 6px 14px; border-radius: 999px; border: none; font-size: .78rem; font-weight: 700; }
+.rs-action-edit { background: var(--sky-100); color: var(--sky-700); }
+.rs-action-edit:hover { background: var(--sky-150); }
+.rs-action-delete { background: #ffe3df; color: #c8402a; }
+.rs-action-delete:hover { background: #ffd2cb; }
+.rs-drag-handle {
+  flex: 0 0 auto;
+  color: var(--sky-400);
+  display: flex;
+  align-items: center;
+  padding: 2px 4px;
+}
+.rs-drag-handle svg { width: 18px; height: 18px; }
+
+/* ---------- Daftar Link: baris link ---------- */
+.redirect-link-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 12px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--sky-150);
+  background: var(--surface-alt);
+  margin-bottom: 10px;
+}
+.redirect-link-row .rl-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--sky-100);
+  color: var(--sky-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.redirect-link-row .rl-icon svg { width: 19px; height: 19px; }
+.redirect-link-row .rl-info { flex: 1; min-width: 0; }
+.redirect-link-row .rl-name {
+  font-size: .9rem;
+  font-weight: 700;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.redirect-link-row .rl-cloud { font-size: .78rem; color: var(--ink-soft); margin-top: 1px; }
+.redirect-link-row .rl-menu-btn {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.redirect-link-row .rl-menu-btn:hover { background: var(--sky-100); color: var(--sky-700); }

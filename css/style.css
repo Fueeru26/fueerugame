@@ -1380,3 +1380,55 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 .age-gate-remember input { accent-color: var(--sky-500); width: 16px; height: 16px; }
 
+/* ================= Redirect Page ================= */
+.redirect-page-wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 20px 18px 40px;
+}
+.redirect-bagian-box {
+  border: 1.5px dashed var(--sky-300);
+  border-radius: var(--radius-md);
+  background: var(--sky-50);
+  padding: 20px;
+  margin-bottom: 18px;
+  min-height: 60px;
+}
+.redirect-countdown-box {
+  text-align: center;
+  border-style: solid;
+  padding: 26px 20px;
+}
+.redirect-countdown-hint {
+  font-size: .88rem;
+  color: var(--ink-soft);
+  margin-bottom: 18px;
+}
+.redirect-countdown-circle {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  border: 3px solid var(--sky-400);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  background: var(--surface);
+}
+.rcc-number { font-size: 2.4rem; font-weight: 800; color: var(--sky-600); line-height: 1; }
+.rcc-label { font-size: .8rem; color: var(--ink-soft); margin-top: 4px; }
+.redirect-continue-btn.btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  max-width: 280px;
+  margin: 0 auto;
+}
+.redirect-continue-btn svg { width: 18px; height: 18px; flex: 0 0 auto; }
+.redirect-not-found {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--ink-soft);
+}

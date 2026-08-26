@@ -254,6 +254,9 @@ const SUB_VIEWS = [
   "viewInfoPerforma",
   "viewInfoRiwayatCommit",
   "viewInfoKeamanan",
+  "viewRedirect",
+  "viewRedirectTampilan",
+  "viewRedirectDaftarLink",
   "viewRecycleBin",
   "viewRecycleBinList"
 ];
@@ -359,6 +362,25 @@ document.getElementById("menuInformasiWeb").addEventListener("click", () => {
   showSub("viewInfo");
 });
 document.getElementById("btnBackFromInfo").addEventListener("click", () => showSub("viewMenu"));
+
+document.getElementById("menuRedirect").addEventListener("click", () => {
+  showSub("viewRedirect");
+});
+document.getElementById("btnBackFromRedirect").addEventListener("click", () => showSub("viewMenu"));
+
+document.getElementById("menuRedirectTampilan").addEventListener("click", () => {
+  showSub("viewRedirectTampilan");
+  renderRedirectSections();
+});
+document.getElementById("btnBackFromRedirectTampilan").addEventListener("click", () => showSub("viewRedirect"));
+
+document.getElementById("menuRedirectDaftarLink").addEventListener("click", () => {
+  redirectLinkSearchQuery = "";
+  document.getElementById("redirectLinkSearchInput").value = "";
+  showSub("viewRedirectDaftarLink");
+  renderRedirectLinksList();
+});
+document.getElementById("btnBackFromRedirectDaftarLink").addEventListener("click", () => showSub("viewRedirect"));
 
 document.getElementById("menuInfoDasar").addEventListener("click", async () => {
   showSub("viewInfoDasar");
@@ -615,6 +637,12 @@ window.addEventListener("popstate", function () {
     current === "viewInfoKeamanan"
   ) {
     showSub("viewInfo");
+    pushBackTrap();
+    return;
+  }
+
+  if (current === "viewRedirectTampilan" || current === "viewRedirectDaftarLink") {
+    showSub("viewRedirect");
     pushBackTrap();
     return;
   }
@@ -4171,6 +4199,561 @@ function initAdminThemeToggle() {
   });
   applyTheme(getCurrentTheme());
 }
+
+// =========================================================
+// Redirect Page — Tampilan Redirect (bagian + reorder) & Daftar Link
+// =========================================================
+let redirectSections = [];
+let reorderMode = false;
+let editingSectionId = null; // null = mode tambah bagian
+
+let redirectLinks = [];
+let redirectLinkSearchQuery = "";
+let addLinkType = "android";
+let editLinkType = "android";
+let editingLinkId = null;
+let contextMenuLinkId = null;
+
+/* ---------- Tampilan Redirect: render daftar bagian ---------- */
+async function renderRedirectSections() {
+  const listEl = document.getElementById("redirectSectionsList");
+  listEl.innerHTML = '<p class="backup-desc">Memuat…</p>';
+  reorderMode = false;
+  document.getElementById("btnToggleReorderSections").textContent = "Atur Posisi Bagian";
+  try {
+    redirectSections = await getRedirectSections();
+  } catch (e) {
+    listEl.innerHTML = '<p class="backup-desc">Gagal memuat data.</p>';
+    return;
+  }
+  renderRedirectSectionsList();
+}
+
+function dragHandleSvg() {
+  return '<span class="rs-drag-handle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="16" x2="20" y2="16"/></svg></span>';
+}
+
+function renderRedirectSectionsList() {
+  const listEl = document.getElementById("redirectSectionsList");
+  if (redirectSections.length === 0) {
+    listEl.innerHTML = '<p class="backup-desc">Belum ada bagian.</p>';
+    return;
+  }
+  listEl.innerHTML = redirectSections
+    .map((s) => {
+      const rowClass = "redirect-section-row" + (s.locked ? " locked" : "") + (reorderMode ? " reorder-mode" : "");
+      if (s.locked) {
+        return `
+          <div class="${rowClass}" data-id="${escapeHtmlAdmin(s.id)}">
+            <div class="rs-row-top">
+              <div>
+                <div class="rs-row-name">${escapeHtmlAdmin(s.name)}</div>
+                <div class="rs-row-locked-note">${escapeHtmlAdmin(s.description || "Bagian ini tidak dapat diedit dan dihapus")}</div>
+              </div>
+              ${reorderMode ? dragHandleSvg() : ""}
+            </div>
+          </div>`;
+      }
+      return `
+        <div class="${rowClass}" data-id="${escapeHtmlAdmin(s.id)}">
+          <div class="rs-row-top">
+            <div>
+              <div class="rs-row-name">${escapeHtmlAdmin(s.name)}</div>
+              ${s.description ? `<div class="rs-row-desc">${escapeHtmlAdmin(s.description)}</div>` : ""}
+            </div>
+            ${
+              reorderMode
+                ? dragHandleSvg()
+                : `<div class="rs-row-actions">
+                    <button type="button" class="rs-action-btn rs-action-edit" data-action="edit-section" data-id="${escapeHtmlAdmin(s.id)}">Edit</button>
+                    <button type="button" class="rs-action-btn rs-action-delete" data-action="delete-section" data-id="${escapeHtmlAdmin(s.id)}">Hapus</button>
+                  </div>`
+            }
+          </div>
+        </div>`;
+    })
+    .join("");
+
+  if (reorderMode) attachSectionDragHandlers();
+  else attachSectionActionHandlers();
+}
+
+function attachSectionActionHandlers() {
+  document.querySelectorAll('#redirectSectionsList [data-action="edit-section"]').forEach((btn) => {
+    btn.addEventListener("click", () => openSectionModal(btn.getAttribute("data-id")));
+  });
+  document.querySelectorAll('#redirectSectionsList [data-action="delete-section"]').forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-id");
+      openConfirmModal("Yakin ingin menghapus bagian ini?", async function () {
+        try {
+          await deleteRedirectSection(id);
+          showToast("Bagian dihapus");
+          renderRedirectSections();
+        } catch (e) {
+          showToast(e.message || "Gagal menghapus bagian");
+        }
+      });
+    });
+  });
+}
+
+/* ---------- Drag reorder (Pointer Events — jalan di HP & desktop) ---------- */
+let sectionDragState = null;
+
+function attachSectionDragHandlers() {
+  document.querySelectorAll("#redirectSectionsList .redirect-section-row").forEach((row) => {
+    row.addEventListener("pointerdown", onSectionDragStart);
+  });
+}
+
+function onSectionDragStart(e) {
+  const listEl = document.getElementById("redirectSectionsList");
+  const row = e.currentTarget;
+  try {
+    row.setPointerCapture(e.pointerId);
+  } catch (err) {}
+  sectionDragState = { pointerId: e.pointerId, row };
+  row.classList.add("dragging");
+  document.addEventListener("pointermove", onSectionDragMove);
+  document.addEventListener("pointerup", onSectionDragEnd);
+
+  function onSectionDragMove(ev) {
+    if (!sectionDragState || ev.pointerId !== sectionDragState.pointerId) return;
+    const y = ev.clientY;
+    const currentRows = Array.from(listEl.querySelectorAll(".redirect-section-row"));
+    for (const other of currentRows) {
+      if (other === sectionDragState.row) continue;
+      const rect = other.getBoundingClientRect();
+      const mid = rect.top + rect.height / 2;
+      if (y < mid && other.previousElementSibling !== sectionDragState.row) {
+        listEl.insertBefore(sectionDragState.row, other);
+        break;
+      } else if (y >= mid && other.nextElementSibling !== sectionDragState.row) {
+        listEl.insertBefore(sectionDragState.row, other.nextElementSibling);
+        break;
+      }
+    }
+  }
+  function onSectionDragEnd(ev) {
+    if (!sectionDragState || ev.pointerId !== sectionDragState.pointerId) return;
+    sectionDragState.row.classList.remove("dragging");
+    try {
+      sectionDragState.row.releasePointerCapture(ev.pointerId);
+    } catch (err) {}
+    document.removeEventListener("pointermove", onSectionDragMove);
+    document.removeEventListener("pointerup", onSectionDragEnd);
+    sectionDragState = null;
+  }
+}
+
+document.getElementById("btnToggleReorderSections").addEventListener("click", async function () {
+  const btn = this;
+  if (!reorderMode) {
+    reorderMode = true;
+    btn.textContent = "Simpan Posisi Bagian";
+    renderRedirectSectionsList();
+    return;
+  }
+  const newOrder = Array.from(document.querySelectorAll("#redirectSectionsList .redirect-section-row")).map((row) =>
+    row.getAttribute("data-id")
+  );
+  try {
+    await reorderRedirectSections(newOrder);
+    showToast("Posisi bagian disimpan");
+  } catch (e) {
+    showToast(e.message || "Gagal menyimpan posisi");
+  }
+  reorderMode = false;
+  btn.textContent = "Atur Posisi Bagian";
+  renderRedirectSections();
+});
+
+/* ---------- Modal Tambahkan/Edit Bagian ---------- */
+const sectionModalBackdrop = document.getElementById("sectionModalBackdrop");
+const sectionModalTitle = document.getElementById("sectionModalTitle");
+const sectionNameInput = document.getElementById("sectionNameInput");
+const sectionDescInput = document.getElementById("sectionDescInput");
+const sectionContentInput = document.getElementById("sectionContentInput");
+const sectionModalError = document.getElementById("sectionModalError");
+
+function hideSectionModalError() {
+  sectionModalError.classList.add("hidden");
+  sectionModalError.textContent = "";
+}
+
+function openSectionModal(id) {
+  editingSectionId = id || null;
+  hideSectionModalError();
+  if (id) {
+    const s = redirectSections.find((x) => x.id === id);
+    if (!s) return;
+    sectionModalTitle.textContent = "Edit Bagian";
+    sectionNameInput.value = s.name;
+    sectionDescInput.value = s.description || "";
+    sectionContentInput.value = s.content || "";
+  } else {
+    sectionModalTitle.textContent = "Tambahkan Bagian";
+    sectionNameInput.value = "";
+    sectionDescInput.value = "";
+    sectionContentInput.value = "";
+  }
+  sectionModalBackdrop.classList.add("show");
+}
+document.getElementById("btnAddRedirectSection").addEventListener("click", () => openSectionModal(null));
+document.getElementById("btnCancelSection").addEventListener("click", () => sectionModalBackdrop.classList.remove("show"));
+sectionModalBackdrop.addEventListener("click", (e) => {
+  if (e.target === sectionModalBackdrop) sectionModalBackdrop.classList.remove("show");
+});
+
+document.getElementById("btnSaveSection").addEventListener("click", async function () {
+  const name = sectionNameInput.value.trim();
+  const description = sectionDescInput.value.trim();
+  const content = sectionContentInput.value.trim();
+  if (!name || !content) {
+    sectionModalError.textContent = "Nama Bagian dan Isi Bagian tidak boleh kosong";
+    sectionModalError.classList.remove("hidden");
+    return;
+  }
+  try {
+    if (editingSectionId) {
+      await updateRedirectSection(editingSectionId, { name, description, content });
+      showToast("Bagian diperbarui");
+    } else {
+      await createRedirectSection({ name, description, content });
+      showToast("Bagian ditambahkan");
+    }
+    sectionModalBackdrop.classList.remove("show");
+    renderRedirectSections();
+  } catch (e) {
+    sectionModalError.textContent = e.message || "Gagal menyimpan bagian";
+    sectionModalError.classList.remove("hidden");
+  }
+});
+
+/* ---------- Preview Halaman Redirect (pakai modal Preview yang sudah ada) ---------- */
+document.getElementById("btnPreviewRedirectPage").addEventListener("click", function () {
+  previewViewportInner.innerHTML = buildRedirectSectionsHtml(redirectSections);
+  reviveRedirectScripts(previewViewportInner);
+  initRedirectCountdownWidget(previewViewportInner, function () {
+    showToast("ini hanya preview — tidak benar-benar menuju link");
+  });
+  previewModalBackdrop.classList.add("show");
+  applyPreviewDeviceMode("mobile");
+});
+
+/* ---------- Daftar Link: render daftar ---------- */
+async function renderRedirectLinksList() {
+  const listEl = document.getElementById("redirectLinksList");
+  listEl.innerHTML = '<p class="backup-desc">Memuat…</p>';
+  try {
+    redirectLinks = await getRedirectLinks();
+  } catch (e) {
+    listEl.innerHTML = '<p class="backup-desc">Gagal memuat data.</p>';
+    return;
+  }
+  drawRedirectLinksList();
+}
+
+function linkTypeIconSvg(type) {
+  if (type === "pc") {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>';
+  }
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16V11a7 7 0 0114 0v5"/><path d="M4 12v5a1 1 0 001 1h14a1 1 0 001-1v-5"/><line x1="8.5" y1="3.5" x2="7.5" y2="5.5"/><line x1="15.5" y1="3.5" x2="16.5" y2="5.5"/><line x1="9" y1="10" x2="9" y2="11"/><line x1="15" y1="10" x2="15" y2="11"/></svg>';
+}
+
+function drawRedirectLinksList() {
+  const listEl = document.getElementById("redirectLinksList");
+  const q = redirectLinkSearchQuery.toLowerCase();
+  const filtered = q ? redirectLinks.filter((l) => l.name.toLowerCase().includes(q)) : redirectLinks;
+
+  if (filtered.length === 0) {
+    listEl.innerHTML = `<p class="backup-desc">${redirectLinks.length === 0 ? "Belum ada link." : "Tidak ada link yang cocok."}</p>`;
+    return;
+  }
+  listEl.innerHTML = filtered
+    .map(
+      (l) => `
+      <div class="redirect-link-row" data-id="${escapeHtmlAdmin(l.id)}">
+        <span class="rl-icon">${linkTypeIconSvg(l.type)}</span>
+        <div class="rl-info">
+          <div class="rl-name">${escapeHtmlAdmin(l.name)}</div>
+          <div class="rl-cloud">${escapeHtmlAdmin(l.cloudName)}</div>
+        </div>
+        <button type="button" class="rl-menu-btn" data-menu-link="${escapeHtmlAdmin(l.id)}" aria-label="Menu ${escapeHtmlAdmin(l.name)}">⋮</button>
+      </div>`
+    )
+    .join("");
+
+  document.querySelectorAll("#redirectLinksList .rl-menu-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openRedirectLinkContextMenu(btn.getAttribute("data-menu-link"), btn);
+    });
+  });
+}
+
+document.getElementById("redirectLinkSearchInput").addEventListener("input", function () {
+  redirectLinkSearchQuery = this.value.trim();
+  drawRedirectLinksList();
+});
+
+function fullRedirectUrl(code) {
+  return window.location.origin + "/redirect" + code;
+}
+
+/* ---------- Menu titik-tiga: Detail / Edit / Hapus ---------- */
+const redirectLinkContextMenu = document.getElementById("redirectLinkContextMenu");
+
+function openRedirectLinkContextMenu(id, triggerBtn) {
+  contextMenuLinkId = id;
+  const rect = triggerBtn.getBoundingClientRect();
+  const menuWidth = 170;
+  let left = rect.right - menuWidth;
+  if (left < 8) left = 8;
+  if (left + menuWidth > window.innerWidth - 8) left = window.innerWidth - menuWidth - 8;
+  redirectLinkContextMenu.style.left = left + "px";
+  redirectLinkContextMenu.style.top = rect.bottom + 6 + "px";
+  redirectLinkContextMenu.classList.add("show");
+  requestAnimationFrame(() => {
+    const menuRect = redirectLinkContextMenu.getBoundingClientRect();
+    if (menuRect.bottom > window.innerHeight - 8) {
+      redirectLinkContextMenu.style.top = rect.top - menuRect.height - 6 + "px";
+    }
+  });
+}
+function closeRedirectLinkContextMenu() {
+  redirectLinkContextMenu.classList.remove("show");
+  contextMenuLinkId = null;
+}
+document.addEventListener("click", function (e) {
+  if (!redirectLinkContextMenu.contains(e.target)) closeRedirectLinkContextMenu();
+});
+document.addEventListener("scroll", closeRedirectLinkContextMenu, true);
+
+redirectLinkContextMenu.addEventListener("click", function (e) {
+  const btn = e.target.closest("button[data-action]");
+  if (!btn || !contextMenuLinkId) return;
+  const id = contextMenuLinkId;
+  const action = btn.getAttribute("data-action");
+  closeRedirectLinkContextMenu();
+
+  if (action === "detail") openLinkDetailModal(id);
+  else if (action === "edit") openEditLinkModal(id);
+  else if (action === "delete") {
+    openConfirmModal("Yakin ingin menghapus link ini? Link redirect-nya tidak akan bisa dipakai lagi.", async function () {
+      try {
+        await deleteRedirectLink(id);
+        showToast("Link dihapus");
+        renderRedirectLinksList();
+      } catch (e2) {
+        showToast(e2.message || "Gagal menghapus link");
+      }
+    });
+  }
+});
+
+/* ---------- Modal Detail Link ---------- */
+const linkDetailModalBackdrop = document.getElementById("linkDetailModalBackdrop");
+function detailRowCopyable(label, value) {
+  return `
+    <div class="vrb-row">
+      <div class="vrb-label">${escapeHtmlAdmin(label)}</div>
+      <div class="vrb-value-copy-row">
+        <div class="vrb-value">${escapeHtmlAdmin(value)}</div>
+        <button type="button" class="vrb-copy-btn" data-copy-value="${escapeHtmlAdmin(value)}" aria-label="Salin link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        </button>
+      </div>
+    </div>`;
+}
+function openLinkDetailModal(id) {
+  const l = redirectLinks.find((x) => x.id === id);
+  if (!l) return;
+  document.getElementById("linkDetailBody").innerHTML =
+    detailRow("Nama Link", l.name) +
+    detailRow("Tipe Link", l.type === "pc" ? "PC" : "Android") +
+    detailRow("Nama Cloud", l.cloudName) +
+    detailRow("Link Cloud", l.cloudLink) +
+    detailRowCopyable("Link Redirect", fullRedirectUrl(l.redirectCode)) +
+    detailRow("Tanggal Dibuat", formatReportDate(l.createdAt));
+  linkDetailModalBackdrop.classList.add("show");
+}
+document.getElementById("linkDetailBody").addEventListener("click", async function (e) {
+  const btn = e.target.closest("[data-copy-value]");
+  if (!btn) return;
+  const ok = await copyTextToClipboard(btn.getAttribute("data-copy-value"));
+  showToast(ok ? "Link disalin" : "Gagal menyalin link");
+});
+document.getElementById("btnCloseLinkDetail").addEventListener("click", () => linkDetailModalBackdrop.classList.remove("show"));
+linkDetailModalBackdrop.addEventListener("click", (e) => {
+  if (e.target === linkDetailModalBackdrop) linkDetailModalBackdrop.classList.remove("show");
+});
+
+/* ---------- Salin ke clipboard (dipakai modal Tambahkan & Edit Link) ---------- */
+async function copyTextToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (e) {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+}
+
+/* ---------- Modal Tambahkan Link ---------- */
+const addLinkModalBackdrop = document.getElementById("addLinkModalBackdrop");
+const linkNameInput = document.getElementById("linkNameInput");
+const linkCloudNameInput = document.getElementById("linkCloudNameInput");
+const linkCloudLinkInput = document.getElementById("linkCloudLinkInput");
+const linkRedirectResultInput = document.getElementById("linkRedirectResultInput");
+const addLinkModalError = document.getElementById("addLinkModalError");
+const linkSuccessMsg = document.getElementById("linkSuccessMsg");
+const btnGenerateLink = document.getElementById("btnGenerateLink");
+
+function setLinkTypeToggle(groupSelector, type) {
+  document.querySelectorAll(groupSelector + " .link-type-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.getAttribute("data-type") === type);
+  });
+}
+
+document.querySelectorAll("#addLinkModalBackdrop .link-type-btn").forEach((btn) => {
+  btn.addEventListener("click", function () {
+    addLinkType = this.getAttribute("data-type");
+    setLinkTypeToggle("#addLinkModalBackdrop", addLinkType);
+  });
+});
+document.querySelectorAll("#editLinkModalBackdrop .link-type-btn").forEach((btn) => {
+  btn.addEventListener("click", function () {
+    editLinkType = this.getAttribute("data-type");
+    setLinkTypeToggle("#editLinkModalBackdrop", editLinkType);
+  });
+});
+
+function resetAddLinkModal() {
+  linkNameInput.value = "";
+  linkCloudNameInput.value = "";
+  linkCloudLinkInput.value = "";
+  linkRedirectResultInput.value = "";
+  addLinkType = "android";
+  setLinkTypeToggle("#addLinkModalBackdrop", "android");
+  addLinkModalError.classList.add("hidden");
+  addLinkModalError.textContent = "";
+  linkSuccessMsg.classList.add("hidden");
+  btnGenerateLink.disabled = false;
+  btnGenerateLink.textContent = "Buat Link";
+  [linkNameInput, linkCloudNameInput, linkCloudLinkInput].forEach((el) => (el.disabled = false));
+  document.querySelectorAll("#addLinkModalBackdrop .link-type-btn").forEach((btn) => (btn.disabled = false));
+}
+
+document.getElementById("btnAddRedirectLink").addEventListener("click", function () {
+  resetAddLinkModal();
+  addLinkModalBackdrop.classList.add("show");
+});
+
+document.getElementById("btnGenerateLink").addEventListener("click", async function () {
+  const name = linkNameInput.value.trim();
+  const cloudName = linkCloudNameInput.value.trim();
+  const cloudLink = linkCloudLinkInput.value.trim();
+  if (!name || !cloudName || !cloudLink) {
+    addLinkModalError.textContent = "Semua kolom harus diisi";
+    addLinkModalError.classList.remove("hidden");
+    return;
+  }
+  addLinkModalError.classList.add("hidden");
+  const btn = this;
+  btn.disabled = true;
+  btn.textContent = "Membuat…";
+  try {
+    const result = await createRedirectLink({ name, type: addLinkType, cloudName, cloudLink });
+    linkRedirectResultInput.value = fullRedirectUrl(result.redirectCode);
+    linkSuccessMsg.classList.remove("hidden");
+    btn.textContent = "Buat Link";
+    // Sudah tersimpan otomatis ke Daftar Link -> kunci form supaya tidak dobel-buat.
+    [linkNameInput, linkCloudNameInput, linkCloudLinkInput].forEach((el) => (el.disabled = true));
+    document.querySelectorAll("#addLinkModalBackdrop .link-type-btn").forEach((b) => (b.disabled = true));
+    renderRedirectLinksList();
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = "Buat Link";
+    addLinkModalError.textContent = e.message || "Gagal membuat link";
+    addLinkModalError.classList.remove("hidden");
+  }
+});
+
+document.getElementById("btnCopyGeneratedLink").addEventListener("click", async function () {
+  if (!linkRedirectResultInput.value) return;
+  const ok = await copyTextToClipboard(linkRedirectResultInput.value);
+  showToast(ok ? "Link disalin" : "Gagal menyalin link");
+});
+
+document.getElementById("btnCloseAddLinkModal").addEventListener("click", function () {
+  addLinkModalBackdrop.classList.remove("show");
+  renderRedirectLinksList();
+});
+
+/* ---------- Modal Edit Link ---------- */
+const editLinkModalBackdrop = document.getElementById("editLinkModalBackdrop");
+const editLinkNameInput = document.getElementById("editLinkNameInput");
+const editLinkCloudNameInput = document.getElementById("editLinkCloudNameInput");
+const editLinkCloudLinkInput = document.getElementById("editLinkCloudLinkInput");
+const editLinkRedirectInput = document.getElementById("editLinkRedirectInput");
+const editLinkModalError = document.getElementById("editLinkModalError");
+
+function openEditLinkModal(id) {
+  const l = redirectLinks.find((x) => x.id === id);
+  if (!l) return;
+  editingLinkId = id;
+  editLinkNameInput.value = l.name;
+  editLinkCloudNameInput.value = l.cloudName;
+  editLinkCloudLinkInput.value = l.cloudLink;
+  editLinkRedirectInput.value = fullRedirectUrl(l.redirectCode);
+  editLinkType = l.type;
+  setLinkTypeToggle("#editLinkModalBackdrop", editLinkType);
+  editLinkModalError.classList.add("hidden");
+  editLinkModalError.textContent = "";
+  editLinkModalBackdrop.classList.add("show");
+}
+document.getElementById("btnCancelEditLink").addEventListener("click", () => editLinkModalBackdrop.classList.remove("show"));
+editLinkModalBackdrop.addEventListener("click", (e) => {
+  if (e.target === editLinkModalBackdrop) editLinkModalBackdrop.classList.remove("show");
+});
+document.getElementById("btnCopyEditLink").addEventListener("click", async function () {
+  if (!editLinkRedirectInput.value) return;
+  const ok = await copyTextToClipboard(editLinkRedirectInput.value);
+  showToast(ok ? "Link disalin" : "Gagal menyalin link");
+});
+
+document.getElementById("btnSaveEditLink").addEventListener("click", async function () {
+  const name = editLinkNameInput.value.trim();
+  const cloudName = editLinkCloudNameInput.value.trim();
+  const cloudLink = editLinkCloudLinkInput.value.trim();
+  if (!name || !cloudName || !cloudLink) {
+    editLinkModalError.textContent = "Semua kolom harus diisi";
+    editLinkModalError.classList.remove("hidden");
+    return;
+  }
+  try {
+    await updateRedirectLink(editingLinkId, { name, type: editLinkType, cloudName, cloudLink });
+    showToast("Link diperbarui");
+    editLinkModalBackdrop.classList.remove("show");
+    renderRedirectLinksList();
+  } catch (e) {
+    editLinkModalError.textContent = e.message || "Gagal menyimpan link";
+    editLinkModalError.classList.remove("hidden");
+  }
+});
 
 document.addEventListener("DOMContentLoaded", function () {
   initAdminThemeToggle();

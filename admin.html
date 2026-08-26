@@ -51,6 +51,15 @@
         <div class="amc-sub">Edit isi Halaman pada Navigasi situs website</div>
       </span>
     </button>
+    <button type="button" class="admin-menu-card" data-target="menuRedirect">
+      <span class="amc-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </span>
+      <span>
+        <div class="amc-title">Redirect</div>
+        <div class="amc-sub">Kelola tampilan &amp; link halaman redirect</div>
+      </span>
+    </button>
     <button type="button" class="admin-menu-card" data-target="menuLihatLaporan">
       <span class="amc-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L14.71 3.86a2 2 0 00-3.42 0z"/></svg>
@@ -201,6 +210,15 @@
           <span>
             <div class="amc-title">Halaman</div>
             <div class="amc-sub">Edit isi Halaman pada Navigasi situs website</div>
+          </span>
+        </button>
+        <button type="button" class="admin-menu-card" id="menuRedirect">
+          <span class="amc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </span>
+          <span>
+            <div class="amc-title">Redirect</div>
+            <div class="amc-sub">Kelola tampilan &amp; link halaman redirect</div>
           </span>
         </button>
         <button type="button" class="admin-menu-card" id="menuLihatLaporan">
@@ -1088,6 +1106,81 @@
       </div>
     </div>
 
+    <!-- ===== VIEW: Redirect (pilih kategori) ===== -->
+    <div id="viewRedirect" class="admin-panel-card hidden">
+      <div class="admin-subheader">
+        <button type="button" class="btn-back-mini" id="btnBackFromRedirect">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1>Redirect</h1>
+      </div>
+
+      <div class="admin-menu-grid">
+        <button type="button" class="admin-menu-card" id="menuRedirectTampilan">
+          <span class="amc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg>
+          </span>
+          <span>
+            <div class="amc-title">Tampilan Redirect</div>
+            <div class="amc-sub">Atur bagian &amp; urutan halaman redirect</div>
+          </span>
+        </button>
+        <button type="button" class="admin-menu-card" id="menuRedirectDaftarLink">
+          <span class="amc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.07 0l2.83-2.83a5 5 0 00-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 00-7.07 0L4.1 13.83a5 5 0 007.07 7.07l1.5-1.5"/></svg>
+          </span>
+          <span>
+            <div class="amc-title">Daftar Link</div>
+            <div class="amc-sub">Buat &amp; kelola link redirect</div>
+          </span>
+        </button>
+      </div>
+
+      <p class="redirect-explainer">
+        Redirect Page adalah halaman perantara sebelum pengunjung sampai ke link download asli (Google Drive, Mega, dll). Kamu bisa menaruh kode HTML — misalnya iklan — di beberapa bagian, dan pengunjung wajib menunggu hitung mundur singkat sebelum tombol lanjut ke link aktif. Atur tampilannya di <strong>Tampilan Redirect</strong>, lalu buat link-nya satu per satu di <strong>Daftar Link</strong>.
+      </p>
+    </div>
+
+    <!-- ===== VIEW: Redirect — Tampilan Redirect ===== -->
+    <div id="viewRedirectTampilan" class="admin-panel-card hidden">
+      <div class="admin-subheader">
+        <button type="button" class="btn-back-mini" id="btnBackFromRedirectTampilan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1>Tampilan Redirect</h1>
+      </div>
+
+      <button class="btn-add" id="btnAddRedirectSection">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Tambahkan Bagian
+      </button>
+
+      <button type="button" class="btn-cancel" id="btnToggleReorderSections" style="width:100%;margin-bottom:18px;">Atur Posisi Bagian</button>
+
+      <div id="redirectSectionsList"><p class="backup-desc">Memuat…</p></div>
+
+      <button type="button" class="btn-primary" id="btnPreviewRedirectPage" style="width:100%;margin-top:8px;">Preview Halaman Redirect</button>
+    </div>
+
+    <!-- ===== VIEW: Redirect — Daftar Link ===== -->
+    <div id="viewRedirectDaftarLink" class="admin-panel-card hidden">
+      <div class="admin-subheader">
+        <button type="button" class="btn-back-mini" id="btnBackFromRedirectDaftarLink">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1>Daftar Link</h1>
+      </div>
+      <div class="admin-search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="redirectLinkSearchInput" placeholder="Cari nama link…">
+      </div>
+      <button class="btn-add" id="btnAddRedirectLink">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Tambahkan Link
+      </button>
+      <div id="redirectLinksList"><p class="backup-desc">Memuat…</p></div>
+    </div>
+
     <!-- ===== VIEW: Recycle Bin (pilih folder) ===== -->
     <div id="viewRecycleBin" class="admin-panel-card hidden">
       <div class="admin-subheader">
@@ -1423,11 +1516,130 @@
   </div>
 </div>
 
+<!-- ===== Modal: Tambahkan/Edit Bagian Redirect ===== -->
+<div class="modal-backdrop" id="sectionModalBackdrop">
+  <div class="modal-box">
+    <h3 id="sectionModalTitle">Tambahkan Bagian</h3>
+    <label for="sectionNameInput">Nama Bagian</label>
+    <input type="text" id="sectionNameInput" placeholder="Masukkan nama bagian">
+    <label for="sectionDescInput">Deskripsi Bagian (Opsional)</label>
+    <input type="text" id="sectionDescInput" placeholder="Masukkan deskripsi bagian">
+    <label for="sectionContentInput">Isi Bagian (Kode HTML)</label>
+    <textarea id="sectionContentInput" rows="9" placeholder="Tulis isi bagian dengan kode HTML…"></textarea>
+    <p class="link-modal-error hidden" id="sectionModalError"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="btnCancelSection" style="flex:1;">Batal</button>
+      <button type="button" class="btn-primary" id="btnSaveSection" style="flex:1;">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: Tambahkan Link Redirect ===== -->
+<div class="modal-backdrop" id="addLinkModalBackdrop">
+  <div class="modal-box">
+    <h3>Tambahkan Link</h3>
+    <label for="linkNameInput">Nama Link</label>
+    <input type="text" id="linkNameInput" placeholder="Masukkan nama link">
+
+    <label>Tipe Link</label>
+    <div class="link-type-toggle">
+      <button type="button" class="link-type-btn active" data-type="android" id="btnLinkTypeAndroid">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16V11a7 7 0 0114 0v5"/><path d="M4 12v5a1 1 0 001 1h14a1 1 0 001-1v-5"/><line x1="8.5" y1="3.5" x2="7.5" y2="5.5"/><line x1="15.5" y1="3.5" x2="16.5" y2="5.5"/><line x1="9" y1="10" x2="9" y2="11"/><line x1="15" y1="10" x2="15" y2="11"/></svg>
+      </button>
+      <button type="button" class="link-type-btn" data-type="pc" id="btnLinkTypePc">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </button>
+    </div>
+
+    <label for="linkCloudNameInput">Nama Cloud</label>
+    <input type="text" id="linkCloudNameInput" placeholder="Masukkan nama cloud">
+
+    <label for="linkCloudLinkInput">Link Cloud</label>
+    <input type="url" id="linkCloudLinkInput" placeholder="Masukkan link cloud">
+
+    <p class="link-modal-error hidden" id="addLinkModalError"></p>
+
+    <button type="button" class="btn-primary" id="btnGenerateLink" style="width:100%;margin-top:14px;">Buat Link</button>
+
+    <label for="linkRedirectResultInput" style="margin-top:18px;">Link Redirect</label>
+    <div class="copy-field">
+      <input type="text" id="linkRedirectResultInput" placeholder="Linknya akan ditampilkan disini" readonly>
+      <button type="button" class="copy-field-btn" id="btnCopyGeneratedLink" aria-label="Salin link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+      </button>
+    </div>
+    <p class="link-success-msg hidden" id="linkSuccessMsg">Link redirect berhasil dibuat, tutup jendela ini</p>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="btnCloseAddLinkModal" style="flex:1;">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: Edit Link Redirect ===== -->
+<div class="modal-backdrop" id="editLinkModalBackdrop">
+  <div class="modal-box">
+    <h3>Edit Link</h3>
+    <label for="editLinkNameInput">Nama Link</label>
+    <input type="text" id="editLinkNameInput" placeholder="Masukkan nama link">
+
+    <label>Tipe Link</label>
+    <div class="link-type-toggle">
+      <button type="button" class="link-type-btn" data-type="android" id="btnEditLinkTypeAndroid">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16V11a7 7 0 0114 0v5"/><path d="M4 12v5a1 1 0 001 1h14a1 1 0 001-1v-5"/><line x1="8.5" y1="3.5" x2="7.5" y2="5.5"/><line x1="15.5" y1="3.5" x2="16.5" y2="5.5"/><line x1="9" y1="10" x2="9" y2="11"/><line x1="15" y1="10" x2="15" y2="11"/></svg>
+      </button>
+      <button type="button" class="link-type-btn" data-type="pc" id="btnEditLinkTypePc">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </button>
+    </div>
+
+    <label for="editLinkCloudNameInput">Nama Cloud</label>
+    <input type="text" id="editLinkCloudNameInput" placeholder="Masukkan nama cloud">
+
+    <label for="editLinkCloudLinkInput">Link Cloud</label>
+    <input type="url" id="editLinkCloudLinkInput" placeholder="Masukkan link cloud">
+
+    <label for="editLinkRedirectInput" style="margin-top:18px;">Link Redirect</label>
+    <div class="copy-field">
+      <input type="text" id="editLinkRedirectInput" readonly>
+      <button type="button" class="copy-field-btn" id="btnCopyEditLink" aria-label="Salin link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+      </button>
+    </div>
+
+    <p class="link-modal-error hidden" id="editLinkModalError"></p>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="btnCancelEditLink" style="flex:1;">Batal</button>
+      <button type="button" class="btn-primary" id="btnSaveEditLink" style="flex:1;">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: Detail Link Redirect ===== -->
+<div class="modal-backdrop" id="linkDetailModalBackdrop">
+  <div class="modal-box">
+    <h3>Detail Link</h3>
+    <div id="linkDetailBody" class="view-report-body"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="btnCloseLinkDetail" style="flex:1;">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Menu titik-tiga (⋮): Detail / Edit / Hapus link redirect ===== -->
+<div class="vfs-context-menu" id="redirectLinkContextMenu">
+  <button type="button" data-action="detail">Detail</button>
+  <button type="button" data-action="edit">Edit</button>
+  <button type="button" data-action="delete" class="danger">Hapus</button>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="js/data.js?v=20260821"></script>
 <script src="js/vfs.js?v=20260821"></script>
 <script src="js/ziputil.js?v=20260821"></script>
+<script src="js/redirect-widget.js?v=20260826"></script>
 <script src="js/admin.js?v=20260821"></script>
 </body>
 </html>

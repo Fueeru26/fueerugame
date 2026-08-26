@@ -666,6 +666,215 @@ async function handleServerNotifications(request, env, method) {
   return json(results);
 }
 
+/** ---------------- Redirect Page ---------------- */
+
+/** Pastikan bagian terkunci "Redirect Countdown" selalu ada (dibuat sekali,
+ * lazy, kalau belum ada baris dengan locked=1 di tabel). */
+async function ensureRedirectCountdownSection(env) {
+  const row = await env.DB.prepare("SELECT id FROM redirect_sections WHERE locked = 1 LIMIT 1").first();
+  if (row) return;
+  await env.DB.prepare(
+    "INSERT INTO redirect_sections (id, name, description, content, sortOrder, locked, createdAt) VALUES (?, ?, ?, NULL, ?, 1, ?)"
+  )
+    .bind(newId("rsec"), "Redirect Countdown", "Bagian ini tidak dapat diedit dan dihapus", 0, new Date().toISOString())
+    .run();
+}
+
+function rowToRedirectSection(r) {
+  return {
+    id: r.id,
+    name: r.name,
+    description: r.description || "",
+    content: r.content || "",
+    sortOrder: r.sortOrder,
+    locked: !!r.locked,
+    createdAt: r.createdAt
+  };
+}
+
+/** [ADMIN] Daftar bagian Tampilan Redirect (GET) & tambah bagian baru (POST). */
+async function handleRedirectSections(request, env, method) {
+  if (!(await requireAdmin(request, env))) return unauthorized();
+
+  if (method === "GET") {
+    await ensureRedirectCountdownSection(env);
+    const { results } = await env.DB.prepare("SELECT * FROM redirect_sections ORDER BY sortOrder ASC").all();
+    return json(results.map(rowToRedirectSection));
+  }
+
+  if (method === "POST") {
+    const body = await request.json().catch(() => null);
+    if (!body || !body.name || !body.content) {
+      return badRequest("Nama Bagian dan Isi Bagian tidak boleh kosong");
+    }
+    const maxRow = await env.DB.prepare("SELECT MAX(sortOrder) as m FROM redirect_sections").first();
+    const nextOrder = (maxRow && maxRow.m != null ? maxRow.m : -1) + 1;
+    const id = newId("rsec");
+    await env.DB.prepare(
+      "INSERT INTO redirect_sections (id, name, description, content, sortOrder, locked, createdAt) VALUES (?, ?, ?, ?, ?, 0, ?)"
+    )
+      .bind(id, body.name, body.description || "", body.content, nextOrder, new Date().toISOString())
+      .run();
+    return json({ ok: true, id });
+  }
+
+  return badRequest("Method tidak didukung");
+}
+
+/** [ADMIN] Edit (PUT) / hapus (DELETE) satu bagian — ditolak kalau bagian terkunci. */
+async function handleRedirectSectionById(request, env, method, id) {
+  if (!(await requireAdmin(request, env))) return unauthorized();
+
+  const existing = await env.DB.prepare("SELECT * FROM redirect_sections WHERE id = ?").bind(id).first();
+  if (!existing) return notFound();
+  if (existing.locked) return badRequest("Bagian ini tidak dapat diedit atau dihapus");
+
+  if (method === "PUT") {
+    const body = await request.json().catch(() => null);
+    if (!body || !body.name || !body.content) {
+      return badRequest("Nama Bagian dan Isi Bagian tidak boleh kosong");
+    }
+    await env.DB.prepare("UPDATE redirect_sections SET name = ?, description = ?, content = ? WHERE id = ?")
+      .bind(body.name, body.description || "", body.content, id)
+      .run();
+    return json({ ok: true });
+  }
+
+  if (method === "DELETE") {
+    await env.DB.prepare("DELETE FROM redirect_sections WHERE id = ?").bind(id).run();
+    return json({ ok: true });
+  }
+
+  return badRequest("Method tidak didukung");
+}
+
+/** [ADMIN] Simpan urutan baru semua bagian (drag reorder). Body: { order: [id, id, ...] } */
+async function handleRedirectSectionsReorder(request, env, method) {
+  if (method !== "PUT") return badRequest("Method tidak didukung");
+  if (!(await requireAdmin(request, env))) return unauthorized();
+  const body = await request.json().catch(() => null);
+  if (!body || !Array.isArray(body.order)) return badRequest("Data urutan tidak valid");
+
+  for (let i = 0; i < body.order.length; i++) {
+    await env.DB.prepare("UPDATE redirect_sections SET sortOrder = ? WHERE id = ?").bind(i, body.order[i]).run();
+  }
+  return json({ ok: true });
+}
+
+function newRedirectCode(len) {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let code = "";
+  for (let i = 0; i < len; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+function rowToRedirectLink(r) {
+  return {
+    id: r.id,
+    name: r.name,
+    type: r.type,
+    cloudName: r.cloudName,
+    cloudLink: r.cloudLink,
+    redirectCode: r.redirectCode,
+    createdAt: r.createdAt
+  };
+}
+
+/** [ADMIN] Daftar semua link redirect (GET) & buat link baru (POST, generate kode unik). */
+async function handleRedirectLinks(request, env, method) {
+  if (!(await requireAdmin(request, env))) return unauthorized();
+
+  if (method === "GET") {
+    const { results } = await env.DB.prepare("SELECT * FROM redirect_links ORDER BY createdAt DESC").all();
+    return json(results.map(rowToRedirectLink));
+  }
+
+  if (method === "POST") {
+    const body = await request.json().catch(() => null);
+    if (!body || !body.name || !body.type || !body.cloudName || !body.cloudLink) {
+      return badRequest("Semua kolom harus diisi");
+    }
+    try {
+      const cloudUrl = new URL(body.cloudLink);
+      if (!cloudUrl.protocol.startsWith("http")) throw new Error("invalid");
+    } catch (e) {
+      return badRequest("Link Cloud tidak valid");
+    }
+
+    let code = newRedirectCode(12);
+    for (let i = 0; i < 5; i++) {
+      const clash = await env.DB.prepare("SELECT id FROM redirect_links WHERE redirectCode = ?").bind(code).first();
+      if (!clash) break;
+      code = newRedirectCode(12);
+    }
+
+    const id = newId("rlink");
+    await env.DB.prepare(
+      "INSERT INTO redirect_links (id, name, type, cloudName, cloudLink, redirectCode, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    )
+      .bind(id, body.name, body.type, body.cloudName, body.cloudLink, code, new Date().toISOString())
+      .run();
+    return json({ ok: true, id, redirectCode: code });
+  }
+
+  return badRequest("Method tidak didukung");
+}
+
+/** [ADMIN] Detail (GET), edit (PUT — tanpa ganti kode redirect), hapus (DELETE) 1 link. */
+async function handleRedirectLinkById(request, env, method, id) {
+  if (!(await requireAdmin(request, env))) return unauthorized();
+
+  const existing = await env.DB.prepare("SELECT * FROM redirect_links WHERE id = ?").bind(id).first();
+  if (!existing) return notFound();
+
+  if (method === "GET") return json(rowToRedirectLink(existing));
+
+  if (method === "PUT") {
+    const body = await request.json().catch(() => null);
+    if (!body || !body.name || !body.type || !body.cloudName || !body.cloudLink) {
+      return badRequest("Semua kolom harus diisi");
+    }
+    try {
+      const cloudUrl = new URL(body.cloudLink);
+      if (!cloudUrl.protocol.startsWith("http")) throw new Error("invalid");
+    } catch (e) {
+      return badRequest("Link Cloud tidak valid");
+    }
+    await env.DB.prepare("UPDATE redirect_links SET name = ?, type = ?, cloudName = ?, cloudLink = ? WHERE id = ?")
+      .bind(body.name, body.type, body.cloudName, body.cloudLink, id)
+      .run();
+    return json({ ok: true });
+  }
+
+  if (method === "DELETE") {
+    await env.DB.prepare("DELETE FROM redirect_links WHERE id = ?").bind(id).run();
+    return json({ ok: true });
+  }
+
+  return badRequest("Method tidak didukung");
+}
+
+/** [PUBLIK] Ambil data 1 link + semua bagian tampilan, dipakai halaman
+ * publik /redirect<kode> untuk merender halaman redirect. Tanpa auth. */
+async function handleRedirectResolve(request, env, method, code) {
+  if (method !== "GET") return badRequest("Method tidak didukung");
+  const link = await env.DB.prepare("SELECT * FROM redirect_links WHERE redirectCode = ?").bind(code).first();
+  if (!link) return notFound();
+
+  await ensureRedirectCountdownSection(env);
+  const { results } = await env.DB.prepare("SELECT * FROM redirect_sections ORDER BY sortOrder ASC").all();
+
+  return json({
+    link: rowToRedirectLink(link),
+    sections: results.map((r) => ({
+      id: r.id,
+      name: r.name,
+      content: r.content || "",
+      locked: !!r.locked
+    }))
+  });
+}
+
 /** [ADMIN] Informasi dasar web: nama, link repo, link dashboard Worker,
  * versi/commit live & status deploy terakhir. Ukuran data lokal dihitung
  * di sisi klien (localStorage khusus per perangkat), tidak lewat sini. */
@@ -1221,7 +1430,28 @@ export default {
       if (path === "/api/info/login-fails") return await handleLoginFails(request, env, method);
       if (path === "/api/notifications") return await handleServerNotifications(request, env, method);
 
+      if (path === "/api/redirect/sections") return await handleRedirectSections(request, env, method);
+      if (path === "/api/redirect/sections/reorder") return await handleRedirectSectionsReorder(request, env, method);
+      m = path.match(/^\/api\/redirect\/sections\/([^/]+)$/);
+      if (m) return await handleRedirectSectionById(request, env, method, decodeURIComponent(m[1]));
+
+      if (path === "/api/redirect/links") return await handleRedirectLinks(request, env, method);
+      m = path.match(/^\/api\/redirect\/links\/([^/]+)$/);
+      if (m) return await handleRedirectLinkById(request, env, method, decodeURIComponent(m[1]));
+
+      m = path.match(/^\/api\/redirect\/resolve\/([^/]+)$/);
+      if (m) return await handleRedirectResolve(request, env, method, decodeURIComponent(m[1]));
+
       if (path.startsWith("/api/")) return json({ error: "Endpoint tidak ditemukan" }, 404);
+
+      // Path publik /redirect<kode> -> tetap sajikan file statis redirect.html;
+      // kode di path dibaca sendiri oleh js/redirect.js di sisi klien.
+      m = path.match(/^\/redirect([A-Za-z0-9]+)$/);
+      if (m) {
+        const assetUrl = new URL(request.url);
+        assetUrl.pathname = "/redirect.html";
+        return env.ASSETS.fetch(new Request(assetUrl.toString(), request));
+      }
 
       // Bukan /api/... -> serve file statis (html/css/js/gambar)
       return env.ASSETS.fetch(request);

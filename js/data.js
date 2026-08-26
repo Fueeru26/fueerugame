@@ -618,3 +618,53 @@ async function savePageContent(pageId, content) {
     return "error";
   }
 }
+
+/* ---------------- Redirect Page (server) ---------------- */
+
+/** [ADMIN] Semua bagian Tampilan Redirect, terurut sesuai posisi tampil. */
+async function getRedirectSections() {
+  return apiCall("GET", "/api/redirect/sections", undefined, true);
+}
+/** [ADMIN] Tambah bagian baru. Lempar Error(message) kalau nama/isi kosong. */
+async function createRedirectSection(data) {
+  return apiCall("POST", "/api/redirect/sections", data, true);
+}
+/** [ADMIN] Edit 1 bagian (ditolak server kalau bagian terkunci). */
+async function updateRedirectSection(id, data) {
+  return apiCall("PUT", "/api/redirect/sections/" + encodeURIComponent(id), data, true);
+}
+/** [ADMIN] Hapus 1 bagian (ditolak server kalau bagian terkunci). */
+async function deleteRedirectSection(id) {
+  return apiCall("DELETE", "/api/redirect/sections/" + encodeURIComponent(id), undefined, true);
+}
+/** [ADMIN] Simpan urutan baru semua bagian setelah drag reorder. */
+async function reorderRedirectSections(orderedIds) {
+  return apiCall("PUT", "/api/redirect/sections/reorder", { order: orderedIds }, true);
+}
+
+/** [ADMIN] Semua link redirect yang sudah dibuat. */
+async function getRedirectLinks() {
+  return apiCall("GET", "/api/redirect/links", undefined, true);
+}
+/** [ADMIN] 1 link redirect (untuk isi window Detail/Edit). */
+async function getRedirectLinkById(id) {
+  return apiCall("GET", "/api/redirect/links/" + encodeURIComponent(id), undefined, true);
+}
+/** [ADMIN] Buat link redirect baru (server men-generate kode uniknya). */
+async function createRedirectLink(data) {
+  return apiCall("POST", "/api/redirect/links", data, true);
+}
+/** [ADMIN] Edit link redirect (nama/tipe/cloud) — kode redirect tidak berubah. */
+async function updateRedirectLink(id, data) {
+  return apiCall("PUT", "/api/redirect/links/" + encodeURIComponent(id), data, true);
+}
+/** [ADMIN] Hapus 1 link redirect. */
+async function deleteRedirectLink(id) {
+  return apiCall("DELETE", "/api/redirect/links/" + encodeURIComponent(id), undefined, true);
+}
+
+/** [PUBLIK] Ambil data link + bagian tampilan berdasarkan kode di URL,
+ * dipakai oleh redirect.html (tanpa perlu login admin). */
+async function resolveRedirectByCode(code) {
+  return apiCall("GET", "/api/redirect/resolve/" + encodeURIComponent(code), undefined, false);
+}

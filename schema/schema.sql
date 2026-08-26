@@ -112,3 +112,23 @@ INSERT OR IGNORE INTO pages (id, title, content) VALUES
   ('cara-download', 'Cara Download', '<p>Isi halaman Cara Download.</p>'),
   ('donasi', 'Donasi', '<p>Isi halaman Donasi.</p>'),
   ('tentang', 'Tentang', '<p>Isi halaman Tentang.</p>');
+
+CREATE TABLE IF NOT EXISTS redirect_sections (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT,
+  content TEXT,           -- kode HTML (kosong/NULL utk bagian terkunci "Redirect Countdown")
+  sortOrder INTEGER NOT NULL DEFAULT 0,
+  locked INTEGER NOT NULL DEFAULT 0,   -- 1 = bagian "Redirect Countdown", tak bisa diedit/dihapus
+  createdAt TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS redirect_links (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL,           -- 'android' | 'pc'
+  cloudName TEXT NOT NULL,
+  cloudLink TEXT NOT NULL,
+  redirectCode TEXT NOT NULL UNIQUE,   -- kode unik di path /redirect<code>
+  createdAt TEXT NOT NULL
+);
