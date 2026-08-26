@@ -755,12 +755,19 @@ body.admin-body {
 :root.dark .admin-menu-card,
 :root.dark .gradient-menu-card {
   background: var(--surface-alt);
-  border: 1.5px solid var(--card-border-color);
-  box-shadow: var(--shadow-card);
+  /* PENTING: dipakai box-shadow inset, BUKAN border. Kalau pakai
+     "border: 1.5px solid", lebar isi kartu berkurang ~3px (box-sizing:
+     border-box) dibanding mode terang (border:none) — itu penyebab
+     nama entry yang mepet (mis. "Postingan & Halaman") jadi ganti baris
+     beda antara mode terang & gelap, bikin tinggi kolom kiri/kanan tidak
+     sama. box-shadow inset murni visual, tidak memakan ruang sama
+     sekali, jadi ukuran kartu selalu identik persis dengan mode terang. */
+  border: none;
+  box-shadow: var(--shadow-card), inset 0 0 0 1.5px var(--card-border-color);
 }
 :root.dark .admin-menu-card:hover,
 :root.dark .gradient-menu-card:hover {
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--shadow-soft), inset 0 0 0 1.5px var(--card-border-color);
 }
 :root.dark .admin-menu-card .amc-icon,
 :root.dark .gradient-menu-card .gmc-icon {
