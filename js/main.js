@@ -440,17 +440,145 @@ function initShareSection(container, post) {
     shareShowToast(ok ? "Link disalin" : "Gagal menyalin link");
   });
 
-  wrap.querySelector('[data-share="native"]').addEventListener("click", async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: title, text: `${title} — Fueeru Game`, url: url });
-      } catch (e) {
-        /* dibatalkan pengguna — abaikan, tidak perlu toast error */
-      }
-    } else {
-      const ok = await shareCopyToClipboard(url);
-      shareShowToast(ok ? "Berbagi tidak didukung browser ini — link disalin" : "Gagal menyalin link");
-    }
+  wrap.querySelector('[data-share="native"]').addEventListener("click", () => {
+    openShareModal(post);
+  });
+}
+
+/* ---------------- Modal "Bagikan ke aplikasi lain" ----------------
+   Dipicu oleh tombol Berbagi. Ukuran & gaya mengikuti modal Konfirmasi
+   Umur (age gate) — kartu putih/gelap di tengah layar dengan backdrop
+   gelap. Berisi ringkasan postingan (thumbnail + judul + kategori/genre)
+   dan tombol share ke 8 aplikasi. */
+const SHARE_APPS = [
+  {
+    id: "instagram",
+    label: "Instagram",
+    bg: "linear-gradient(135deg,#f58529,#dd2a7b,#8134af,#515bd4)",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.2" cy="6.8" r="1" fill="#fff" stroke="none"/></svg>`,
+  },
+  {
+    id: "whatsapp",
+    label: "WhatsApp",
+    bg: "#25d366",
+    icon: `<svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2a10 10 0 00-8.5 15.2L2 22l4.9-1.5A10 10 0 1012 2zm5.8 14.2c-.2.7-1.4 1.3-2 1.4-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.7-.6-3-1.3-5-4.3-5.1-4.5-.1-.2-1.2-1.6-1.2-3s.7-2.1 1-2.4c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5.2.5.7 1.8.8 1.9.1.1.1.3 0 .5-.1.2-.1.3-.3.5l-.4.5c-.1.1-.3.3-.1.6.2.3.9 1.5 1.9 2.4 1.3 1.2 2.4 1.5 2.7 1.7.3.1.5.1.7-.1.2-.2.7-.8.9-1.1.2-.3.4-.2.6-.1l1.7.8c.2.1.3.2.4.3.1.2.1.9-.1 1.6z"/></svg>`,
+  },
+  {
+    id: "threads",
+    label: "Threads",
+    bg: "#000",
+    icon: `<span style="font-family:'Poppins',sans-serif;font-weight:800;font-size:19px;color:#fff;">@</span>`,
+  },
+  {
+    id: "telegram",
+    label: "Telegram",
+    bg: "#26a5e4",
+    icon: `<svg viewBox="0 0 24 24" fill="#fff"><path d="M21.9 3.5L2.6 11c-1 .4-1 1.7.1 2l4.7 1.5 1.8 5.7c.2.7 1.1.9 1.6.3l2.6-2.9 4.8 3.6c.7.5 1.7.1 1.9-.8l3-16.1c.2-1-.8-1.7-1.6-1.3zM8.6 14l9.6-6.7L9.9 15.8l-.3 3-1-4.8z"/></svg>`,
+  },
+  {
+    id: "discord",
+    label: "Discord",
+    bg: "#5865f2",
+    icon: `<span style="font-family:'Poppins',sans-serif;font-weight:800;font-size:19px;color:#fff;">D</span>`,
+  },
+  {
+    id: "email",
+    label: "Email",
+    bg: "#6b8299",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>`,
+  },
+  {
+    id: "pinterest",
+    label: "Pinterest",
+    bg: "#e60023",
+    icon: `<span style="font-family:'Poppins',sans-serif;font-weight:800;font-size:19px;color:#fff;">P</span>`,
+  },
+  {
+    id: "reddit",
+    label: "Reddit",
+    bg: "#ff4500",
+    icon: `<span style="font-family:'Poppins',sans-serif;font-weight:800;font-size:19px;color:#fff;">r</span>`,
+  },
+];
+
+function shareAppAction(appId, url, title, text, thumbUrl) {
+  switch (appId) {
+    case "whatsapp":
+      window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(text + " " + url), "_blank", "noopener");
+      break;
+    case "telegram":
+      window.open("https://t.me/share/url?url=" + encodeURIComponent(url) + "&text=" + encodeURIComponent(text), "_blank", "noopener");
+      break;
+    case "threads":
+      window.open("https://www.threads.net/intent/post?text=" + encodeURIComponent(text + " " + url), "_blank", "noopener");
+      break;
+    case "email":
+      window.location.href = "mailto:?subject=" + encodeURIComponent(text) + "&body=" + encodeURIComponent(url);
+      break;
+    case "pinterest":
+      window.open("https://pinterest.com/pin/create/button/?url=" + encodeURIComponent(url) + "&description=" + encodeURIComponent(text) + (thumbUrl ? "&media=" + encodeURIComponent(thumbUrl) : ""), "_blank", "noopener");
+      break;
+    case "reddit":
+      window.open("https://www.reddit.com/submit?url=" + encodeURIComponent(url) + "&title=" + encodeURIComponent(title), "_blank", "noopener");
+      break;
+    case "instagram":
+    case "discord":
+    default:
+      // Instagram & Discord tidak punya URL share resmi di web — link
+      // disalin supaya bisa ditempel manual di aplikasinya.
+      shareCopyToClipboard(url).then((ok) => {
+        shareShowToast(ok ? `Link disalin — tempel di ${SHARE_APPS.find((a) => a.id === appId).label}` : "Gagal menyalin link");
+      });
+      break;
+  }
+}
+
+function openShareModal(post) {
+  const url = window.location.href;
+  const title = post.title;
+  const text = `${title} — Fueeru Game`;
+  const genres = post.genres || [];
+  const metaText = [post.jenis, genres.join(", ")].filter(Boolean).join(" • ");
+
+  const backdrop = document.createElement("div");
+  backdrop.className = "share-modal-backdrop";
+  backdrop.innerHTML = `
+    <div class="share-modal-box">
+      <h3 class="share-modal-title">Bagikan ke aplikasi lain</h3>
+      <div class="share-modal-preview">
+        <img class="share-modal-thumb" src="${resolveAsset(post.thumbnail)}" alt="" onerror="this.onerror=null;this.src='${assetBase()}webpictures/postplaceholder.webp';">
+        <div class="share-modal-info">
+          <div class="share-modal-post-title">${escapeHtml(title)}</div>
+          <div class="share-modal-post-meta">${escapeHtml(metaText)}</div>
+        </div>
+      </div>
+      <div class="share-modal-apps">
+        ${SHARE_APPS.map(
+          (app) => `
+          <button type="button" class="share-app-btn" data-app="${app.id}">
+            <span class="share-app-ic" style="background:${app.bg};">${app.icon}</span>
+            ${app.label}
+          </button>`
+        ).join("")}
+      </div>
+      <button type="button" class="share-modal-close" id="shareModalClose">Tutup</button>
+    </div>`;
+  document.body.appendChild(backdrop);
+  document.documentElement.style.overflow = "hidden";
+
+  function closeModal() {
+    document.documentElement.style.overflow = "";
+    backdrop.remove();
+  }
+
+  backdrop.addEventListener("click", (e) => {
+    if (e.target === backdrop) closeModal();
+  });
+  backdrop.querySelector("#shareModalClose").addEventListener("click", closeModal);
+  backdrop.querySelectorAll(".share-app-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      shareAppAction(btn.getAttribute("data-app"), url, title, text, resolveAsset(post.thumbnail));
+    });
   });
 }
 
