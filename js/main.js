@@ -452,10 +452,10 @@ function initShareSection(container, post) {
    dan tombol share ke 8 aplikasi. */
 const SHARE_APPS = [
   {
-    id: "instagram",
-    label: "Instagram",
-    bg: "linear-gradient(135deg,#f58529,#dd2a7b,#8134af,#515bd4)",
-    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.2" cy="6.8" r="1" fill="#fff" stroke="none"/></svg>`,
+    id: "telegram",
+    label: "Telegram",
+    bg: "#26a5e4",
+    icon: `<svg viewBox="0 0 24 24" fill="#fff"><path d="M21.9 3.5L2.6 11c-1 .4-1 1.7.1 2l4.7 1.5 1.8 5.7c.2.7 1.1.9 1.6.3l2.6-2.9 4.8 3.6c.7.5 1.7.1 1.9-.8l3-16.1c.2-1-.8-1.7-1.6-1.3zM8.6 14l9.6-6.7L9.9 15.8l-.3 3-1-4.8z"/></svg>`,
   },
   {
     id: "whatsapp",
@@ -470,24 +470,6 @@ const SHARE_APPS = [
     icon: `<span style="font-family:'Poppins',sans-serif;font-weight:800;font-size:19px;color:#fff;">@</span>`,
   },
   {
-    id: "telegram",
-    label: "Telegram",
-    bg: "#26a5e4",
-    icon: `<svg viewBox="0 0 24 24" fill="#fff"><path d="M21.9 3.5L2.6 11c-1 .4-1 1.7.1 2l4.7 1.5 1.8 5.7c.2.7 1.1.9 1.6.3l2.6-2.9 4.8 3.6c.7.5 1.7.1 1.9-.8l3-16.1c.2-1-.8-1.7-1.6-1.3zM8.6 14l9.6-6.7L9.9 15.8l-.3 3-1-4.8z"/></svg>`,
-  },
-  {
-    id: "discord",
-    label: "Discord",
-    bg: "#5865f2",
-    icon: `<span style="font-family:'Poppins',sans-serif;font-weight:800;font-size:19px;color:#fff;">D</span>`,
-  },
-  {
-    id: "email",
-    label: "Email",
-    bg: "#6b8299",
-    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>`,
-  },
-  {
     id: "pinterest",
     label: "Pinterest",
     bg: "#e60023",
@@ -498,6 +480,24 @@ const SHARE_APPS = [
     label: "Reddit",
     bg: "#ff4500",
     icon: `<span style="font-family:'Poppins',sans-serif;font-weight:800;font-size:19px;color:#fff;">r</span>`,
+  },
+  {
+    id: "linkedin",
+    label: "LinkedIn",
+    bg: "#0a66c2",
+    icon: `<span style="font-family:'Poppins',sans-serif;font-weight:800;font-size:15px;color:#fff;">in</span>`,
+  },
+  {
+    id: "tumblr",
+    label: "Tumblr",
+    bg: "#36465d",
+    icon: `<span style="font-family:'Poppins',sans-serif;font-weight:800;font-size:19px;color:#fff;">t</span>`,
+  },
+  {
+    id: "email",
+    label: "Email",
+    bg: "#6b8299",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>`,
   },
 ];
 
@@ -521,10 +521,18 @@ function shareAppAction(appId, url, title, text, thumbUrl) {
     case "reddit":
       window.open("https://www.reddit.com/submit?url=" + encodeURIComponent(url) + "&title=" + encodeURIComponent(title), "_blank", "noopener");
       break;
-    case "instagram":
-    case "discord":
+    case "linkedin":
+      window.open("https://www.linkedin.com/sharing/share-offsite/?url=" + encodeURIComponent(url), "_blank", "noopener");
+      break;
+    case "tumblr":
+      window.open(
+        "https://www.tumblr.com/widgets/share/tool?canonicalUrl=" + encodeURIComponent(url) + "&title=" + encodeURIComponent(title) + "&caption=" + encodeURIComponent(text),
+        "_blank",
+        "noopener"
+      );
+      break;
     default:
-      // Instagram & Discord tidak punya URL share resmi di web — link
+      // Fallback kalau ada app tanpa URL share resmi di web — link
       // disalin supaya bisa ditempel manual di aplikasinya.
       shareCopyToClipboard(url).then((ok) => {
         shareShowToast(ok ? `Link disalin — tempel di ${SHARE_APPS.find((a) => a.id === appId).label}` : "Gagal menyalin link");

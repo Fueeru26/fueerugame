@@ -7,6 +7,7 @@
 const SESSION_KEY = "fueeru_admin_session";
 const REMEMBER_KEY = "fueeru_admin_remember";
 const PAGE_SIZE = 10;
+const DATA_VERSION = "1.0"; // versi format file backup JSON (Postingan & Halaman)
 
 let editingId = null; // null = mode tambah, string = mode edit
 let currentGenres = []; // genre yang sedang dipilih di form
