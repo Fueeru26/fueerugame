@@ -380,6 +380,80 @@ function registerServiceWorker() {
 }
 registerServiceWorker();
 
+/* ---------------- Bagikan Postingan (di bawah genre postingan) ----------------
+   4 opsi: Facebook, Tweet (X), Salin Link, dan Berbagi (native Web Share API —
+   membuka window share bawaan HP/browser ke banyak aplikasi sekaligus,
+   lengkap dengan ringkasan judul postingan). */
+let shareToastTimer = null;
+function shareShowToast(msg) {
+  let toast = document.getElementById("shareToast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "shareToast";
+    toast.className = "share-toast";
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.classList.add("show");
+  clearTimeout(shareToastTimer);
+  shareToastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
+}
+
+async function shareCopyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (e) {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+}
+
+function initShareSection(container, post) {
+  const wrap = container.querySelector(".share-section");
+  if (!wrap) return;
+  const url = window.location.href;
+  const title = post.title;
+
+  wrap.querySelector('[data-share="facebook"]').addEventListener("click", () => {
+    window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url), "_blank", "noopener,width=580,height=520");
+  });
+
+  wrap.querySelector('[data-share="twitter"]').addEventListener("click", () => {
+    const text = `${title} — Fueeru Game`;
+    window.open("https://twitter.com/intent/tweet?url=" + encodeURIComponent(url) + "&text=" + encodeURIComponent(text), "_blank", "noopener,width=580,height=520");
+  });
+
+  wrap.querySelector('[data-share="copy"]').addEventListener("click", async () => {
+    const ok = await shareCopyToClipboard(url);
+    shareShowToast(ok ? "Link disalin" : "Gagal menyalin link");
+  });
+
+  wrap.querySelector('[data-share="native"]').addEventListener("click", async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: title, text: `${title} — Fueeru Game`, url: url });
+      } catch (e) {
+        /* dibatalkan pengguna — abaikan, tidak perlu toast error */
+      }
+    } else {
+      const ok = await shareCopyToClipboard(url);
+      shareShowToast(ok ? "Berbagi tidak didukung browser ini — link disalin" : "Gagal menyalin link");
+    }
+  });
+}
+
 document.addEventListener("DOMContentLoaded", initChrome);
 document.addEventListener("DOMContentLoaded", initPWAInstallMenu);
 document.addEventListener("DOMContentLoaded", renderRightAside);

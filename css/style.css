@@ -828,6 +828,78 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 .genre-chip-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
 
+/* ---------------- Bagikan Postingan (di bawah genre, halaman detail post) ---------------- */
+.share-section {
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--card-border-color);
+  background: var(--surface-alt);
+}
+.share-heading {
+  font-family: 'Poppins', sans-serif;
+  font-size: .92rem;
+  font-weight: 800;
+  color: var(--sky-700);
+  margin-bottom: 12px;
+}
+.share-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.share-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--sky-150);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: .85rem;
+  font-family: 'Inter', sans-serif;
+  transition: background .18s ease, border-color .18s ease, transform .18s ease;
+}
+.share-btn:hover { background: var(--sky-50); border-color: var(--sky-300); transform: translateY(-1px); }
+.share-ic {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--sky-600);
+}
+.share-ic svg { width: 16px; height: 16px; }
+.share-ic-fb { background: #1877f2; color: #fff; }
+.share-ic-tw { background: #14171a; color: #fff; }
+
+/* Toast kecil untuk konfirmasi "Link disalin" dsb (dibuat dinamis via JS) */
+.share-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  transform: translateX(-50%) translateY(12px);
+  background: var(--navy-900);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: .84rem;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .22s ease, transform .22s ease;
+  z-index: 9999;
+  box-shadow: 0 10px 26px -8px rgba(0,0,0,.4);
+}
+.share-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 /* ---------------- Post detail page ---------------- */
 .post-detail-title {
   font-family: 'Poppins', 'Inter', sans-serif;
