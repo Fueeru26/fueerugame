@@ -1,0 +1,10 @@
+schema/
+worker/
+functions/
+wrangler.toml
+.assetsignore
+.git/
+.gitattributes
+.github/
+node_modules/
+.wrangler/
