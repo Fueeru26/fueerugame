@@ -298,6 +298,7 @@ document.querySelectorAll("#viewPages .gradient-menu-card").forEach((btn) => {
     document.getElementById("pageEditHeading").textContent = pageLabel;
     const pc = await getPageContent(pageId);
     editorContentPageEl.innerHTML = pc.content;
+    initImgGalleriesAdmin(editorContentPageEl);
     if (richPageEditor) richPageEditor.resetHistory();
     showSub("viewPageEdit");
     capturePageFormSnapshot();
@@ -323,6 +324,7 @@ document.getElementById("btnPreviewPage").addEventListener("click", function () 
     <div class="post-detail-content">${content}</div>
   `;
   initSpoilersAdmin(previewViewportInner);
+  initImgGalleriesAdmin(previewViewportInner);
   previewModalBackdrop.classList.add("show");
   applyPreviewDeviceMode("mobile");
 });
@@ -684,6 +686,64 @@ function initSpoilersAdmin(container) {
       box.classList.toggle("revealed");
     });
   });
+}
+
+/** Aktifkan navigasi kiri/kanan untuk galeri gambar (hasil upload banyak
+ * gambar sekaligus) di dalam `container` — dipakai baik di editor
+ * (contenteditable, supaya bisa dicek sambil menulis) maupun Preview.
+ * Geser antar gambar pakai transform (bukan scroll manual). Galeri
+ * berisi 1 gambar saja: tombol navigasi otomatis disembunyikan. */
+function initImgGalleriesAdmin(container) {
+  (container || document).querySelectorAll(".img-gallery").forEach((gallery) => {
+    if (gallery.dataset.galleryBound) return;
+    gallery.dataset.galleryBound = "1";
+    const track = gallery.querySelector(".img-gallery-track");
+    const imgs = track ? track.children : [];
+    if (imgs.length <= 1) {
+      gallery.classList.add("single-image");
+      return;
+    }
+    let index = 0;
+    function update() {
+      if (track) track.style.transform = "translateX(-" + index * 100 + "%)";
+    }
+    const prevBtn = gallery.querySelector(".img-gallery-nav.prev");
+    const nextBtn = gallery.querySelector(".img-gallery-nav.next");
+    if (prevBtn) {
+      prevBtn.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        index = (index - 1 + imgs.length) % imgs.length;
+        update();
+      });
+    }
+    if (nextBtn) {
+      nextBtn.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        index = (index + 1) % imgs.length;
+        update();
+      });
+    }
+  });
+}
+
+/** Bangun markup HTML galeri gambar dari daftar dataURL. Kalau cuma 1
+ * gambar, kembalikan <img> polos (perilaku lama, tanpa pembungkus). */
+function buildImgGalleryHtml(dataUrls) {
+  if (dataUrls.length <= 1) {
+    return `<img src="${dataUrls[0]}" alt="">`;
+  }
+  const imgs = dataUrls.map((u) => `<img src="${u}" alt="">`).join("");
+  return (
+    `<span class="img-gallery" contenteditable="false">` +
+    `<span class="img-gallery-track">${imgs}</span>` +
+    `<button type="button" class="img-gallery-nav prev" aria-label="Gambar sebelumnya">` +
+    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>` +
+    `<button type="button" class="img-gallery-nav next" aria-label="Gambar berikutnya">` +
+    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>` +
+    `</span>`
+  );
 }
 
 // =========================================================
@@ -1074,7 +1134,7 @@ function resetForm() {
 function openAddForm() {
   resetForm();
   showSub("viewForm");
-  fieldTitle.focus();
+  fieldTitle.focus({ preventScroll: true });
   captureFormSnapshot();
 }
 
@@ -1097,6 +1157,7 @@ async function openEditForm(id) {
   currentGenres = (post.genres || []).slice();
   renderGenreChips();
   editorContent.innerHTML = post.content;
+  initImgGalleriesAdmin(editorContent);
   currentThumbnailData = post.thumbnail;
   uploadPreview.src = resolveAdminAsset(post.thumbnail);
   uploadPreview.style.display = "block";
@@ -1241,6 +1302,51 @@ function initRichTextEditor(cfg) {
     if (e.target.closest("button")) e.preventDefault();
   });
 
+  // Fokuskan kembali contentEl TANPA memicu auto-scroll (preventScroll)
+  // dan TANPA membuka ulang keyboard virtual kalau contentEl memang
+  // sudah menjadi elemen yang fokus saat ini (mis. tombol toolbar
+  // ditekan sesaat setelah teks diseleksi — fokus tidak pernah benar-
+  // benar hilang berkat preventDefault di atas, jadi tidak perlu
+  // fokus ulang yang bisa memicu keyboard muncul lagi di mobile).
+  function focusEditor() {
+    if (document.activeElement !== contentEl) {
+      contentEl.focus({ preventScroll: true });
+    }
+  }
+
+  // ---------- Highlight "icon area" tombol toolbar saat ditekan ----------
+  // Semua tombol toolbar (SELAIN tombol format teks Bold/Italic/
+  // Underline/Strikethrough, yang statusnya persisten — lihat
+  // updateFormatButtonsState) hanya menyala selama benar-benar ditekan
+  // (mousedown/touchstart) dan langsung padam saat dilepas
+  // (mouseup/touchend/mouseleave/touchcancel). Dipasang lewat delegasi
+  // + listener global supaya konsisten di semua browser mobile
+  // (beberapa browser mobile tidak selalu memicu :active dg baik).
+  let pressedToolbarBtn = null;
+  function clearToolbarPress() {
+    if (pressedToolbarBtn) {
+      pressedToolbarBtn.classList.remove("tb-pressing");
+      pressedToolbarBtn = null;
+    }
+  }
+  toolbarEl.addEventListener("touchstart", function (e) {
+    const btn = e.target.closest("button");
+    if (btn) {
+      pressedToolbarBtn = btn;
+      btn.classList.add("tb-pressing");
+    }
+  }, { passive: true });
+  toolbarEl.addEventListener("mousedown", function (e) {
+    const btn = e.target.closest("button");
+    if (btn) {
+      pressedToolbarBtn = btn;
+      btn.classList.add("tb-pressing");
+    }
+  });
+  ["mouseup", "mouseleave", "touchend", "touchcancel"].forEach(function (evt) {
+    document.addEventListener(evt, clearToolbarPress);
+  });
+
   // ---------- Riwayat Undo/Redo kustom ----------
   // document.execCommand("undo"/"redo") bawaan browser HANYA mencatat
   // perubahan yang dilakukan lewat execCommand. Aksi manual di editor ini
@@ -1290,13 +1396,14 @@ function initRichTextEditor(cfg) {
     isRestoringHistory = false;
     typingSessionActive = false;
     clearTimeout(typingDebounceTimer);
-    contentEl.focus();
+    focusEditor();
     placeCursorAtEnd();
+    initImgGalleriesAdmin(contentEl);
   }
 
   function doUndo() {
     if (!undoStack.length) return;
-    contentEl.focus();
+    focusEditor();
     const current = snapshot();
     const prev = undoStack.pop();
     redoStack.push(current);
@@ -1305,7 +1412,7 @@ function initRichTextEditor(cfg) {
 
   function doRedo() {
     if (!redoStack.length) return;
-    contentEl.focus();
+    focusEditor();
     const current = snapshot();
     const next = redoStack.pop();
     undoStack.push(current);
@@ -1365,7 +1472,7 @@ function initRichTextEditor(cfg) {
     }
   }
   function restoreSelection() {
-    contentEl.focus();
+    focusEditor();
     const sel = window.getSelection();
     sel.removeAllRanges();
     if (savedSelectionRange) {
@@ -1406,6 +1513,28 @@ function initRichTextEditor(cfg) {
     return true;
   }
 
+  // ---------- Status persisten tombol format teks (Bold/Italic/Underline/Strike) ----------
+  // Berbeda dari tombol lain (yang "icon area"-nya cuma nyala selagi
+  // ditekan), 4 tombol ini punya status AKTIF/NONAKTIF yang bertahan:
+  // begitu ditekan, langsung aktif (highlight menyala) dan teks yang
+  // diketik selanjutnya memakai format tsb; ditekan lagi -> nonaktif.
+  // queryCommandState mengikuti status toggle bawaan browser tsb
+  // (termasuk saat kursor berpindah-pindah tanpa seleksi).
+  const FORMAT_TOGGLE_CMDS = ["bold", "italic", "underline", "strikeThrough"];
+  function updateFormatButtonsState() {
+    const isFocused = document.activeElement === contentEl;
+    FORMAT_TOGGLE_CMDS.forEach(function (cmd) {
+      const btn = toolbarEl.querySelector('button[data-cmd="' + cmd + '"]');
+      if (!btn) return;
+      let active = false;
+      if (isFocused) {
+        try { active = document.queryCommandState(cmd); } catch (err) { active = false; }
+      }
+      btn.classList.toggle("tb-format-active", active);
+    });
+  }
+  document.addEventListener("selectionchange", updateFormatButtonsState);
+
   // ---------- Tombol format dasar (data-cmd) ----------
   toolbarEl.addEventListener("click", function (e) {
     const cmdBtn = e.target.closest("button[data-cmd]");
@@ -1413,9 +1542,10 @@ function initRichTextEditor(cfg) {
     const cmd = cmdBtn.getAttribute("data-cmd");
     if (cmd === "undo") { doUndo(); return; }
     if (cmd === "redo") { doRedo(); return; }
-    contentEl.focus();
+    focusEditor();
     recordBeforeChange();
     document.execCommand(cmd, false, null);
+    updateFormatButtonsState();
   });
 
   // ---------- Ukuran Teks (dropdown px + navigasi perkecil/perbesar) ----------
@@ -1510,29 +1640,33 @@ function initRichTextEditor(cfg) {
   fsStepDownEl.addEventListener("click", function (e) { e.stopPropagation(); stepFontSize(-1); });
   fsStepUpEl.addEventListener("click", function (e) { e.stopPropagation(); stepFontSize(1); });
 
-  // ---------- Sisipkan Gambar ----------
+  // ---------- Sisipkan Gambar (kini bisa upload banyak gambar sekaligus) ----------
   document.getElementById(cfg.insertImageBtnId).addEventListener("click", function () {
     saveSelection();
     document.getElementById(cfg.imageInputId).click();
   });
 
   document.getElementById(cfg.imageInputId).addEventListener("change", function (e) {
-    const file = e.target.files && e.target.files[0];
+    const files = e.target.files ? Array.prototype.slice.call(e.target.files) : [];
     e.target.value = "";
-    if (!file) return;
-    compressImageFile(file, 1000, 0.8)
-      .then(function (dataUrl) {
+    if (!files.length) return;
+    Promise.all(files.map((f) => compressImageFile(f, 1000, 0.8)))
+      .then(function (dataUrls) {
         restoreSelection();
         recordBeforeChange();
         const sel = window.getSelection();
         const range = sel.getRangeAt(0);
         range.deleteContents();
-        const img = document.createElement("img");
-        img.src = dataUrl;
-        img.alt = "";
-        range.insertNode(img);
-        range.setStartAfter(img);
-        range.setEndAfter(img);
+        // >1 gambar diupload bersamaan -> gabung jadi satu galeri geser
+        // (bukan disisip satu-satu berurutan) supaya tombol navigasi
+        // kiri/kanannya cuma perlu tersedia untuk kumpulan itu.
+        const wrapper = document.createElement("span");
+        wrapper.innerHTML = buildImgGalleryHtml(dataUrls);
+        const node = wrapper.firstChild;
+        range.insertNode(node);
+        initImgGalleriesAdmin(contentEl);
+        range.setStartAfter(node);
+        range.setEndAfter(node);
         sel.removeAllRanges();
         sel.addRange(range);
         savedSelectionRange = range.cloneRange();
@@ -1549,7 +1683,7 @@ function initRichTextEditor(cfg) {
     resetLinkModal();
     linkTextInput.value = savedSelectionRange ? savedSelectionRange.toString() : "";
     linkModalBackdrop.classList.add("show");
-    setTimeout(() => linkUrlInput.focus(), 100);
+    setTimeout(() => linkUrlInput.focus({ preventScroll: true }), 100);
   });
 
   // ---------- Warna Teks ----------
@@ -1579,14 +1713,14 @@ function initRichTextEditor(cfg) {
 
   // ---------- Kutipan ----------
   document.getElementById(cfg.quoteBtnId).addEventListener("click", function () {
-    contentEl.focus();
+    focusEditor();
     recordBeforeChange();
     document.execCommand("formatBlock", false, "blockquote");
   });
 
   // ---------- Ubah huruf besar/kecil (siklus: kecil -> BESAR -> Kapital Awal) ----------
   document.getElementById(cfg.caseToggleBtnId).addEventListener("click", function () {
-    contentEl.focus();
+    focusEditor();
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed || !contentEl.contains(sel.anchorNode)) {
       showToast("Pilih teks yang ingin diubah terlebih dahulu");
@@ -1615,75 +1749,161 @@ function initRichTextEditor(cfg) {
     savedSelectionRange = newRange.cloneRange();
   });
 
+  // Sisipkan sebuah baris kosong (div+br) TEPAT SETELAH `node`, supaya
+  // selalu ada tempat mengetik di LUAR fungsi toolbar (Quote/Spoiler/
+  // Label) tanpa harus menekan Enter dulu untuk keluar dari fungsi tsb.
+  function insertBlankLineAfter(node) {
+    const line = document.createElement("div");
+    line.appendChild(document.createElement("br"));
+    if (node.nextSibling) {
+      node.parentNode.insertBefore(line, node.nextSibling);
+    } else {
+      node.parentNode.appendChild(line);
+    }
+    return line;
+  }
+
+  // Tempatkan kursor collapsed di awal `el` (dipakai supaya kursor
+  // langsung berada DI DALAM spoiler/label yang baru dibuat kosong).
+  function placeCursorInside(el) {
+    const r = document.createRange();
+    r.selectNodeContents(el);
+    r.collapse(true);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(r);
+    savedSelectionRange = r.cloneRange();
+  }
+
   // ---------- Spoiler ----------
   // Bungkus teks dan/atau gambar yang dipilih ke dalam kotak spoiler:
   // label "SPOILER" yang bisa diklik pengunjung untuk membuka isinya.
+  // Kalau tidak ada teks yang diseleksi, buat kotak spoiler kosong berisi
+  // 1 baris kosong yang langsung siap ditulisi/diisi gambar.
   document.getElementById(cfg.spoilerBtnId).addEventListener("click", function () {
-    contentEl.focus();
+    focusEditor();
     const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0 || sel.isCollapsed || !contentEl.contains(sel.anchorNode)) {
-      showToast("Pilih teks atau gambar yang ingin dijadikan spoiler terlebih dahulu");
-      return;
-    }
-    const range = sel.getRangeAt(0);
-    if (!contentEl.contains(range.commonAncestorContainer)) return;
-
-    recordBeforeChange();
-    let extracted;
-    try {
-      extracted = range.extractContents();
-    } catch (err) {
-      undoStack.pop();
-      showToast("Gagal membuat spoiler pada seleksi ini");
-      return;
-    }
-    if (!extracted || !extracted.hasChildNodes()) {
-      undoStack.pop();
-      showToast("Gagal membuat spoiler pada seleksi ini");
-      return;
-    }
-
-    const inner = document.createElement("span");
-    inner.className = "spoiler-inner";
-    inner.appendChild(extracted);
+    const hasSelection = sel && sel.rangeCount > 0 && !sel.isCollapsed && contentEl.contains(sel.anchorNode);
 
     const label = document.createElement("span");
     label.className = "spoiler-label";
     label.setAttribute("contenteditable", "false");
     label.textContent = "SPOILER";
 
+    const inner = document.createElement("span");
+    inner.className = "spoiler-inner";
+
     const wrapper = document.createElement("span");
     wrapper.className = "spoiler-content";
     wrapper.appendChild(label);
     wrapper.appendChild(inner);
 
-    range.insertNode(wrapper);
-
-    const newRange = document.createRange();
-    newRange.setStartAfter(wrapper);
-    newRange.collapse(true);
-    sel.removeAllRanges();
-    sel.addRange(newRange);
-    savedSelectionRange = newRange.cloneRange();
+    if (hasSelection) {
+      const range = sel.getRangeAt(0);
+      if (!contentEl.contains(range.commonAncestorContainer)) return;
+      recordBeforeChange();
+      let extracted;
+      try {
+        extracted = range.extractContents();
+      } catch (err) {
+        undoStack.pop();
+        showToast("Gagal membuat spoiler pada seleksi ini");
+        return;
+      }
+      if (!extracted || !extracted.hasChildNodes()) {
+        undoStack.pop();
+        showToast("Gagal membuat spoiler pada seleksi ini");
+        return;
+      }
+      inner.appendChild(extracted);
+      range.insertNode(wrapper);
+      insertBlankLineAfter(wrapper);
+      const newRange = document.createRange();
+      newRange.setStartAfter(wrapper);
+      newRange.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(newRange);
+      savedSelectionRange = newRange.cloneRange();
+    } else {
+      // Tanpa seleksi: sisipkan spoiler kosong (1 baris kosong di
+      // dalamnya) tepat di posisi kursor.
+      inner.appendChild(document.createElement("br"));
+      recordBeforeChange();
+      let range;
+      if (sel && sel.rangeCount > 0 && contentEl.contains(sel.anchorNode)) {
+        range = sel.getRangeAt(0);
+      } else {
+        range = document.createRange();
+        range.selectNodeContents(contentEl);
+        range.collapse(false);
+      }
+      range.deleteContents();
+      range.insertNode(wrapper);
+      insertBlankLineAfter(wrapper);
+      placeCursorInside(inner);
+    }
   });
 
   // ---------- Label ----------
   // Bungkus teks (bisa lebih dari 1 paragraf) yang dipilih dengan kotak
   // berborder biru muda (mirip kotak pembungkus di menu Informasi Web).
+  // Kalau tidak ada teks yang diseleksi, buat kotak Label kosong berisi
+  // 1 baris kosong yang langsung siap ditulisi.
   document.getElementById(cfg.labelBtnId).addEventListener("click", function () {
-    contentEl.focus();
+    focusEditor();
     const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0 || sel.isCollapsed || !contentEl.contains(sel.anchorNode)) {
-      showToast("Pilih teks yang ingin diberi Label terlebih dahulu");
-      return;
+    const hasSelection = sel && sel.rangeCount > 0 && !sel.isCollapsed && contentEl.contains(sel.anchorNode);
+
+    if (hasSelection) {
+      recordBeforeChange();
+      const div = document.createElement("div");
+      div.className = "label-box";
+      if (!wrapSelection(div)) {
+        undoStack.pop();
+        showToast("Gagal membuat Label pada seleksi ini");
+        return;
+      }
+      insertBlankLineAfter(div);
+    } else {
+      const div = document.createElement("div");
+      div.className = "label-box";
+      div.appendChild(document.createElement("br"));
+      recordBeforeChange();
+      let range;
+      if (sel && sel.rangeCount > 0 && contentEl.contains(sel.anchorNode)) {
+        range = sel.getRangeAt(0);
+      } else {
+        range = document.createRange();
+        range.selectNodeContents(contentEl);
+        range.collapse(false);
+      }
+      range.deleteContents();
+      range.insertNode(div);
+      insertBlankLineAfter(div);
+      placeCursorInside(div);
     }
+  });
+
+  // ---------- Enter di dalam Spoiler / Label ----------
+  // Perilaku default browser saat Enter ditekan di dalam elemen blok
+  // (spoiler-inner span yang di-display:block, atau label-box div) bisa
+  // "meloncat keluar" dan malah membuat kotak baru terpisah di luar,
+  // bukan menambah baris baru di DALAM kotak yang sama. Di sini Enter
+  // dipaksa selalu menyisipkan <br> di posisi kursor, supaya baris baru
+  // tetap berada di dalam fungsi (spoiler/label) yang sedang diedit.
+  // (Toolbar Kutipan/blockquote sudah otomatis benar secara bawaan,
+  // jadi tidak perlu ditangani di sini.)
+  contentEl.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" || e.shiftKey) return;
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    let node = sel.getRangeAt(0).startContainer;
+    if (node.nodeType === Node.TEXT_NODE) node = node.parentElement;
+    const stayInsideEl = node && node.closest ? node.closest(".spoiler-inner, .label-box") : null;
+    if (!stayInsideEl || !contentEl.contains(stayInsideEl)) return;
+    e.preventDefault();
     recordBeforeChange();
-    const div = document.createElement("div");
-    div.className = "label-box";
-    if (!wrapSelection(div)) {
-      undoStack.pop();
-      showToast("Gagal membuat Label pada seleksi ini");
-    }
+    document.execCommand("insertLineBreak");
   });
 
   // ---------- Clear All Formatting ----------
@@ -1721,7 +1941,7 @@ function initRichTextEditor(cfg) {
   }
 
   document.getElementById(cfg.clearFormatBtnId).addEventListener("click", function () {
-    contentEl.focus();
+    focusEditor();
     if (!contentEl.hasChildNodes()) {
       showToast("Konten masih kosong, tidak ada format untuk dihapus");
       return;
@@ -1828,7 +2048,7 @@ document.getElementById("btnConfirmLink").addEventListener("click", function () 
   if (!url) {
     linkModalError.textContent = "Masukkan Link terlebih dahulu!";
     linkModalError.classList.remove("hidden");
-    linkUrlInput.focus();
+    linkUrlInput.focus({ preventScroll: true });
     return;
   }
   if (mode === "gambar" && !linkImageData) {
@@ -1986,6 +2206,7 @@ document.getElementById("btnPreviewForm").addEventListener("click", async functi
   // Spoiler di preview sebelumnya tidak berfungsi sama sekali —
   // pasang handler toggle yang sama seperti di halaman publik.
   initSpoilersAdmin(previewViewportInner);
+  initImgGalleriesAdmin(previewViewportInner);
   previewModalBackdrop.classList.add("show");
   applyPreviewDeviceMode("mobile");
 });
@@ -1995,7 +2216,7 @@ document.getElementById("btnPreviewForm").addEventListener("click", async functi
 function readPostFormFields() {
   const title = fieldTitle.value.trim();
   if (!title) {
-    fieldTitle.focus();
+    fieldTitle.focus({ preventScroll: true });
     return null;
   }
   return {
@@ -2222,7 +2443,7 @@ function openScheduleModal() {
   setScheduleStatus("");
   scheduleModalSnapshot = JSON.stringify(getScheduleFieldsData());
   document.getElementById("scheduleModalBackdrop").classList.add("show");
-  document.getElementById("scheduleDD").focus();
+  document.getElementById("scheduleDD").focus({ preventScroll: true });
 }
 function forceCloseScheduleModal() {
   document.getElementById("scheduleModalBackdrop").classList.remove("show");
@@ -2246,7 +2467,7 @@ function setupScheduleDigitInput(id, maxLen, nextId) {
     this.value = this.value.replace(/\D/g, "").slice(0, maxLen);
     if (this.value.length === maxLen && nextId) {
       const next = document.getElementById(nextId);
-      next.focus();
+      next.focus({ preventScroll: true });
       next.select();
     }
   });
@@ -4050,6 +4271,7 @@ async function openTrashPreview(id) {
       <div class="post-detail-content">${item.content}</div>
     `;
     initSpoilersAdmin(body);
+    initImgGalleriesAdmin(body);
   } else {
     function row(label, value, isEmpty) {
       return `

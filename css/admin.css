@@ -316,6 +316,19 @@ body.admin-body {
   flex: 0 0 auto;
 }
 .editor-toolbar button:hover { background: var(--sky-150); }
+/* "Icon area" (highlight kotak) HANYA muncul saat tombol sedang ditekan
+   (:active — hilang begitu jari/klik dilepas), KECUALI tombol format
+   teks (Bold/Italic/Underline/Strikethrough) yang punya class
+   .tb-format-active: pada tombol-tombol itu highlight bersifat
+   persisten selama fungsinya aktif (lihat updateFormatButtonsState). */
+.editor-toolbar button:active,
+.editor-toolbar button.tb-pressing { background: var(--sky-150); }
+.editor-toolbar button.tb-format-active,
+.editor-toolbar button.tb-format-active:hover,
+.editor-toolbar button.tb-format-active:active {
+  background: var(--sky-600);
+  color: #fff;
+}
 .editor-toolbar button svg { width: 17px; height: 17px; }
 .editor-toolbar .sep { width: 1px; align-self: stretch; background: var(--sky-200); margin: 4px 2px; flex: 0 0 auto; }
 .editor-toolbar .toolbar-break { flex-basis: 100%; height: 0; }
@@ -432,6 +445,12 @@ body.admin-body {
 }
 .editor-content:focus { border-color: var(--sky-500); }
 .editor-content img { max-width: 100%; border-radius: 8px; margin: 6px 0; }
+/* Gambar di dalam galeri (upload banyak gambar) tidak boleh kena
+   margin/radius umum di atas — harus penuh & rapat spt di halaman
+   publik, supaya slidernya presisi. Spesifisitas dinaikkan supaya
+   menang dari aturan .editor-content img di atas. */
+.editor-content .img-gallery-track img { max-width: 100%; border-radius: 0; margin: 0; }
+.editor-content .img-gallery { cursor: default; }
 .editor-content:empty::before {
   content: attr(data-placeholder);
   color: #9db6cb;
@@ -464,6 +483,11 @@ body.admin-body {
   user-select: none;
   cursor: default;
 }
+/* Revisi: area/kotak dekoratif (garis biru kiri + latar) di dalam
+   spoiler dihapus — isi (teks/gambar) langsung tampil polos di dalam
+   kotak putus-putus, tanpa pembungkus visual tambahan. min-height
+   dipertahankan supaya baris kosong (spoiler baru dibuat, belum diisi)
+   tetap punya tinggi & bisa disentuh/di-tap. */
 .editor-content .spoiler-inner {
   display: block;
   flex: 1 1 100%;
@@ -472,10 +496,7 @@ body.admin-body {
   overflow: visible;
   opacity: 1;
   color: inherit;
-  border-left: 3px solid var(--sky-500);
-  background: var(--sky-50);
-  border-radius: 0 8px 8px 0;
-  padding: 8px 12px;
+  min-height: 1.6em;
   margin-top: 2px;
 }
 .editor-content .spoiler-inner img { max-width: 100%; vertical-align: middle; }

@@ -163,6 +163,45 @@ function initSpoilers(container) {
   });
 }
 
+/** Aktifkan navigasi kiri/kanan untuk galeri gambar (hasil upload banyak
+ * gambar sekaligus di editor Admin) di dalam `container`. Geser antar
+ * gambar pakai transform (bukan scroll manual). Galeri berisi 1 gambar
+ * saja: tombol navigasi otomatis disembunyikan. */
+function initImgGalleries(container) {
+  (container || document).querySelectorAll(".img-gallery").forEach((gallery) => {
+    if (gallery.dataset.galleryBound) return;
+    gallery.dataset.galleryBound = "1";
+    const track = gallery.querySelector(".img-gallery-track");
+    const imgs = track ? track.children : [];
+    if (imgs.length <= 1) {
+      gallery.classList.add("single-image");
+      return;
+    }
+    let index = 0;
+    function update() {
+      if (track) track.style.transform = "translateX(-" + index * 100 + "%)";
+    }
+    const prevBtn = gallery.querySelector(".img-gallery-nav.prev");
+    const nextBtn = gallery.querySelector(".img-gallery-nav.next");
+    if (prevBtn) {
+      prevBtn.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        index = (index - 1 + imgs.length) % imgs.length;
+        update();
+      });
+    }
+    if (nextBtn) {
+      nextBtn.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        index = (index + 1) % imgs.length;
+        update();
+      });
+    }
+  });
+}
+
 /** Render kartu untuk carousel "Random Game" */
 /** Fallback: kalau src gambar gagal dimuat (mis. data lama menunjuk ke
  * file yang tak pernah benar-benar ada di server, seperti placeholder

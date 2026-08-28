@@ -1111,6 +1111,60 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   padding: 10px 14px;
 }
 .spoiler-inner img { max-width: 100%; border-radius: 8px; vertical-align: middle; }
+
+/* ---------------- Galeri gambar (upload banyak gambar sekaligus) ----------------
+   Dipakai bersama di editor admin (contenteditable) dan halaman post publik.
+   Kalau isinya cuma 1 gambar, tombol navigasi disembunyikan otomatis lewat
+   JS (initImgGalleries/initImgGalleriesAdmin) karena tidak diperlukan.
+   Navigasi geser dengan tombol kiri/kanan (transform), BUKAN scroll manual. */
+.post-detail-content .img-gallery,
+.editor-content .img-gallery {
+  display: block;
+  position: relative;
+  max-width: 100%;
+  margin: 10px 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--sky-100);
+}
+.img-gallery-track {
+  display: flex;
+  transition: transform .3s ease;
+}
+.img-gallery-track img {
+  flex: 0 0 100%;
+  width: 100%;
+  max-width: 100%;
+  display: block;
+  margin: 0;
+  border-radius: 0;
+  vertical-align: middle;
+}
+.img-gallery-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(10, 24, 38, 0.4);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .18s ease;
+}
+.img-gallery-nav:hover, .img-gallery-nav:active { background: rgba(10, 24, 38, 0.6); }
+.img-gallery-nav svg { width: 18px; height: 18px; }
+.img-gallery-nav.prev { left: 8px; }
+.img-gallery-nav.next { right: 8px; }
+/* Galeri dengan 1 gambar saja tidak butuh navigasi (disembunyikan via JS
+   dengan class ini). */
+.img-gallery.single-image .img-gallery-nav { display: none; }
+
 .post-detail-meta {
   display: flex;
   justify-content: space-between;

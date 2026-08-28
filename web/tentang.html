@@ -149,6 +149,7 @@
   const pc = await getPageContent("tentang");
   document.getElementById("pageContentBody").innerHTML = pc.content;
   initSpoilers(document.getElementById("pageContentBody"));
+  initImgGalleries(document.getElementById("pageContentBody"));
 })();
 </script>
 
