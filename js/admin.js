@@ -695,8 +695,15 @@ function initSpoilersAdmin(container) {
  * berisi 1 gambar saja: tombol navigasi otomatis disembunyikan. */
 function initImgGalleriesAdmin(container) {
   (container || document).querySelectorAll(".img-gallery").forEach((gallery) => {
-    if (gallery.dataset.galleryBound) return;
-    gallery.dataset.galleryBound = "1";
+    // PENTING: pakai properti JS biasa (bukan dataset/atribut HTML) untuk
+    // penanda "sudah dipasangi event". Kalau pakai dataset (data-*), atribut
+    // itu ikut ke-serialize ke editorContent.innerHTML saat postingan
+    // disimpan — akibatnya begitu HTML yang tersimpan itu dimuat ulang di
+    // tempat lain (Preview, halaman publik), penanda itu sudah "ada" duluan
+    // padahal event click di konteks BARU itu belum pernah dipasang sama
+    // sekali, jadi tombol navigasi terlihat tapi tidak berfungsi.
+    if (gallery._navBound) return;
+    gallery._navBound = true;
     const track = gallery.querySelector(".img-gallery-track");
     const imgs = track ? track.children : [];
     if (imgs.length <= 1) {

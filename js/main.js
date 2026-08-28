@@ -169,8 +169,12 @@ function initSpoilers(container) {
  * saja: tombol navigasi otomatis disembunyikan. */
 function initImgGalleries(container) {
   (container || document).querySelectorAll(".img-gallery").forEach((gallery) => {
-    if (gallery.dataset.galleryBound) return;
-    gallery.dataset.galleryBound = "1";
+    // Pakai properti JS biasa (bukan dataset/atribut HTML) sebagai penanda
+    // "sudah dipasangi event" — dataset akan ikut tersimpan ke HTML
+    // postingan dan bikin tombol navigasi kelihatan tapi tidak berfungsi
+    // saat konten itu dimuat ulang di halaman lain.
+    if (gallery._navBound) return;
+    gallery._navBound = true;
     const track = gallery.querySelector(".img-gallery-track");
     const imgs = track ? track.children : [];
     if (imgs.length <= 1) {
