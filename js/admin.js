@@ -1302,9 +1302,23 @@ function initRichTextEditor(cfg) {
   const contentEl = document.getElementById(cfg.contentId);
   let savedSelectionRange = null;
 
-  // Klik tombol toolbar TIDAK boleh menghilangkan seleksi teks yang
+  // Klik tombol toolbar TIDAK boleh menghilangkan fokus/seleksi teks yang
   // sedang aktif di contentEl (perilaku default browser: elemen yang
-  // di-mousedown akan mengambil fokus & mengosongkan seleksi lama).
+  // disentuh/di-klik akan mengambil fokus & menutup keyboard + kehilangan
+  // seleksi lama). PENTING untuk mobile: ini HARUS dicegah di event
+  // "pointerdown" (bukan cuma "mousedown"), karena di Android/Chrome,
+  // keyboard virtual sudah mulai ditutup begitu jari MENYENTUH tombol
+  // (touchstart/pointerdown) — jauh sebelum event "mousedown" sintetis
+  // sempat menyusul, jadi preventDefault di "mousedown" saja sudah
+  // terlambat (itulah sebabnya keyboard sempat tertutup lalu terbuka lagi
+  // / layar seperti "melompat", persis keluhan auto-scroll). Pointer
+  // Events (bukan Touch Events lama) dipilih karena preventDefault di
+  // sini TIDAK menekan event "click" yang menyusul, jadi tombolnya tetap
+  // berfungsi normal.
+  toolbarEl.addEventListener("pointerdown", function (e) {
+    if (e.target.closest("button")) e.preventDefault();
+  });
+  // Fallback untuk browser sangat lama yang belum kenal Pointer Events.
   toolbarEl.addEventListener("mousedown", function (e) {
     if (e.target.closest("button")) e.preventDefault();
   });
@@ -1325,10 +1339,9 @@ function initRichTextEditor(cfg) {
   // Semua tombol toolbar (SELAIN tombol format teks Bold/Italic/
   // Underline/Strikethrough, yang statusnya persisten — lihat
   // updateFormatButtonsState) hanya menyala selama benar-benar ditekan
-  // (mousedown/touchstart) dan langsung padam saat dilepas
-  // (mouseup/touchend/mouseleave/touchcancel). Dipasang lewat delegasi
-  // + listener global supaya konsisten di semua browser mobile
-  // (beberapa browser mobile tidak selalu memicu :active dg baik).
+  // (pointerdown) dan langsung padam saat dilepas
+  // (pointerup/pointercancel/pointerleave/mouseleave). Dipasang lewat
+  // delegasi + listener global supaya konsisten di semua browser mobile.
   let pressedToolbarBtn = null;
   function clearToolbarPress() {
     if (pressedToolbarBtn) {
@@ -1336,21 +1349,14 @@ function initRichTextEditor(cfg) {
       pressedToolbarBtn = null;
     }
   }
-  toolbarEl.addEventListener("touchstart", function (e) {
-    const btn = e.target.closest("button");
-    if (btn) {
-      pressedToolbarBtn = btn;
-      btn.classList.add("tb-pressing");
-    }
-  }, { passive: true });
-  toolbarEl.addEventListener("mousedown", function (e) {
+  toolbarEl.addEventListener("pointerdown", function (e) {
     const btn = e.target.closest("button");
     if (btn) {
       pressedToolbarBtn = btn;
       btn.classList.add("tb-pressing");
     }
   });
-  ["mouseup", "mouseleave", "touchend", "touchcancel"].forEach(function (evt) {
+  ["pointerup", "pointercancel", "pointerleave", "mouseup", "mouseleave"].forEach(function (evt) {
     document.addEventListener(evt, clearToolbarPress);
   });
 

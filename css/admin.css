@@ -314,6 +314,7 @@ body.admin-body {
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
+  touch-action: manipulation;
 }
 .editor-toolbar button:hover { background: var(--sky-150); }
 /* "Icon area" (highlight kotak) HANYA muncul saat tombol sedang ditekan
