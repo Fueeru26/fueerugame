@@ -547,6 +547,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   text-align: center;
   margin: 22px 0 14px;
 }
+.section-head-tight { margin-top: 4px; }
 .section-head h2 {
   display: inline-block;
   font-size: 1.5rem;
@@ -589,12 +590,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   gap: 14px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  padding: 6px 4px 14px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--sky-300) transparent;
+  padding: 6px 4px 4px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
-.carousel-track::-webkit-scrollbar { height: 7px; }
-.carousel-track::-webkit-scrollbar-thumb { background: var(--sky-300); border-radius: 8px; }
+.carousel-track::-webkit-scrollbar { display: none; }
 
 .game-card {
   flex: 0 0 auto;
@@ -831,7 +831,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   overflow-x: auto;
   padding-bottom: 4px;
   margin: -6px 0 18px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+.info-filter-tabs::-webkit-scrollbar { display: none; }
 .info-filter-tab {
   flex: 0 0 auto;
   padding: 9px 18px;
@@ -1300,7 +1303,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .post-detail-content {
   color: var(--ink);
   font-size: 1.02rem;
-  line-height: 1.85;
+  line-height: 1.5;
 }
 .post-detail-content p { margin: 0 0 16px; }
 .post-detail-content img { border-radius: var(--radius-sm); margin: 10px 0; }
@@ -1955,7 +1958,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   padding: 20px;
 }
 .age-gate-box {
-  background: #fff;
+  background: var(--surface);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
   max-width: 400px;
@@ -1973,17 +1976,17 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 .age-gate-box h2 {
   font-size: 1.2rem;
-  color: var(--navy-900);
+  color: var(--ink);
   margin-bottom: 10px;
 }
 .age-gate-box p {
   font-size: .88rem;
-  color: #4a6a89;
+  color: var(--ink-soft);
   line-height: 1.55;
   margin-bottom: 16px;
 }
 .age-gate-error {
-  color: #c0392b;
+  color: #e0554a;
   font-size: .82rem;
   font-weight: 600;
   min-height: 1.2em;
@@ -2005,10 +2008,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   font-family: inherit;
 }
 #ageGateNo {
-  background: #e6f2fa;
-  color: var(--navy-900);
+  background: var(--sky-100);
+  color: var(--ink);
 }
-#ageGateNo:hover { background: #dceefa; }
+#ageGateNo:hover { background: var(--sky-150); }
 #ageGateYes {
   background: var(--sky-500);
   color: #fff;
@@ -2020,7 +2023,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   justify-content: center;
   gap: 8px;
   font-size: .85rem;
-  color: #4a6a89;
+  color: var(--ink-soft);
   cursor: pointer;
 }
 .age-gate-remember input { accent-color: var(--sky-500); width: 16px; height: 16px; }
