@@ -80,18 +80,6 @@
   font-display: swap;
 }
 
-/* Font custom (FredokaOne) — tidak lagi dipakai di halaman publik (heading
-   & judul postingan sekarang memakai Poppins untuk tampilan lebih formal/
-   profesional), disisakan di sini kalau-kalau ingin dipakai lagi nanti. */
-@font-face {
-  font-family: 'FueeruDisplay';
-  src: url('../font/FredokaOne-Regular.otf') format('opentype'),
-       url('../font/FredokaOne-Regular.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
 :root {
   --ink: #0b2947;
   --ink-soft: #4a6a89;
@@ -959,7 +947,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 .lede-text {
   color: var(--ink-soft);
-  line-height: 1.8;
+  line-height: 1.5;
   font-size: 1rem;
 }
 
