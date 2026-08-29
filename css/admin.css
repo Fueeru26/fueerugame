@@ -820,6 +820,8 @@ body.admin-body {
 :root.dark .gradient-menu-card:nth-child(6) .gmc-icon svg { color: #c39af7; }
 :root.dark .admin-menu-card:nth-child(7) .amc-icon svg,
 :root.dark .gradient-menu-card:nth-child(7) .gmc-icon svg { color: #3ddbc4; }
+:root.dark .admin-menu-card:nth-child(8) .amc-icon svg { color: #ff8ba0; }
+:root.dark .admin-menu-card:nth-child(9) .amc-icon svg { color: #6bc8f0; }
 
 .admin-subheader {
   display: flex;
@@ -1553,6 +1555,8 @@ body.admin-body {
 .admin-menu-card:nth-child(5) { background: linear-gradient(135deg, #8f9bd6, var(--navy-700)); }
 .admin-menu-card:nth-child(6) { background: linear-gradient(135deg, #b79cf0, var(--navy-700)); }
 .admin-menu-card:nth-child(7) { background: linear-gradient(135deg, #4fb8a8, var(--navy-700)); }
+.admin-menu-card:nth-child(8) { background: linear-gradient(135deg, #e0667a, var(--navy-700)); }
+.admin-menu-card:nth-child(9) { background: linear-gradient(135deg, #5cb0e6, var(--navy-700)); }
 
 .backup-section {
   border: 1.5px solid var(--sky-150);

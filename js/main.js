@@ -331,6 +331,97 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+/* =========================================================
+   Custom Select — pengganti window pilihan bawaan browser/OS
+   untuk elemen <select> di halaman publik (mis. Engine Game di
+   form Request Game). Sama seperti versi Admin Panel.
+   ========================================================= */
+const customSelectRegistry = {};
+
+function buildCustomSelect(select) {
+  const wrap = document.createElement("div");
+  wrap.className = "custom-select";
+  wrap.setAttribute("data-for", select.id);
+
+  select.parentNode.insertBefore(wrap, select);
+  select.classList.add("native-select-hidden");
+  select.setAttribute("tabindex", "-1");
+  select.setAttribute("aria-hidden", "true");
+  wrap.appendChild(select);
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "custom-select-btn";
+  btn.innerHTML =
+    '<span class="custom-select-label"></span>' +
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+  wrap.appendChild(btn);
+
+  const menu = document.createElement("div");
+  menu.className = "custom-select-menu";
+  wrap.appendChild(menu);
+
+  const labelEl = btn.querySelector(".custom-select-label");
+
+  function closeMenu() {
+    menu.classList.remove("show");
+    btn.classList.remove("open");
+  }
+  function renderOptions() {
+    menu.innerHTML = Array.from(select.options)
+      .map(function (o) {
+        return (
+          '<button type="button" data-value="' +
+          escapeHtml(o.value) +
+          '" class="' +
+          (o.value === select.value ? "selected" : "") +
+          '">' +
+          escapeHtml(o.textContent) +
+          "</button>"
+        );
+      })
+      .join("");
+  }
+  function syncLabel() {
+    const opt = select.options[select.selectedIndex];
+    labelEl.textContent = opt ? opt.textContent : "";
+  }
+
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    const isOpen = menu.classList.contains("show");
+    document.querySelectorAll(".custom-select-menu.show").forEach(function (m) {
+      m.classList.remove("show");
+      if (m.previousElementSibling) m.previousElementSibling.classList.remove("open");
+    });
+    if (!isOpen) {
+      renderOptions();
+      menu.classList.add("show");
+      btn.classList.add("open");
+    }
+  });
+  menu.addEventListener("click", function (e) {
+    const optBtn = e.target.closest("button[data-value]");
+    if (!optBtn) return;
+    select.value = optBtn.getAttribute("data-value");
+    syncLabel();
+    closeMenu();
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  document.addEventListener("click", closeMenu);
+
+  syncLabel();
+  customSelectRegistry[select.id] = { syncLabel: syncLabel };
+}
+
+/** Sinkronkan label tombol custom select dengan nilai <select> aslinya —
+ * dipanggil setiap kali kode mengubah `.value` select secara terprogram. */
+function refreshCustomSelect(select) {
+  if (!select) return;
+  const entry = customSelectRegistry[select.id];
+  if (entry) entry.syncLabel();
+}
+
 /** Komponen pagination generik.
  * Hanya menampilkan nomor halaman yang sedang aktif (bukan daftar semua
  * nomor halaman) — supaya tetap ringkas walau jumlah halaman terus bertambah.
