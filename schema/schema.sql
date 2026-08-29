@@ -31,7 +31,11 @@ CREATE TABLE IF NOT EXISTS reports (
   content TEXT,
   attachment TEXT,   -- JSON {name, dataUrl} atau NULL
   date TEXT,
-  status TEXT DEFAULT 'belum'
+  status TEXT DEFAULT 'belum',  -- belum | sedang | selesai | ditolak
+  formType TEXT NOT NULL DEFAULT 'lapor',  -- 'lapor' (Laporkan Masalah) | 'request' (Request Game)
+  gameName TEXT,     -- khusus formType = 'request'
+  engine TEXT,       -- khusus formType = 'request': tidak-tahu | rpgm | tyrano
+  gameLink TEXT       -- khusus formType = 'request'
 );
 
 CREATE TABLE IF NOT EXISTS trash_reports (
@@ -41,9 +45,20 @@ CREATE TABLE IF NOT EXISTS trash_reports (
 );
 
 CREATE TABLE IF NOT EXISTS pages (
-  id TEXT PRIMARY KEY,   -- tutorial | cara-download | donasi | tentang
+  id TEXT PRIMARY KEY,   -- tutorial | cara-download | donasi | tentang | fitur
   title TEXT,
   content TEXT
+);
+
+-- Update Info: kartu yang tampil di web/info.html + menu "Update Info" di Admin Panel.
+CREATE TABLE IF NOT EXISTS info_items (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  type TEXT NOT NULL,     -- update-game | bug-fix | info-admin
+  content TEXT NOT NULL,
+  gameLink TEXT,           -- khusus type update-game / bug-fix (tombol "Lihat Game")
+  date TEXT NOT NULL,
+  createdAt TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS settings (
@@ -111,7 +126,8 @@ INSERT OR IGNORE INTO pages (id, title, content) VALUES
   ('tutorial', 'Tutorial Main', '<p>Isi halaman Tutorial Main.</p>'),
   ('cara-download', 'Cara Download', '<p>Isi halaman Cara Download.</p>'),
   ('donasi', 'Donasi', '<p>Isi halaman Donasi.</p>'),
-  ('tentang', 'Tentang', '<p>Isi halaman Tentang.</p>');
+  ('tentang', 'Tentang', '<p>Isi halaman Tentang.</p>'),
+  ('fitur', 'Fitur Tambahan', '<p>Isi halaman Fitur Tambahan.</p>');
 
 CREATE TABLE IF NOT EXISTS redirect_sections (
   id TEXT PRIMARY KEY,

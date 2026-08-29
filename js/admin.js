@@ -240,7 +240,9 @@ const SUB_VIEWS = [
   "viewForm",
   "viewPages",
   "viewPageEdit",
+  "viewFormulir",
   "viewReports",
+  "viewInfoAdmin",
   "viewFiles",
   "viewFileEdit",
   "viewBackup",
@@ -355,6 +357,21 @@ function goBackFromPageEdit(onLeft) {
 }
 
 document.getElementById("menuLihatLaporan").addEventListener("click", () => {
+  showSub("viewFormulir");
+});
+document.getElementById("btnBackFromFormulir").addEventListener("click", () => showSub("viewMenu"));
+document.getElementById("btnOpenFormLapor").addEventListener("click", () => {
+  currentFormType = "lapor";
+  document.getElementById("viewReportsHeading").textContent = "Laporkan Masalah";
+  reportSearchQuery = "";
+  document.getElementById("reportSearchInput").value = "";
+  reportsPage = 1;
+  showSub("viewReports");
+  renderReportsList();
+});
+document.getElementById("btnOpenFormRequest").addEventListener("click", () => {
+  currentFormType = "request";
+  document.getElementById("viewReportsHeading").textContent = "Request Game";
   reportSearchQuery = "";
   document.getElementById("reportSearchInput").value = "";
   reportsPage = 1;
@@ -502,7 +519,7 @@ document.getElementById("btnBackFromDeployWebsite").addEventListener("click", ()
   showSub("viewBackup");
 });
 document.getElementById("btnBackFromPosts").addEventListener("click", () => showSub("viewMenu"));
-document.getElementById("btnBackFromReports").addEventListener("click", () => showSub("viewMenu"));
+document.getElementById("btnBackFromReports").addEventListener("click", () => showSub("viewFormulir"));
 document.getElementById("btnBackFromForm").addEventListener("click", () => {
   goBackFromForm();
 });
@@ -1006,7 +1023,7 @@ function refreshCustomSelect(select) {
   if (entry) entry.syncLabel();
 }
 
-["fieldPlatform", "fieldBahasa", "fieldJenis", "fileSortSelect", "trashSortSelect", "postViewsSort", "postStatusFilter"].forEach(
+["fieldPlatform", "fieldBahasa", "fieldJenis", "fileSortSelect", "trashSortSelect", "postViewsSort", "postStatusFilter", "infoAdminTypeFilter", "infoItemType"].forEach(
   function (id) {
     const el = document.getElementById(id);
     if (el) buildCustomSelect(el);
@@ -2562,6 +2579,7 @@ document.getElementById("btnApplySchedule").addEventListener("click", function (
 // =========================================================
 let reportSearchQuery = "";
 let reportsPage = 1;
+let currentFormType = "lapor";
 
 document.getElementById("reportSearchInput").addEventListener("input", function () {
   reportSearchQuery = this.value.trim().toLowerCase();
@@ -2579,7 +2597,12 @@ function formatReportDate(iso) {
   }
 }
 
-const REPORT_STATUS_LABELS = { belum: "Belum ditangani", sedang: "Sedang ditangani", selesai: "Sudah ditangani" };
+const REPORT_STATUS_LABELS = {
+  belum: "Belum ditangani",
+  sedang: "Sedang ditangani",
+  selesai: "Sudah ditangani",
+  ditolak: "Formulir ditolak"
+};
 function reportStatusIconSvg(status) {
   const s = status || "belum";
   if (s === "selesai") {
@@ -2588,26 +2611,38 @@ function reportStatusIconSvg(status) {
   if (s === "sedang") {
     return `<span class="report-status-icon sedang" title="${REPORT_STATUS_LABELS.sedang}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></span>`;
   }
-  return `<span class="report-status-icon belum" title="${REPORT_STATUS_LABELS.belum}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>`;
+  if (s === "ditolak") {
+    return `<span class="report-status-icon ditolak" title="${REPORT_STATUS_LABELS.ditolak}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>`;
+  }
+  return `<span class="report-status-icon belum" title="${REPORT_STATUS_LABELS.belum}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="7" x2="12" y2="13"/><circle cx="12" cy="17" r="0.5" fill="currentColor" stroke-width="2.4"/></svg></span>`;
 }
 
 async function renderReportsList() {
-  let reports = await loadReports();
+  let reports = (await loadReports()).filter((r) => (r.formType || "lapor") === currentFormType);
   if (reportSearchQuery) {
-    reports = reports.filter(
-      (r) =>
+    reports = reports.filter((r) => {
+      if (currentFormType === "request") {
+        return (
+          (r.title || "").toLowerCase().includes(reportSearchQuery) ||
+          (r.name || "").toLowerCase().includes(reportSearchQuery) ||
+          (r.gameLink || "").toLowerCase().includes(reportSearchQuery)
+        );
+      }
+      return (
         r.title.toLowerCase().includes(reportSearchQuery) ||
         (r.name || "").toLowerCase().includes(reportSearchQuery) ||
         r.content.toLowerCase().includes(reportSearchQuery)
-    );
+      );
+    });
   }
 
+  const noun = currentFormType === "request" ? "request" : "laporan";
   const list = document.getElementById("adminReportList");
   if (reports.length === 0) {
     list.innerHTML = `
       <div class="empty-state">
-        <h3>Tidak ada laporan</h3>
-        <p>${reportSearchQuery ? "Tidak ada laporan yang cocok dengan pencarian." : "Belum ada laporan yang masuk."}</p>
+        <h3>Tidak ada ${noun}</h3>
+        <p>${reportSearchQuery ? `Tidak ada ${noun} yang cocok dengan pencarian.` : `Belum ada ${noun} yang masuk.`}</p>
       </div>`;
     renderPagination("reportsPagination", 0, PAGE_SIZE, 1, () => {});
     return;
@@ -2650,6 +2685,8 @@ async function renderReportsList() {
 // ---------- Modal: Lihat detail laporan ----------
 const viewReportModalBackdrop = document.getElementById("viewReportModalBackdrop");
 const viewReportModalBody = document.getElementById("viewReportModalBody");
+const viewReportModalTitle = document.getElementById("viewReportModalTitle");
+const ENGINE_LABELS = { "tidak-tahu": "Tidak Tahu", rpgm: "RPGM", tyrano: "Tyrano Builder" };
 
 async function openViewReportModal(id) {
   const reports = await loadReports();
@@ -2665,21 +2702,31 @@ async function openViewReportModal(id) {
   }
 
   let html = "";
-  html += row("Judul Laporan", r.title, false);
-  html += row("Nama", r.name || "Anonim", !r.name);
-  html += row("Media Balasan", r.contactMedia || "Tidak diisi", !r.contactMedia);
-  html += row("Isi Laporan", r.content, false);
-  if (r.attachment) {
-    html += `
-      <div class="vrb-row">
-        <div class="vrb-label">Lampiran</div>
-        <div class="vrb-value">
-          <a class="rep-attachment" href="${r.attachment.dataUrl}" download="${escapeHtmlAdmin(r.attachment.name)}">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            ${escapeHtmlAdmin(r.attachment.name)}
-          </a>
-        </div>
-      </div>`;
+  if ((r.formType || "lapor") === "request") {
+    viewReportModalTitle.textContent = "Detail Request Game";
+    html += row("Nama Game", r.gameName || r.title, false);
+    html += row("Nama", r.name || "Anonim", !r.name);
+    html += row("Engine Game", ENGINE_LABELS[r.engine] || r.engine || "Tidak Tahu", false);
+    html += row("Link Game", r.gameLink || "Tidak diisi", !r.gameLink);
+    html += row("Media Balasan", r.contactMedia || "Tidak diisi", !r.contactMedia);
+  } else {
+    viewReportModalTitle.textContent = "Detail Laporan";
+    html += row("Judul Laporan", r.title, false);
+    html += row("Nama", r.name || "Anonim", !r.name);
+    html += row("Media Balasan", r.contactMedia || "Tidak diisi", !r.contactMedia);
+    html += row("Isi Laporan", r.content, false);
+    if (r.attachment) {
+      html += `
+        <div class="vrb-row">
+          <div class="vrb-label">Lampiran</div>
+          <div class="vrb-value">
+            <a class="rep-attachment" href="${r.attachment.dataUrl}" download="${escapeHtmlAdmin(r.attachment.name)}">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              ${escapeHtmlAdmin(r.attachment.name)}
+            </a>
+          </div>
+        </div>`;
+    }
   }
   html += row("Tanggal", formatReportDate(r.date), false);
 
@@ -2698,7 +2745,7 @@ document.getElementById("btnUpdateReportStatus").addEventListener("click", async
   await setReportStatus(currentViewingReportId, selected.value);
   viewReportModalBackdrop.classList.remove("show");
   renderReportsList();
-  showToast("Status laporan diperbarui");
+  showToast("Status diperbarui");
 });
 
 document.getElementById("btnCloseViewReport").addEventListener("click", function () {
@@ -2709,31 +2756,208 @@ viewReportModalBackdrop.addEventListener("click", function (e) {
 });
 
 function deleteReport(id) {
+  const noun = currentFormType === "request" ? "request" : "laporan";
   openConfirmModal(
-    "Hapus laporan ini? Laporan akan dipindahkan ke Recycle Bin dan bisa dipulihkan dalam 30 hari.",
+    `Hapus ${noun} ini? Data akan dipindahkan ke Recycle Bin dan bisa dipulihkan dalam 30 hari.`,
     async function () {
       await trashReport(id);
       renderReportsList();
-      showToast("Laporan dipindahkan ke Recycle Bin");
+      showToast(`${noun[0].toUpperCase()}${noun.slice(1)} dipindahkan ke Recycle Bin`);
     },
-    { title: "Hapus Laporan" }
+    { title: currentFormType === "request" ? "Hapus Request" : "Hapus Laporan" }
   );
 }
 
 document.getElementById("btnDeleteAllReports").addEventListener("click", async function () {
-  const reports = await loadReports();
+  const reports = (await loadReports()).filter((r) => (r.formType || "lapor") === currentFormType);
   if (reports.length === 0) return;
+  const noun = currentFormType === "request" ? "request" : "laporan";
   openConfirmModal(
-    "Yakin ingin hapus semua laporan? Laporan akan dipindahkan ke Recycle Bin dan bisa dipulihkan dalam 30 hari.",
+    `Yakin ingin hapus semua ${noun}? Data akan dipindahkan ke Recycle Bin dan bisa dipulihkan dalam 30 hari.`,
     async function () {
       for (const r of reports) await trashReport(r.id);
       reportsPage = 1;
       renderReportsList();
-      showToast("Semua laporan dipindahkan ke Recycle Bin");
+      showToast(`Semua ${noun} dipindahkan ke Recycle Bin`);
     },
-    { title: "Hapus Semua Laporan" }
+    { title: currentFormType === "request" ? "Hapus Semua Request" : "Hapus Semua Laporan" }
   );
 });
+
+// =========================================================
+// UPDATE INFO (Admin) — kelola Update Game / Bug Fix / Info Admin
+// =========================================================
+let infoAdminSearchQuery = "";
+let infoAdminTypeFilterValue = "semua";
+let infoAdminPage = 1;
+let currentEditingInfoItemId = null;
+
+const INFO_TYPE_LABELS = { "update-game": "Update Game", "bug-fix": "Bug Fix", "info-admin": "Info Admin" };
+
+document.getElementById("menuUpdateInfo").addEventListener("click", () => {
+  infoAdminSearchQuery = "";
+  document.getElementById("infoAdminSearchInput").value = "";
+  infoAdminTypeFilterValue = "semua";
+  document.getElementById("infoAdminTypeFilter").value = "semua";
+  refreshCustomSelect(document.getElementById("infoAdminTypeFilter"));
+  infoAdminPage = 1;
+  showSub("viewInfoAdmin");
+  renderInfoAdminList();
+});
+document.getElementById("btnBackFromInfoAdmin").addEventListener("click", () => showSub("viewMenu"));
+
+document.getElementById("infoAdminSearchInput").addEventListener("input", function () {
+  infoAdminSearchQuery = this.value.trim().toLowerCase();
+  infoAdminPage = 1;
+  renderInfoAdminList();
+});
+document.getElementById("infoAdminTypeFilter").addEventListener("change", function () {
+  infoAdminTypeFilterValue = this.value;
+  infoAdminPage = 1;
+  renderInfoAdminList();
+});
+
+async function renderInfoAdminList() {
+  let items = await loadInfoItems("semua");
+  if (infoAdminTypeFilterValue !== "semua") {
+    items = items.filter((i) => i.type === infoAdminTypeFilterValue);
+  }
+  if (infoAdminSearchQuery) {
+    items = items.filter((i) => i.title.toLowerCase().includes(infoAdminSearchQuery));
+  }
+
+  const list = document.getElementById("infoAdminList");
+  if (items.length === 0) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <h3>Belum ada informasi</h3>
+        <p>${infoAdminSearchQuery ? "Tidak ada informasi yang cocok dengan pencarian." : "Klik \"Tambahkan Informasi\" untuk membuat yang pertama."}</p>
+      </div>`;
+    renderPagination("infoAdminPagination", 0, PAGE_SIZE, 1, () => {});
+    return;
+  }
+
+  const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+  if (infoAdminPage > totalPages) infoAdminPage = totalPages;
+  const start = (infoAdminPage - 1) * PAGE_SIZE;
+  const pageItems = items.slice(start, start + PAGE_SIZE);
+
+  list.innerHTML = pageItems
+    .map(
+      (i) => `
+    <div class="admin-post-item">
+      <div class="api-body">
+        <div class="api-title">${escapeHtmlAdmin(i.title)}</div>
+        <div class="api-meta">${escapeHtmlAdmin(INFO_TYPE_LABELS[i.type] || i.type)}</div>
+      </div>
+      <div class="api-actions">
+        <button type="button" class="btn-edit" data-id="${i.id}">Edit</button>
+        <button type="button" class="btn-delete" data-id="${i.id}">Hapus</button>
+      </div>
+    </div>`
+    )
+    .join("");
+
+  list.querySelectorAll(".btn-edit").forEach((btn) =>
+    btn.addEventListener("click", () => openEditInfoItemModal(btn.getAttribute("data-id")))
+  );
+  list.querySelectorAll(".btn-delete").forEach((btn) =>
+    btn.addEventListener("click", () => deleteInfoItemConfirm(btn.getAttribute("data-id")))
+  );
+
+  renderPagination("infoAdminPagination", items.length, PAGE_SIZE, infoAdminPage, (page) => {
+    infoAdminPage = page;
+    renderInfoAdminList();
+  });
+}
+
+const infoItemModalBackdrop = document.getElementById("infoItemModalBackdrop");
+const infoItemTitleEl = document.getElementById("infoItemTitle");
+const infoItemTypeEl = document.getElementById("infoItemType");
+const infoItemContentEl = document.getElementById("infoItemContent");
+const infoItemGameLinkEl = document.getElementById("infoItemGameLink");
+const infoItemGameLinkLabelEl = document.getElementById("infoItemGameLinkLabel");
+
+function updateInfoItemGameLinkVisibility() {
+  const isInfoAdmin = infoItemTypeEl.value === "info-admin";
+  infoItemGameLinkEl.style.display = isInfoAdmin ? "none" : "";
+  infoItemGameLinkLabelEl.textContent = isInfoAdmin ? "Link Game (Info Admin tidak tersedia)" : "Link Game";
+}
+infoItemTypeEl.addEventListener("change", updateInfoItemGameLinkVisibility);
+
+document.getElementById("btnOpenAddInfoItem").addEventListener("click", () => {
+  currentEditingInfoItemId = null;
+  document.getElementById("infoItemModalTitle").textContent = "Tambahkan Informasi";
+  infoItemTitleEl.value = "";
+  infoItemTypeEl.value = "update-game";
+  refreshCustomSelect(infoItemTypeEl);
+  infoItemContentEl.value = "";
+  infoItemGameLinkEl.value = "";
+  updateInfoItemGameLinkVisibility();
+  infoItemModalBackdrop.classList.add("show");
+});
+
+async function openEditInfoItemModal(id) {
+  const items = await loadInfoItems("semua");
+  const item = items.find((i) => i.id === id);
+  if (!item) return;
+  currentEditingInfoItemId = id;
+  document.getElementById("infoItemModalTitle").textContent = "Edit Informasi";
+  infoItemTitleEl.value = item.title;
+  infoItemTypeEl.value = item.type;
+  refreshCustomSelect(infoItemTypeEl);
+  infoItemContentEl.value = item.content;
+  infoItemGameLinkEl.value = item.gameLink || "";
+  updateInfoItemGameLinkVisibility();
+  infoItemModalBackdrop.classList.add("show");
+}
+
+document.getElementById("btnCancelInfoItem").addEventListener("click", () => {
+  infoItemModalBackdrop.classList.remove("show");
+});
+infoItemModalBackdrop.addEventListener("click", function (e) {
+  if (e.target === infoItemModalBackdrop) infoItemModalBackdrop.classList.remove("show");
+});
+
+document.getElementById("btnSaveInfoItem").addEventListener("click", async function () {
+  const title = infoItemTitleEl.value.trim();
+  const type = infoItemTypeEl.value;
+  const content = infoItemContentEl.value.trim();
+  const gameLink = infoItemGameLinkEl.value.trim();
+  if (!title || !content) {
+    showToast("Judul dan isi informasi wajib diisi");
+    return;
+  }
+  try {
+    if (currentEditingInfoItemId) {
+      await updateInfoItem(currentEditingInfoItemId, title, type, content, gameLink);
+      showToast("Informasi diperbarui");
+    } else {
+      await addInfoItem(title, type, content, gameLink);
+      showToast("Informasi ditambahkan");
+    }
+    infoItemModalBackdrop.classList.remove("show");
+    renderInfoAdminList();
+  } catch (err) {
+    showToast("Gagal menyimpan informasi — coba lagi.");
+  }
+});
+
+function deleteInfoItemConfirm(id) {
+  openConfirmModal(
+    "Hapus informasi ini secara permanen?",
+    async function () {
+      try {
+        await deleteInfoItem(id);
+        renderInfoAdminList();
+        showToast("Informasi dihapus");
+      } catch (err) {
+        showToast("Gagal menghapus — coba lagi.");
+      }
+    },
+    { title: "Hapus Informasi", confirmLabel: "Ya, Hapus" }
+  );
+}
 
 // =========================================================
 // PENAMPIL FILE (read-only, data live dari GitHub — lihat js/vfs.js)
@@ -3617,16 +3841,35 @@ async function renderInfoDasar() {
     document.getElementById("infoSiteName").textContent = "Gagal memuat";
   }
 
+  const laporReports = reports.filter((r) => (r.formType || "lapor") === "lapor");
+  const requestReports = reports.filter((r) => r.formType === "request");
+
   document.getElementById("infoTotalPosts").textContent = posts.length;
-  document.getElementById("infoTotalReports").textContent = reports.length;
-  document.getElementById("infoReportsPending").textContent = reports.filter(
+  document.getElementById("infoTotalReports").textContent = laporReports.length;
+  document.getElementById("infoReportsPending").textContent = laporReports.filter(
     (r) => (r.status || "belum") === "belum"
   ).length;
-  document.getElementById("infoReportsSedang").textContent = reports.filter(
+  document.getElementById("infoReportsSedang").textContent = laporReports.filter(
     (r) => (r.status || "belum") === "sedang"
   ).length;
-  document.getElementById("infoReportsSelesai").textContent = reports.filter(
+  document.getElementById("infoReportsSelesai").textContent = laporReports.filter(
     (r) => (r.status || "belum") === "selesai"
+  ).length;
+  document.getElementById("infoReportsDitolak").textContent = laporReports.filter(
+    (r) => r.status === "ditolak"
+  ).length;
+  document.getElementById("infoTotalRequests").textContent = requestReports.length;
+  document.getElementById("infoRequestsPending").textContent = requestReports.filter(
+    (r) => (r.status || "belum") === "belum"
+  ).length;
+  document.getElementById("infoRequestsSedang").textContent = requestReports.filter(
+    (r) => (r.status || "belum") === "sedang"
+  ).length;
+  document.getElementById("infoRequestsSelesai").textContent = requestReports.filter(
+    (r) => (r.status || "belum") === "selesai"
+  ).length;
+  document.getElementById("infoRequestsDitolak").textContent = requestReports.filter(
+    (r) => r.status === "ditolak"
   ).length;
   document.getElementById("infoStorageSize").textContent = formatBytes(getStorageSizeEstimate());
 }
@@ -4096,7 +4339,9 @@ function openTrashList(type) {
   document.getElementById("trashSearchInput").value = "";
   document.getElementById("trashSortSelect").value = "az";
   refreshCustomSelect(document.getElementById("trashSortSelect"));
-  document.getElementById("recycleBinListHeading").textContent = type === "posts" ? "Postingan" : "Laporan";
+  document.getElementById("recycleBinListHeading").textContent = type === "posts" ? "Postingan" : "Formulir";
+  document.getElementById("trashSearchInput").placeholder =
+    type === "posts" ? "Cari nama postingan" : "Cari nama laporan/request";
   showSub("viewRecycleBinList");
   renderTrashList();
 }

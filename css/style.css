@@ -277,6 +277,56 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   padding-left: 18px;
 }
 
+/* ---------------- Sidebar: submenu dropdown (Formulir / Panduan) ---------------- */
+.sidebar-nav .has-submenu { display: flex; flex-direction: column; }
+.submenu-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-weight: 600;
+  font-size: .98rem;
+  color: #fff;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background .2s ease;
+}
+.submenu-toggle svg:not(.submenu-chevron) { width: 19px; height: 19px; flex: 0 0 auto; opacity: .9; }
+.submenu-toggle span { flex: 1; }
+.submenu-toggle svg.submenu-chevron { width: 15px; height: 15px; flex: 0 0 auto; transition: transform .2s ease; }
+.submenu-toggle:hover { background: rgba(255,255,255,0.1); }
+.has-submenu.open .submenu-toggle svg.submenu-chevron { transform: rotate(180deg); }
+.submenu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: max-height .25s ease;
+}
+.has-submenu.open .submenu { max-height: 300px; }
+.submenu a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px 11px 30px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: .9rem;
+  opacity: .92;
+  transition: background .2s ease;
+}
+.submenu a svg { width: 17px; height: 17px; flex: 0 0 auto; opacity: .9; }
+.submenu a:hover, .submenu a.active { background: rgba(255,255,255,0.14); }
+
 .sidebar-foot {
   margin-top: auto;
   padding-top: 18px;
@@ -690,6 +740,104 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 .game-index-row:hover .gi-title { color: var(--sky-700); }
 
+/* ---------------- Update Info (web/info.html) ---------------- */
+.info-filter-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin: -6px 0 18px;
+}
+.info-filter-tab {
+  flex: 0 0 auto;
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1.5px solid var(--sky-200);
+  background: var(--surface);
+  color: var(--sky-700);
+  font-weight: 700;
+  font-size: .86rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+.info-filter-tab:hover { background: var(--sky-50); }
+.info-filter-tab.active { background: var(--sky-500); border-color: var(--sky-500); color: #fff; }
+
+.info-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.info-item-card {
+  background: var(--surface);
+  border: 1.5px solid var(--card-border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 18px;
+}
+.info-item-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.info-item-icon {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+.info-item-icon svg { width: 22px; height: 22px; }
+.info-item-icon.type-update-game { background: linear-gradient(135deg, var(--sky-500), var(--sky-700)); }
+.info-item-icon.type-bug-fix { background: linear-gradient(135deg, #f0b45c, #d98b2b); }
+.info-item-icon.type-info-admin { background: linear-gradient(135deg, #7fd4c0, #2f9d82); }
+.info-item-headtext { flex: 1 1 auto; min-width: 0; padding-top: 6px; }
+.info-item-title {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 800;
+  font-size: 1.02rem;
+  color: var(--ink);
+  line-height: 1.35;
+}
+.info-item-badge {
+  flex: 0 0 auto;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: .7rem;
+  font-weight: 800;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+  color: #fff;
+  margin-top: 6px;
+}
+.info-item-badge.type-update-game { background: var(--sky-500); }
+.info-item-badge.type-bug-fix { background: #d98b2b; }
+.info-item-badge.type-info-admin { background: #2f9d82; }
+.info-item-content {
+  font-size: .92rem;
+  color: var(--ink-soft);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  margin-bottom: 12px;
+}
+.info-item-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--card-border-color);
+  font-size: .8rem;
+}
+.info-item-date { color: var(--ink-soft); }
+.info-item-gamebtn { font-weight: 700; color: var(--sky-500); }
+.info-item-gamebtn:hover { color: var(--sky-700); }
+
 /* ---------------- Footer ---------------- */
 .site-footer {
   margin-top: 46px;
@@ -954,6 +1102,59 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   color: var(--ink-soft);
   margin-top: 3px;
 }
+/* ---------------- Modal Konfirmasi Umum (mis. sebelum Kirim laporan/request) ---------------- */
+.confirm-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(8, 22, 40, 0.86);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.confirm-dialog-box {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  max-width: 380px;
+  width: 100%;
+  padding: 22px 20px;
+}
+.confirm-dialog-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--sky-700);
+  margin-bottom: 10px;
+}
+.confirm-dialog-message {
+  font-size: .92rem;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+.confirm-dialog-actions {
+  display: flex;
+  gap: 10px;
+}
+.confirm-dialog-actions button {
+  flex: 1;
+  padding: 11px 14px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: .9rem;
+  cursor: pointer;
+  border: 1.5px solid var(--sky-300);
+  background: var(--surface);
+  color: var(--sky-700);
+}
+.confirm-dialog-actions button.confirm-dialog-ok {
+  border: none;
+  background: var(--sky-500);
+  color: #fff;
+}
+
 .share-modal-apps {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1222,6 +1423,25 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 .form-field input[type="text"]:focus,
 .form-field textarea:focus { border-color: var(--sky-500); }
+.form-field select {
+  width: 100%;
+  padding: 13px 15px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--sky-200);
+  font-size: .96rem;
+  font-family: inherit;
+  outline: none;
+  background: var(--surface);
+  color: var(--ink);
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232fa8e0' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
+.form-field select:focus { border-color: var(--sky-500); }
 .form-field .file-upload-box {
   border: 2px dashed var(--sky-300);
   border-radius: var(--radius-md);
@@ -1378,6 +1598,50 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 .menubar-inner a svg { width: 17px; height: 17px; opacity: .9; }
 .menubar-inner a:hover, .menubar-inner a.active { color: var(--sky-500); }
+
+/* ---------------- Menu bar: dropdown (Formulir / Panduan) ---------------- */
+.menubar-dropdown { position: relative; }
+.menubar-dropdown-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: .92rem;
+  color: var(--sky-700);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  white-space: nowrap;
+  transition: color .2s ease;
+}
+.menubar-dropdown-toggle svg { width: 17px; height: 17px; opacity: .9; }
+.menubar-dropdown-toggle svg.submenu-chevron { width: 13px; height: 13px; transition: transform .2s ease; }
+.menubar-dropdown-toggle:hover { color: var(--sky-500); }
+.menubar-dropdown.open .menubar-dropdown-toggle svg.submenu-chevron { transform: rotate(180deg); }
+.menubar-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 14px);
+  left: -14px;
+  min-width: 200px;
+  background: var(--surface);
+  border: 1px solid var(--sky-150);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-soft);
+  padding: 6px;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 40;
+}
+.menubar-dropdown.open .menubar-dropdown-menu { display: flex; }
+.menubar-dropdown-menu a {
+  padding: 9px 10px;
+  border-radius: 8px;
+  color: var(--ink) !important;
+}
+.menubar-dropdown-menu a:hover { background: var(--sky-50, rgba(47,168,224,0.1)); color: var(--sky-500) !important; }
 
 /* ---------------- Footer: tombol Tambah ke Layar Utama ---------------- */
 .install-wrap {

@@ -141,11 +141,39 @@ function initChrome() {
     }
   });
 
-  // Mark active nav link (sidebar mobile + menubar desktop)
+  // Mark active nav link (sidebar mobile + menubar desktop, termasuk yang di dalam submenu/dropdown)
   const current = window.location.pathname.split("/").pop() || "index.html";
-  document.querySelectorAll(".sidebar-nav a, .menubar-inner a").forEach((a) => {
+  document.querySelectorAll(".sidebar-nav a, .menubar-inner a, .menubar-dropdown-menu a").forEach((a) => {
     const href = a.getAttribute("href");
-    if (href === current) a.classList.add("active");
+    if (href === current) {
+      a.classList.add("active");
+      const submenuLi = a.closest(".has-submenu");
+      if (submenuLi) submenuLi.classList.add("open");
+      const dropdownWrap = a.closest(".menubar-dropdown");
+      if (dropdownWrap) dropdownWrap.classList.add("open");
+    }
+  });
+
+  // ---------------- Sidebar: submenu dropdown (Formulir / Panduan) ----------------
+  document.querySelectorAll(".submenu-toggle").forEach((btn) => {
+    btn.addEventListener("click", function () {
+      const li = btn.closest(".has-submenu");
+      if (li) li.classList.toggle("open");
+    });
+  });
+
+  // ---------------- Menubar desktop: dropdown (Formulir / Panduan) ----------------
+  document.querySelectorAll(".menubar-dropdown-toggle").forEach((btn) => {
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      const wrap = btn.closest(".menubar-dropdown");
+      const wasOpen = wrap.classList.contains("open");
+      document.querySelectorAll(".menubar-dropdown.open").forEach((d) => d.classList.remove("open"));
+      if (!wasOpen) wrap.classList.add("open");
+    });
+  });
+  document.addEventListener("click", function () {
+    document.querySelectorAll(".menubar-dropdown.open").forEach((d) => d.classList.remove("open"));
   });
 }
 
@@ -584,12 +612,42 @@ function shareAppAction(appId, url, title, text, thumbUrl) {
   }
 }
 
+/** Modal konfirmasi umum untuk halaman publik (mis. sebelum kirim Laporkan
+ * Masalah / Request Game). `onConfirm` dipanggil kalau user menekan tombol OK. */
+function openConfirmDialog(message, onConfirm, opts) {
+  opts = opts || {};
+  const backdrop = document.createElement("div");
+  backdrop.className = "confirm-dialog-backdrop";
+  backdrop.innerHTML = `
+    <div class="confirm-dialog-box">
+      <div class="confirm-dialog-title">${escapeHtml(opts.title || "Konfirmasi")}</div>
+      <div class="confirm-dialog-message">${escapeHtml(message)}</div>
+      <div class="confirm-dialog-actions">
+        <button type="button" class="confirm-dialog-cancel">${escapeHtml(opts.cancelLabel || "Batal")}</button>
+        <button type="button" class="confirm-dialog-ok">${escapeHtml(opts.confirmLabel || "Kirim")}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(backdrop);
+
+  function close() {
+    backdrop.remove();
+  }
+  backdrop.querySelector(".confirm-dialog-cancel").addEventListener("click", close);
+  backdrop.addEventListener("click", (e) => {
+    if (e.target === backdrop) close();
+  });
+  backdrop.querySelector(".confirm-dialog-ok").addEventListener("click", () => {
+    close();
+    if (onConfirm) onConfirm();
+  });
+}
+
 function openShareModal(post) {
   const url = window.location.href;
   const title = post.title;
   const text = `${title} — Fueeru Game`;
-  const genres = post.genres || [];
-  const metaText = [post.jenis, genres.join(", ")].filter(Boolean).join(" • ");
+  const platform = post.platform || [];
+  const metaText = [platform.join(", "), post.bahasa, post.jenis].filter(Boolean).join(" • ");
 
   const backdrop = document.createElement("div");
   backdrop.className = "share-modal-backdrop";

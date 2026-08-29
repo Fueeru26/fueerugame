@@ -53,7 +53,21 @@ function rowToReport(r) {
     content: r.content,
     attachment: r.attachment ? JSON.parse(r.attachment) : null,
     date: r.date,
-    status: r.status
+    status: r.status,
+    formType: r.formType || "lapor",
+    gameName: r.gameName || null,
+    engine: r.engine || null,
+    gameLink: r.gameLink || null
+  };
+}
+function rowToInfoItem(r) {
+  return {
+    id: r.id,
+    title: r.title,
+    type: r.type,
+    content: r.content,
+    gameLink: r.gameLink || null,
+    date: r.date
   };
 }
 
@@ -1093,20 +1107,37 @@ async function handleReports(request, env, method) {
   }
   if (method === "POST") {
     const body = await request.json().catch(() => null);
-    if (!body || !body.title || !body.content) return badRequest("Data laporan tidak lengkap");
-    const id = newId("report");
+    if (!body) return badRequest("Data tidak lengkap");
+    const formType = body.formType === "request" ? "request" : "lapor";
+
+    let title, content;
+    if (formType === "request") {
+      if (!body.gameName || !body.engine || !body.gameLink) return badRequest("Data request game tidak lengkap");
+      title = body.gameName;
+      content = "";
+    } else {
+      if (!body.title || !body.content) return badRequest("Data laporan tidak lengkap");
+      title = body.title;
+      content = body.content;
+    }
+
+    const id = newId(formType === "request" ? "request" : "report");
     await env.DB.prepare(
-      "INSERT INTO reports (id, title, name, contactMedia, content, attachment, date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+      "INSERT INTO reports (id, title, name, contactMedia, content, attachment, date, status, formType, gameName, engine, gameLink) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     )
       .bind(
         id,
-        body.title,
+        title,
         body.name || "",
         body.contactMedia || "",
-        body.content,
+        content,
         body.attachment ? JSON.stringify(body.attachment) : null,
         new Date().toISOString(),
-        "belum"
+        "belum",
+        formType,
+        formType === "request" ? body.gameName : null,
+        formType === "request" ? body.engine : null,
+        formType === "request" ? body.gameLink : null
       )
       .run();
     return json({ ok: true, id });
@@ -1130,6 +1161,55 @@ async function handleReportById(request, env, method, id) {
       .bind(row.id, JSON.stringify(rowToReport(row)), new Date().toISOString())
       .run();
     await env.DB.prepare("DELETE FROM reports WHERE id = ?").bind(id).run();
+    return json({ ok: true });
+  }
+  return badRequest("Method tidak didukung");
+}
+
+/** [PUBLIK: GET, ADMIN: POST] Daftar Update Info (Update Game / Bug Fix / Info Admin). */
+async function handleInfoItems(request, env, method) {
+  if (method === "GET") {
+    const url = new URL(request.url);
+    const type = url.searchParams.get("type");
+    let stmt;
+    if (type && type !== "semua") {
+      stmt = env.DB.prepare("SELECT * FROM info_items WHERE type = ? ORDER BY date DESC").bind(type);
+    } else {
+      stmt = env.DB.prepare("SELECT * FROM info_items ORDER BY date DESC");
+    }
+    const { results } = await stmt.all();
+    return json(results.map(rowToInfoItem));
+  }
+  if (method === "POST") {
+    if (!(await requireAdmin(request, env))) return unauthorized();
+    const body = await request.json().catch(() => null);
+    if (!body || !body.title || !body.type || !body.content) return badRequest("Data informasi tidak lengkap");
+    const id = newId("info");
+    const now = new Date().toISOString();
+    await env.DB.prepare(
+      "INSERT INTO info_items (id, title, type, content, gameLink, date, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    )
+      .bind(id, body.title, body.type, body.content, body.type === "info-admin" ? null : body.gameLink || null, now, now)
+      .run();
+    return json({ ok: true, id });
+  }
+  return badRequest("Method tidak didukung");
+}
+
+async function handleInfoItemById(request, env, method, id) {
+  if (!(await requireAdmin(request, env))) return unauthorized();
+  if (method === "PUT") {
+    const body = await request.json().catch(() => null);
+    if (!body || !body.title || !body.type || !body.content) return badRequest("Data informasi tidak lengkap");
+    await env.DB.prepare(
+      "UPDATE info_items SET title = ?, type = ?, content = ?, gameLink = ? WHERE id = ?"
+    )
+      .bind(body.title, body.type, body.content, body.type === "info-admin" ? null : body.gameLink || null, id)
+      .run();
+    return json({ ok: true });
+  }
+  if (method === "DELETE") {
+    await env.DB.prepare("DELETE FROM info_items WHERE id = ?").bind(id).run();
     return json({ ok: true });
   }
   return badRequest("Method tidak didukung");
@@ -1184,7 +1264,7 @@ async function handleTrashItem(request, env, method, type, id) {
         .run();
     } else {
       await env.DB.prepare(
-        "INSERT INTO reports (id, title, name, contactMedia, content, attachment, date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+        "INSERT INTO reports (id, title, name, contactMedia, content, attachment, date, status, formType, gameName, engine, gameLink) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
       )
         .bind(
           item.id,
@@ -1194,7 +1274,11 @@ async function handleTrashItem(request, env, method, type, id) {
           item.content,
           item.attachment ? JSON.stringify(item.attachment) : null,
           item.date,
-          item.status || "belum"
+          item.status || "belum",
+          item.formType || "lapor",
+          item.gameName || null,
+          item.engine || null,
+          item.gameLink || null
         )
         .run();
     }
@@ -1400,6 +1484,11 @@ export default {
 
       m = path.match(/^\/api\/reports\/([^/]+)$/);
       if (m) return await handleReportById(request, env, method, decodeURIComponent(m[1]));
+
+      if (path === "/api/info-items") return await handleInfoItems(request, env, method);
+
+      m = path.match(/^\/api\/info-items\/([^/]+)$/);
+      if (m) return await handleInfoItemById(request, env, method, decodeURIComponent(m[1]));
 
       m = path.match(/^\/api\/trash\/([^/]+)$/);
       if (m) return await handleTrashList(request, env, method, m[1]);

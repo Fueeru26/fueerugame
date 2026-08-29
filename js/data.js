@@ -217,12 +217,22 @@ async function loadReports() {
   return apiCall("GET", "/api/reports", undefined, true);
 }
 
-/** [PUBLIK] Kirim 1 laporan baru. attachment = {name, dataUrl} | null */
+/** [PUBLIK] Kirim 1 laporan baru (Laporkan Masalah). attachment = {name, dataUrl} | null */
 async function addReport(title, name, content, attachment, contactMedia) {
   await apiCall(
     "POST",
     "/api/reports",
-    { title, name: name || "", contactMedia: contactMedia || "", content, attachment: attachment || null },
+    { formType: "lapor", title, name: name || "", contactMedia: contactMedia || "", content, attachment: attachment || null },
+    false
+  );
+}
+
+/** [PUBLIK] Kirim 1 permintaan Request Game baru. */
+async function addRequestGame(gameName, name, engine, gameLink, contactMedia) {
+  await apiCall(
+    "POST",
+    "/api/reports",
+    { formType: "request", gameName, name: name || "", engine, gameLink, contactMedia: contactMedia || "" },
     false
   );
 }
@@ -583,6 +593,53 @@ function recordReportSubmission() {
   } catch (e) {}
 }
 
+/* ---------------- Rate limit terpisah untuk Request Game (maks 3/hari) ---------------- */
+const REQUEST_RATE_KEY = "fueeru_request_rate";
+const REQUEST_RATE_LIMIT = 3;
+
+function getRequestCountToday() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(REQUEST_RATE_KEY) || "null");
+    if (!raw || raw.date !== _todayStr()) return 0;
+    return raw.count || 0;
+  } catch (e) {
+    return 0;
+  }
+}
+function canSubmitRequest() {
+  return getRequestCountToday() < REQUEST_RATE_LIMIT;
+}
+function recordRequestSubmission() {
+  try {
+    const count = getRequestCountToday() + 1;
+    localStorage.setItem(REQUEST_RATE_KEY, JSON.stringify({ date: _todayStr(), count: count }));
+  } catch (e) {}
+}
+
+/* ---------------- Update Info (web/info.html + Admin Panel) ---------------- */
+
+/** [PUBLIK] Daftar Update Info, opsional difilter berdasarkan jenis:
+ * "semua" | "update-game" | "bug-fix" | "info-admin" */
+async function loadInfoItems(type) {
+  const q = type && type !== "semua" ? "?type=" + encodeURIComponent(type) : "";
+  return apiCall("GET", "/api/info-items" + q, undefined, false);
+}
+
+/** [ADMIN] Tambah 1 Update Info baru. */
+async function addInfoItem(title, type, content, gameLink) {
+  return apiCall("POST", "/api/info-items", { title, type, content, gameLink: gameLink || null }, true);
+}
+
+/** [ADMIN] Ubah 1 Update Info. */
+async function updateInfoItem(id, title, type, content, gameLink) {
+  await apiCall("PUT", "/api/info-items/" + encodeURIComponent(id), { title, type, content, gameLink: gameLink || null }, true);
+}
+
+/** [ADMIN] Hapus 1 Update Info secara permanen. */
+async function deleteInfoItem(id) {
+  await apiCall("DELETE", "/api/info-items/" + encodeURIComponent(id), undefined, true);
+}
+
 // =========================================================
 // Halaman statis yang bisa diedit lewat Admin Panel (server, D1)
 // =========================================================
@@ -590,7 +647,8 @@ const DEFAULT_PAGE_TITLES = {
   tutorial: "Tutorial Main",
   "cara-download": "Cara Download",
   donasi: "Donasi",
-  tentang: "Tentang"
+  tentang: "Tentang",
+  fitur: "Fitur Tambahan"
 };
 
 /** [PUBLIK] Ambil { title, content } untuk 1 halaman. */

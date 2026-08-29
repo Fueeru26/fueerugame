@@ -4,7 +4,7 @@
 <script>(function(){try{var t=localStorage.getItem('fueeru_theme');if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pencarian — Fueeru Game</title>
+<title>Fitur Tambahan — Fueeru Game</title>
 
 <link rel="icon" type="image/png" href="../webpictures/logo.webp">
 <link rel="manifest" href="../manifest.json">
@@ -137,17 +137,10 @@
 <main class="container">
   <div class="layout-with-aside">
     <div class="main-col">
-  <div class="section-head" id="searchHeading"><h2>Hasil Pencarian</h2></div>
-
-  <form id="pageSearchForm" style="display:flex;gap:8px;margin:0 0 22px;background:var(--surface);border:1.5px solid var(--sky-200);border-radius:999px;padding:6px 6px 6px 18px;box-shadow:var(--shadow-card);">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="18" height="18" style="color:#8fd6fb;flex:0 0 auto;align-self:center;"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <input type="search" id="pageSearchInput" placeholder="Cari judul game…" aria-label="Cari game" style="flex:1;border:none;background:transparent;outline:none;font-size:1rem;font-family:inherit;color:var(--ink);padding:8px 0;">
-    <button type="submit" class="search-submit" aria-label="Cari">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    </button>
-  </form>
-
-  <div class="post-list" id="resultList"></div>
+  <div class="page-card">
+    <h1 class="page-title">Fitur Tambahan</h1>
+    <div class="post-detail-content" id="pageContentBody"></div>
+  </div>
     </div>
     <aside class="right-aside" id="rightAside">
       <div class="aside-block">
@@ -183,47 +176,10 @@
 <script src="../js/agegate.js"></script>
 <script>
 (async function () {
-  const params = new URLSearchParams(window.location.search);
-  const q = (params.get("q") || "").trim();
-  document.getElementById("pageSearchInput").value = q;
-  document.title = (q ? `Hasil "${q}"` : "Pencarian") + " — Fueeru Game";
-
-  document.getElementById("pageSearchForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-    const val = document.getElementById("pageSearchInput").value.trim();
-    window.location.href = "search.html" + (val ? "?q=" + encodeURIComponent(val) : "");
-  });
-
-  const allPosts = await getPublishedPosts();
-  const resultList = document.getElementById("resultList");
-  const heading = document.getElementById("searchHeading");
-
-  if (!q) {
-    heading.innerHTML = `<h2>Hasil Pencarian</h2>`;
-    resultList.innerHTML = `
-      <div class="empty-state">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <h3>Mulai pencarianmu</h3>
-        <p>Ketik judul game yang ingin kamu cari.</p>
-      </div>`;
-  } else {
-    heading.innerHTML = `<h2>Hasil untuk "${escapeHtml(q)}"</h2>`;
-    const results = allPosts.filter((p) =>
-      p.title.toLowerCase().includes(q.toLowerCase()) ||
-      p.jenis.toLowerCase().includes(q.toLowerCase()) ||
-      (p.genres || []).some((g) => g.toLowerCase().includes(q.toLowerCase()))
-    );
-    if (results.length === 0) {
-      resultList.innerHTML = `
-        <div class="empty-state">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <h3>Tidak ditemukan</h3>
-          <p>Tidak ada game yang cocok dengan "${escapeHtml(q)}". Coba kata kunci lain.</p>
-        </div>`;
-    } else {
-      resultList.innerHTML = results.map((p) => postRowHtml(p)).join("");
-    }
-  }
+  const pc = await getPageContent("fitur");
+  document.getElementById("pageContentBody").innerHTML = pc.content;
+  initSpoilers(document.getElementById("pageContentBody"));
+  initImgGalleries(document.getElementById("pageContentBody"));
 })();
 </script>
 
