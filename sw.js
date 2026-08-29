@@ -30,6 +30,7 @@ const PRECACHE_URLS = [
   "web/request.html",
   "web/info.html",
   "web/fitur.html",
+  "web/emulator.html",
   "web/search.html",
   "web/tentang.html",
   "web/list.html",

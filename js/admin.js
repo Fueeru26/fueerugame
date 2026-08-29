@@ -365,6 +365,7 @@ document.getElementById("btnOpenFormLapor").addEventListener("click", () => {
   document.getElementById("viewReportsHeading").textContent = "Laporkan Masalah";
   reportSearchQuery = "";
   document.getElementById("reportSearchInput").value = "";
+  document.getElementById("reportSearchInput").placeholder = "Cari judul, nama, atau isi laporan…";
   reportsPage = 1;
   showSub("viewReports");
   renderReportsList();
@@ -374,6 +375,7 @@ document.getElementById("btnOpenFormRequest").addEventListener("click", () => {
   document.getElementById("viewReportsHeading").textContent = "Request Game";
   reportSearchQuery = "";
   document.getElementById("reportSearchInput").value = "";
+  document.getElementById("reportSearchInput").placeholder = "Cari nama game, nama pengirim, atau link request…";
   reportsPage = 1;
   showSub("viewReports");
   renderReportsList();

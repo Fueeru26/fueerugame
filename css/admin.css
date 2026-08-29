@@ -732,7 +732,6 @@ body.admin-body {
   transition: transform .2s ease, box-shadow .2s ease;
 }
 .gradient-menu-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-soft); }
-.gradient-menu-card.gmc-span-2 { grid-column: 1 / -1; max-width: 260px; margin: 0 auto; }
 .gradient-menu-card:nth-child(2) { background: linear-gradient(135deg, #7fd4c0, var(--navy-700)); }
 .gradient-menu-card:nth-child(3) { background: linear-gradient(135deg, #e88fb0, var(--navy-700)); }
 .gradient-menu-card:nth-child(4) { background: linear-gradient(135deg, #f0b45c, var(--navy-700)); }

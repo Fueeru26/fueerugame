@@ -648,7 +648,8 @@ const DEFAULT_PAGE_TITLES = {
   "cara-download": "Cara Download",
   donasi: "Donasi",
   tentang: "Tentang",
-  fitur: "Fitur Tambahan"
+  fitur: "Fitur Tambahan",
+  emulator: "Emulator"
 };
 
 /** [PUBLIK] Ambil { title, content } untuk 1 halaman. */

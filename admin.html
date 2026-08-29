@@ -517,13 +517,19 @@
           </span>
           <span class="gmc-title">Tutorial Main</span>
         </button>
+        <button type="button" class="gradient-menu-card" data-page-id="emulator">
+          <span class="gmc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4H18a1 1 0 011 1v15l-2.5-1.5L14 20l-2.5-1.5L9 20l-2.5-1.5L4 20V6.5A2.5 2.5 0 016.5 4z"/><line x1="8" y1="8" x2="14" y2="8"/><line x1="8" y1="11.5" x2="14" y2="11.5"/><line x1="8" y1="15" x2="12" y2="15"/></svg>
+          </span>
+          <span class="gmc-title">Emulator</span>
+        </button>
         <button type="button" class="gradient-menu-card" data-page-id="donasi">
           <span class="gmc-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4H18a1 1 0 011 1v15l-2.5-1.5L14 20l-2.5-1.5L9 20l-2.5-1.5L4 20V6.5A2.5 2.5 0 016.5 4z"/><line x1="8" y1="8" x2="14" y2="8"/><line x1="8" y1="11.5" x2="14" y2="11.5"/><line x1="8" y1="15" x2="12" y2="15"/></svg>
           </span>
           <span class="gmc-title">Donasi</span>
         </button>
-        <button type="button" class="gradient-menu-card gmc-span-2" data-page-id="tentang">
+        <button type="button" class="gradient-menu-card" data-page-id="tentang">
           <span class="gmc-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4H18a1 1 0 011 1v15l-2.5-1.5L14 20l-2.5-1.5L9 20l-2.5-1.5L4 20V6.5A2.5 2.5 0 016.5 4z"/><line x1="8" y1="8" x2="14" y2="8"/><line x1="8" y1="11.5" x2="14" y2="11.5"/><line x1="8" y1="15" x2="12" y2="15"/></svg>
           </span>
@@ -696,11 +702,11 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="text" id="infoAdminSearchInput" placeholder="Cari judul Informasi...">
       </div>
-      <button type="button" class="btn-cancel" id="btnOpenAddInfoItem" style="width:100%;margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <button type="button" class="btn-add" id="btnOpenAddInfoItem">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Tambahkan Informasi
       </button>
-      <select id="infoAdminTypeFilter" class="info-text-input" style="margin-top:14px;">
+      <select id="infoAdminTypeFilter" class="info-text-input">
         <option value="semua">Semua</option>
         <option value="update-game">Update Game</option>
         <option value="bug-fix">Bug Fix</option>
@@ -1541,8 +1547,8 @@
         <option value="info-admin">Info Admin</option>
       </select>
 
-      <label style="margin-top:14px;">Isi Informasi</label>
-      <textarea id="infoItemContent" class="info-text-input" rows="8" placeholder="Tuliskan isi informasi..."></textarea>
+      <label style="margin-top:14px;">Isi Informasi (Kode HTML)</label>
+      <textarea id="infoItemContent" class="info-text-input" rows="8" placeholder="Tulis isi informasi dengan teks atau kode HTML..."></textarea>
 
       <label style="margin-top:14px;" id="infoItemGameLinkLabel">Link Game</label>
       <input type="text" id="infoItemGameLink" class="info-text-input" placeholder="Masukkan Link Game">

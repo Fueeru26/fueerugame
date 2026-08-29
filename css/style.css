@@ -563,11 +563,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   font-size: .8rem;
   line-height: 1.28;
   text-align: center;
+  color: var(--sky-700);
+  transition: color .2s ease;
   display: -webkit-box;
   -webkit-line-clamp: 5;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+.game-card:hover .gc-title { color: var(--sky-500); }
 
 .carousel-arrow {
   position: absolute;
@@ -652,12 +655,20 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .pill {
   display: inline-flex;
   align-items: center;
+  gap: 5px;
   background: var(--sky-100);
   color: var(--sky-700);
   padding: 3px 10px;
   border-radius: 999px;
   font-weight: 600;
 }
+.pill-icon { width: 13px; height: 13px; flex: 0 0 auto; opacity: .9; }
+.meta-row .meta-date, .post-detail-meta .meta-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.meta-icon { width: 14px; height: 14px; flex: 0 0 auto; opacity: .8; }
 
 /* ---------------- Pagination ---------------- */
 .pagination {
@@ -1419,6 +1430,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   font-family: inherit;
   outline: none;
   background: var(--surface);
+  color: var(--ink);
   resize: vertical;
 }
 .form-field input[type="text"]:focus,
@@ -1639,7 +1651,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .menubar-dropdown-menu a {
   padding: 9px 10px;
   border-radius: 8px;
-  color: var(--ink) !important;
+  color: var(--sky-700) !important;
+  font-weight: 700;
+  font-size: .92rem;
 }
 .menubar-dropdown-menu a:hover { background: var(--sky-50, rgba(47,168,224,0.1)); color: var(--sky-500) !important; }
 

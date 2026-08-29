@@ -269,6 +269,36 @@ function initCarouselArrows(trackId, prevId, nextId) {
   if (next) next.addEventListener("click", () => track.scrollBy({ left: scrollAmount, behavior: "smooth" }));
 }
 
+/** Ikon-ikon kecil untuk meta info postingan (tanggal & kategori). */
+function calendarIconSvg() {
+  return `<svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+}
+function jenisIconSvg() {
+  return `<svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="6"/><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><circle cx="15" cy="13" r="1" fill="currentColor" stroke="none"/><circle cx="18" cy="11" r="1" fill="currentColor" stroke="none"/></svg>`;
+}
+function platformIconSvg(name) {
+  const n = (name || "").toLowerCase();
+  if (n === "android") {
+    return `<svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="8" width="12" height="10" rx="2"/><line x1="9" y1="4" x2="9" y2="8"/><line x1="15" y1="4" x2="15" y2="8"/><line x1="3" y1="10" x2="3" y2="16"/><line x1="21" y1="10" x2="21" y2="16"/><line x1="9" y1="20" x2="9" y2="22"/><line x1="15" y1="20" x2="15" y2="22"/><circle cx="9.5" cy="12" r=".6" fill="currentColor" stroke="none"/><circle cx="14.5" cy="12" r=".6" fill="currentColor" stroke="none"/></svg>`;
+  }
+  if (n === "pc") {
+    return `<svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><line x1="8" y1="20" x2="16" y2="20"/><line x1="12" y1="16" x2="12" y2="20"/></svg>`;
+  }
+  return `<svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>`;
+}
+function bahasaIconSvg() {
+  return `<svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a14 14 0 010 18a14 14 0 010-18"/></svg>`;
+}
+/** Baris meta info (tanggal + jenis + platform + bahasa) dengan ikon,
+ * dipakai bareng di daftar postingan (postRowHtml) & halaman detail post. */
+function metaRowInnerHtml(p) {
+  return `
+    <span class="meta-date">${calendarIconSvg()}${escapeHtml(formatDate(p.date))}</span>
+    <span class="pill">${jenisIconSvg()}${escapeHtml(p.jenis)}</span>
+    ${(p.platform || []).map((t) => `<span class="pill">${platformIconSvg(t)}${escapeHtml(t)}</span>`).join("")}
+    ${p.bahasa ? `<span class="pill">${bahasaIconSvg()}${escapeHtml(p.bahasa)}</span>` : ""}`;
+}
+
 /** Render 1 baris post (dipakai New Update, Jenis/Genre, Search).
  * opts.showPreview: tampilkan preview isi (default true)
  * opts.showGenres: tampilkan chip genre (default true)
@@ -289,12 +319,7 @@ function postRowHtml(p, opts) {
           <div class="prow-title">${escapeHtml(p.title)}</div>
         </a>
         ${showPreview ? `<div class="prow-preview">${escapeHtml(makePreview(p.content))}</div>` : ""}
-        <div class="meta-row">
-          <span>${escapeHtml(formatDate(p.date))}</span>
-          <span class="pill">${escapeHtml(p.jenis)}</span>
-          ${(p.platform || []).map((t) => `<span class="pill">${escapeHtml(t)}</span>`).join("")}
-          ${p.bahasa ? `<span class="pill">${escapeHtml(p.bahasa)}</span>` : ""}
-        </div>
+        <div class="meta-row">${metaRowInnerHtml(p)}</div>
         ${showGenres && genres.length ? `<div class="genre-chip-row">${genres.map((g) => `<span class="genre-chip">${escapeHtml(g)}</span>`).join("")}</div>` : ""}
       </div>
     </div>`;

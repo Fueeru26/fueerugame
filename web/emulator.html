@@ -4,8 +4,8 @@
 <script>(function(){try{var t=localStorage.getItem('fueeru_theme');if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Halaman Tidak Ditemukan — Fueeru Game</title>
-<meta name="description" content="Halaman yang kamu cari tidak ditemukan.">
+<title>Emulator — Fueeru Game</title>
+
 <link rel="icon" type="image/png" href="../webpictures/logo.webp">
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#2fa8e0">
@@ -136,12 +136,28 @@
   </div>
 </div>
 
-<main class="container" style="max-width:640px;">
-  <div class="empty-state" style="padding:40px 12px;">
-    <img src="../webpictures/404.webp" alt="Halaman tidak ditemukan" style="max-width:100%;width:320px;height:auto;margin:0 auto 18px;display:block;">
-    <h3>Halaman Tidak Ditemukan</h3>
-    <p>Halaman yang kamu cari mungkin sudah dipindahkan, dihapus, atau tautannya salah.</p>
-    <p><a href="../index.html" class="back-link" style="justify-content:center;margin-top:10px;">← Kembali ke Beranda</a></p>
+<main class="container">
+  <div class="layout-with-aside">
+    <div class="main-col">
+  <div class="page-card">
+    <h1 class="page-title">Emulator</h1>
+    <div class="post-detail-content" id="pageContentBody"></div>
+  </div>
+    </div>
+    <aside class="right-aside" id="rightAside">
+      <div class="aside-block">
+        <h3 class="aside-title">Game Populer</h3>
+        <div class="aside-populer" id="asidePopuler"></div>
+      </div>
+      <div class="aside-block">
+        <h3 class="aside-title">Kategori</h3>
+        <div class="aside-kategori" id="asideKategori"></div>
+      </div>
+      <div class="aside-block">
+        <h3 class="aside-title">Rekomendasi Genre</h3>
+        <div class="aside-genre" id="asideGenre"></div>
+      </div>
+    </aside>
   </div>
 </main>
 
@@ -157,8 +173,17 @@
 </footer>
 
 <script>window.ASSET_BASE = "../";</script>
+<script src="../js/data.js"></script>
 <script src="../js/main.js"></script>
 <script src="../js/agegate.js"></script>
+<script>
+(async function () {
+  const pc = await getPageContent("emulator");
+  document.getElementById("pageContentBody").innerHTML = pc.content;
+  initSpoilers(document.getElementById("pageContentBody"));
+  initImgGalleries(document.getElementById("pageContentBody"));
+})();
+</script>
 
 </body>
 </html>

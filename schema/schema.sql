@@ -127,7 +127,8 @@ INSERT OR IGNORE INTO pages (id, title, content) VALUES
   ('cara-download', 'Cara Download', '<p>Isi halaman Cara Download.</p>'),
   ('donasi', 'Donasi', '<p>Isi halaman Donasi.</p>'),
   ('tentang', 'Tentang', '<p>Isi halaman Tentang.</p>'),
-  ('fitur', 'Fitur Tambahan', '<p>Isi halaman Fitur Tambahan.</p>');
+  ('fitur', 'Fitur Tambahan', '<p>Isi halaman Fitur Tambahan.</p>'),
+  ('emulator', 'Emulator', '<p>Isi halaman Emulator.</p>');
 
 CREATE TABLE IF NOT EXISTS redirect_sections (
   id TEXT PRIMARY KEY,
