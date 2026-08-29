@@ -5,33 +5,77 @@
    Font: Poppins (heading) + Inter (body) — dua font populer.
    ========================================================= */
 
-/* Font utama situs — Quicksand (lokal, dari folder /font).
+/* Font utama situs — Qanelas (lokal, dari folder /font).
    Menggantikan Poppins/Inter (Google Fonts) yang dipakai sebelumnya. */
 @font-face {
-  font-family: 'Quicksand';
-  src: url('../font/Quicksand_Book.otf') format('opentype');
+  font-family: 'Qanelas';
+  src: url('../font/Qanelas-Regular.woff2') format('woff2'),
+       url('../font/Qanelas-Regular.woff') format('woff'),
+       url('../font/Qanelas-Regular.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'Quicksand';
-  src: url('../font/Quicksand_Bold.otf') format('opentype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Quicksand';
-  src: url('../font/Quicksand_Book_Oblique.otf') format('opentype');
+  font-family: 'Qanelas';
+  src: url('../font/Qanelas-RegularItalic.woff2') format('woff2'),
+       url('../font/Qanelas-RegularItalic.woff') format('woff'),
+       url('../font/Qanelas-RegularItalic.ttf') format('truetype');
   font-weight: 400;
   font-style: italic;
   font-display: swap;
 }
 @font-face {
-  font-family: 'Quicksand';
-  src: url('../font/Quicksand_Bold_Oblique.otf') format('opentype');
+  font-family: 'Qanelas';
+  src: url('../font/Qanelas-SemiBold.woff2') format('woff2'),
+       url('../font/Qanelas-SemiBold.woff') format('woff'),
+       url('../font/Qanelas-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Qanelas';
+  src: url('../font/Qanelas-SemiBoldItalic.woff2') format('woff2'),
+       url('../font/Qanelas-SemiBoldItalic.woff') format('woff'),
+       url('../font/Qanelas-SemiBoldItalic.ttf') format('truetype');
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Qanelas';
+  src: url('../font/Qanelas-Bold.woff2') format('woff2'),
+       url('../font/Qanelas-Bold.woff') format('woff'),
+       url('../font/Qanelas-Bold.ttf') format('truetype');
   font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Qanelas';
+  src: url('../font/Qanelas-BoldItalic.woff2') format('woff2'),
+       url('../font/Qanelas-BoldItalic.woff') format('woff'),
+       url('../font/Qanelas-BoldItalic.ttf') format('truetype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Qanelas';
+  src: url('../font/Qanelas-ExtraBold.woff2') format('woff2'),
+       url('../font/Qanelas-ExtraBold.woff') format('woff'),
+       url('../font/Qanelas-ExtraBold.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Qanelas';
+  src: url('../font/Qanelas-ExtraBoldItalic.woff2') format('woff2'),
+       url('../font/Qanelas-ExtraBoldItalic.woff') format('woff'),
+       url('../font/Qanelas-ExtraBoldItalic.ttf') format('truetype');
+  font-weight: 800;
   font-style: italic;
   font-display: swap;
 }
@@ -131,7 +175,7 @@ html { scroll-behavior: smooth; }
 
 body {
   margin: 0;
-  font-family: 'Quicksand', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-family: 'Qanelas', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   color: var(--ink);
   background: linear-gradient(180deg, var(--sky-50) 0%, var(--surface) 340px, var(--surface) 100%);
   min-height: 100vh;
@@ -140,7 +184,7 @@ body {
 }
 
 h1, h2, h3, h4, .brand-font {
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Qanelas', sans-serif;
   margin: 0;
   color: var(--ink);
 }
@@ -270,7 +314,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   flex: 0 0 auto;
 }
 .sidebar-head .brand-name {
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Qanelas', sans-serif;
   font-weight: 800;
   font-size: 1.15rem;
   letter-spacing: .3px;
@@ -515,7 +559,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 #randomHeading,
 #updateHeading {
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Qanelas', sans-serif;
   letter-spacing: .1px;
 }
 .section-head::before {
@@ -587,7 +631,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   min-height: 0;
 }
 .game-card .gc-title {
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Qanelas', sans-serif;
   font-weight: 600;
   font-size: .8rem;
   line-height: 1.28;
@@ -655,7 +699,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 .post-row .prow-body { min-width: 0; flex: 1; }
 .post-row .prow-title {
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Qanelas', sans-serif;
   font-weight: 600;
   font-size: 1.02rem;
   color: var(--sky-700);
@@ -763,7 +807,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   justify-content: center;
   background: var(--sky-100);
   color: var(--sky-700);
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Qanelas', sans-serif;
   font-weight: 700;
   font-size: .8rem;
 }
@@ -838,7 +882,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .info-item-icon.type-info-admin { background: linear-gradient(135deg, #7fd4c0, #2f9d82); }
 .info-item-headtext { flex: 1 1 auto; min-width: 0; padding-top: 6px; }
 .info-item-title {
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Qanelas', sans-serif;
   font-weight: 800;
   font-size: 1.02rem;
   color: var(--ink);
@@ -889,7 +933,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   background: var(--sky-50);
 }
 .site-footer .foot-brand {
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Qanelas', sans-serif;
   font-weight: 800;
   color: var(--sky-700);
   margin-bottom: 4px;
@@ -932,7 +976,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   border-radius: var(--radius-md);
   background: linear-gradient(155deg, var(--sky-400), var(--sky-600));
   color: #fff;
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Qanelas', sans-serif;
   font-weight: 700;
   font-size: 1rem;
   box-shadow: var(--shadow-card);
@@ -974,7 +1018,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .jenis-grid .category-card { padding: 34px 12px; font-size: 1.15rem; }
 
 .subsection-title {
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Qanelas', sans-serif;
   font-weight: 800;
   color: var(--sky-700);
   font-size: 1.15rem;
@@ -1040,7 +1084,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   color: var(--sky-700);
   font-weight: 700;
   font-size: .85rem;
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Qanelas', sans-serif;
   transition: background .18s ease, border-color .18s ease, transform .18s ease;
 }
 .share-btn:hover { background: var(--sky-50); border-color: var(--sky-300); transform: translateY(-1px); }
@@ -1103,7 +1147,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   padding: 22px 20px;
 }
 .share-modal-title {
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Qanelas', sans-serif;
   font-size: 1.05rem;
   font-weight: 800;
   color: var(--sky-700);
@@ -1162,7 +1206,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   padding: 22px 20px;
 }
 .confirm-dialog-title {
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Qanelas', sans-serif;
   font-size: 1.05rem;
   font-weight: 800;
   color: var(--sky-700);
@@ -1208,7 +1252,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   gap: 6px;
   background: none;
   border: none;
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Qanelas', sans-serif;
   font-size: .7rem;
   font-weight: 600;
   color: var(--sky-700);
@@ -1237,7 +1281,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 
 /* ---------------- Post detail page ---------------- */
 .post-detail-title {
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Qanelas', sans-serif;
   font-size: 1.6rem;
   font-weight: 800;
   color: var(--sky-700);
@@ -1791,7 +1835,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .right-aside { display: none; }
 .aside-block { margin-bottom: 28px; }
 .aside-title {
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Qanelas', sans-serif;
   font-weight: 800;
   font-size: 1.05rem;
   color: var(--sky-700);

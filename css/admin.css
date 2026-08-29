@@ -19,7 +19,7 @@ body.admin-body {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Qanelas', sans-serif;
   font-weight: 800;
 }
 .admin-topbar .brand-mini img { width: 34px; height: 34px; border-radius: 50%; background: #fff; }
@@ -212,7 +212,7 @@ body.admin-body {
 }
 .admin-post-item .api-body { flex: 1; min-width: 0; }
 .admin-post-item .api-title {
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Qanelas', sans-serif;
   font-weight: 700;
   font-size: .95rem;
   color: var(--ink);
@@ -701,7 +701,7 @@ body.admin-body {
   flex: 0 0 auto;
 }
 .admin-menu-card .amc-icon svg { width: 24px; height: 24px; }
-.admin-menu-card .amc-title { font-family: 'Quicksand', sans-serif; font-weight: 800; font-size: 1.05rem; }
+.admin-menu-card .amc-title { font-family: 'Qanelas', sans-serif; font-weight: 800; font-size: 1.05rem; }
 .admin-menu-card .amc-sub { font-size: .8rem; opacity: .85; margin-top: 2px; }
 
 /* ---------------- Kartu menu gradien kolom (dipakai di semua submenu:
@@ -762,7 +762,7 @@ body.admin-body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Qanelas', sans-serif;
   font-weight: 800;
   font-size: 1.05rem;
   line-height: 1.3;
@@ -1052,7 +1052,7 @@ body.admin-body {
 }
 .report-item:last-child { border-bottom: none; }
 .report-item .rep-body { flex: 1; min-width: 0; }
-.report-item .rep-title { font-family: 'Quicksand', sans-serif; font-weight: 700; font-size: .95rem; color: var(--ink); }
+.report-item .rep-title { font-family: 'Qanelas', sans-serif; font-weight: 700; font-size: .95rem; color: var(--ink); }
 .report-item .rep-meta { font-size: .76rem; color: var(--ink-soft); margin: 3px 0 6px; }
 .report-item .rep-content {
   font-size: .85rem;
@@ -1745,7 +1745,7 @@ body.admin-body {
 }
 .info-box:first-of-type { margin-top: 4px; }
 .info-box-title {
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Qanelas', sans-serif;
   font-weight: 800;
   font-size: 1.15rem;
   color: var(--sky-700);
@@ -1925,7 +1925,7 @@ body.admin-body {
 }
 .post-view-item .pvi-body { flex: 1; min-width: 0; }
 .post-view-item .pvi-title {
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Qanelas', sans-serif;
   font-weight: 700;
   font-size: .88rem;
   color: var(--ink);
