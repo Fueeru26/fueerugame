@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<script>(function(){try{var t=localStorage.getItem('fueeru_theme');if(t!=='light'){document.documentElement.classList.add('dark');}}catch(e){}})();</script>
+<script>(function(){try{var t=localStorage.getItem('fueeru_theme');if(!t)t=localStorage.getItem('fueeru_theme_default_cache');if(t!=='light'){document.documentElement.classList.add('dark');}}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Panel — Fueeru Game</title>
@@ -9,8 +9,8 @@
 <link rel="manifest" href="admin-manifest.json">
 <meta name="theme-color" content="#0b2947">
 <link rel="apple-touch-icon" href="webpictures/icon-admin-192.png">
-<link rel="stylesheet" href="css/style.css?v=20260906">
-<link rel="stylesheet" href="css/admin.css?v=20260905">
+<link rel="stylesheet" href="css/style.css?v=20260910">
+<link rel="stylesheet" href="css/admin.css?v=20260910">
 </head>
 <body class="admin-body">
 
@@ -85,6 +85,15 @@
       <span>
         <div class="amc-title">Informasi Web</div>
         <div class="amc-sub">Lihat informasi-informasi seputar situs website</div>
+      </span>
+    </button>
+    <button type="button" class="admin-menu-card" data-target="menuPengaturan">
+      <span class="amc-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </span>
+      <span>
+        <div class="amc-title">Pengaturan</div>
+        <div class="amc-sub">Ubah gaya, gambar, teks, dan keamanan situs</div>
       </span>
     </button>
     <button type="button" class="admin-menu-card" data-target="menuManajemenFile">
@@ -255,6 +264,15 @@
           <span>
             <div class="amc-title">Informasi Web</div>
             <div class="amc-sub">Lihat informasi-informasi seputar situs website</div>
+          </span>
+        </button>
+        <button type="button" class="admin-menu-card" id="menuPengaturan">
+          <span class="amc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          </span>
+          <span>
+            <div class="amc-title">Pengaturan</div>
+            <div class="amc-sub">Ubah gaya, gambar, teks, dan keamanan situs</div>
           </span>
         </button>
         <button type="button" class="admin-menu-card" id="menuManajemenFile">
@@ -718,6 +736,236 @@
       </select>
       <div id="infoAdminList" style="margin-top:14px;"></div>
       <div class="pagination" id="infoAdminPagination"></div>
+    </div>
+
+    <!-- ===== VIEW: Pengaturan (pilih Style/Gambar/Teks/Keamanan) ===== -->
+    <div id="viewPengaturan" class="admin-panel-card hidden">
+      <div class="admin-subheader">
+        <button type="button" class="btn-back-mini" id="btnBackFromPengaturan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1>Pengaturan</h1>
+      </div>
+
+      <div class="gradient-menu-grid">
+        <button type="button" class="gradient-menu-card" id="btnOpenPengaturanStyle">
+          <span class="gmc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2a10 10 0 000 20 3 3 0 003-3v-1a2 2 0 012-2h1a3 3 0 003-3 10 10 0 00-9-11z"/></svg>
+          </span>
+          <span class="gmc-title">Pengaturan Style</span>
+        </button>
+        <button type="button" class="gradient-menu-card" id="btnOpenPengaturanGambar">
+          <span class="gmc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          </span>
+          <span class="gmc-title">Pengaturan Gambar</span>
+        </button>
+        <button type="button" class="gradient-menu-card" id="btnOpenPengaturanTeks">
+          <span class="gmc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+          </span>
+          <span class="gmc-title">Pengaturan Teks</span>
+        </button>
+        <button type="button" class="gradient-menu-card" id="btnOpenPengaturanKeamanan">
+          <span class="gmc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/></svg>
+          </span>
+          <span class="gmc-title">Pengaturan Keamanan</span>
+        </button>
+      </div>
+
+      <p class="backup-desc" style="margin-top:20px;"><strong>Pengaturan Style</strong> untuk ubah font, warna aksen, dan mode tampilan default. <strong>Pengaturan Gambar</strong> untuk ganti logo, favicon, gambar header, dan gambar 404. <strong>Pengaturan Teks</strong> untuk teks pengumuman, sidebar, dan footer. <strong>Pengaturan Keamanan</strong> untuk kata sandi, peringatan umur, dan mode maintenance.</p>
+    </div>
+
+    <!-- ===== VIEW: Pengaturan Style ===== -->
+    <div id="viewPengaturanStyle" class="admin-panel-card hidden">
+      <div class="admin-subheader">
+        <button type="button" class="btn-back-mini" id="btnBackFromPengaturanStyle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1>Pengaturan Style</h1>
+      </div>
+
+      <div class="settings-section">
+        <div class="subsection-title" style="margin-top:4px;">Ganti Font Website</div>
+        <p class="backup-desc">Pilih font "Default" untuk pakai Google Fonts (Poppins), atau font custom yang sudah ditambahkan ke folder <code>font/</code>.</p>
+        <select id="settingsFontSelect" class="info-text-input">
+          <option value="default">Default (Google Fonts)</option>
+          <option value="qanelas">Qanelas</option>
+        </select>
+        <div class="settings-btn-row">
+          <button type="button" class="btn-cancel" id="btnPreviewFont">Preview</button>
+          <button type="button" class="btn-primary" id="btnSaveFont">Simpan</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="subsection-title">Ganti Warna Website</div>
+        <p class="backup-desc">Pilih 1 warna dasar — semua tingkatan warna aksen situs (terang &amp; gelap) otomatis disesuaikan dari warna ini.</p>
+        <div class="settings-color-row">
+          <input type="color" id="settingsColorPicker" value="#2fa8e0">
+          <input type="text" id="settingsColorHexInput" class="info-text-input" value="#2fa8e0" maxlength="7" style="flex:1;">
+        </div>
+        <div class="settings-btn-row">
+          <button type="button" class="btn-cancel" id="btnPreviewColor">Preview</button>
+          <button type="button" class="btn-primary" id="btnSaveColor">Simpan</button>
+        </div>
+        <button type="button" class="btn-reset-default" id="btnResetColor">Kembalikan ke Default</button>
+      </div>
+
+      <div class="settings-section">
+        <div class="subsection-title">Mode Tampilan Default</div>
+        <p class="backup-desc">Mode yang otomatis aktif saat pengunjung baru pertama kali membuka situs (belum pernah memilih mode sendiri).</p>
+        <div class="onoff-toggle" id="settingsThemeDefaultToggle">
+          <button type="button" class="onoff-btn" data-value="light">Terang</button>
+          <button type="button" class="onoff-btn" data-value="dark">Gelap</button>
+        </div>
+        <button type="button" class="btn-primary" id="btnSaveThemeDefault" style="width:100%;margin-top:14px;">Simpan</button>
+      </div>
+    </div>
+
+    <!-- ===== VIEW: Pengaturan Gambar ===== -->
+    <div id="viewPengaturanGambar" class="admin-panel-card hidden">
+      <div class="admin-subheader">
+        <button type="button" class="btn-back-mini" id="btnBackFromPengaturanGambar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1>Pengaturan Gambar</h1>
+      </div>
+
+      <div class="settings-section">
+        <div class="subsection-title" style="margin-top:4px;">Ubah Logo &amp; Favicon</div>
+        <p class="backup-desc">Upload gambar 1:1 (persegi) — dipakai sekaligus sebagai logo situs dan favicon (ikon tab browser).</p>
+        <div class="upload-box" id="settingsLogoUploadBox">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div id="settingsLogoUploadLabel">Klik untuk upload logo baru (PNG/WebP)</div>
+          <input type="file" id="settingsLogoFile" accept="image/png,image/webp">
+          <img id="settingsLogoPreview" class="upload-preview" src="webpictures/logo.webp" alt="Preview Logo" style="display:block;max-height:120px;object-fit:contain;">
+        </div>
+        <div class="settings-error-text" id="settingsLogoError"></div>
+        <div class="settings-btn-row">
+          <button type="button" class="btn-primary" id="btnSaveLogo" style="flex:1;">Simpan</button>
+        </div>
+        <button type="button" class="btn-reset-default" id="btnResetLogo">Kembalikan ke Default</button>
+      </div>
+
+      <div class="settings-section">
+        <div class="subsection-title">Ubah Gambar Header</div>
+        <p class="backup-desc">Upload gambar landscape — dipakai sebagai gambar wordmark/header di bagian atas situs.</p>
+        <div class="upload-box" id="settingsHeaderUploadBox">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div id="settingsHeaderUploadLabel">Klik untuk upload gambar header baru (PNG/WebP)</div>
+          <input type="file" id="settingsHeaderFile" accept="image/png,image/webp">
+          <img id="settingsHeaderPreview" class="upload-preview" src="webpictures/header.webp" alt="Preview Header" style="display:block;">
+        </div>
+        <div class="settings-error-text" id="settingsHeaderError"></div>
+        <div class="settings-btn-row">
+          <button type="button" class="btn-primary" id="btnSaveHeader" style="flex:1;">Simpan</button>
+        </div>
+        <button type="button" class="btn-reset-default" id="btnResetHeader">Kembalikan ke Default</button>
+      </div>
+
+      <div class="settings-section">
+        <div class="subsection-title">Ubah Gambar 404</div>
+        <p class="backup-desc">Upload gambar yang tampil di halaman "Halaman tidak ditemukan" (404).</p>
+        <div class="upload-box" id="settings404UploadBox">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div id="settings404UploadLabel">Klik untuk upload gambar 404 baru (PNG/WebP)</div>
+          <input type="file" id="settings404File" accept="image/png,image/webp">
+          <img id="settings404Preview" class="upload-preview" src="webpictures/404.webp" alt="Preview 404" style="display:block;">
+        </div>
+        <div class="settings-error-text" id="settings404Error"></div>
+        <div class="settings-btn-row">
+          <button type="button" class="btn-primary" id="btnSave404" style="flex:1;">Simpan</button>
+        </div>
+        <button type="button" class="btn-reset-default" id="btnReset404">Kembalikan ke Default</button>
+      </div>
+    </div>
+
+    <!-- ===== VIEW: Pengaturan Teks ===== -->
+    <div id="viewPengaturanTeks" class="admin-panel-card hidden">
+      <div class="admin-subheader">
+        <button type="button" class="btn-back-mini" id="btnBackFromPengaturanTeks">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1>Pengaturan Teks</h1>
+      </div>
+
+      <div class="settings-section">
+        <div class="subsection-title" style="margin-top:4px;">Teks Pengumuman</div>
+        <p class="backup-desc">Running text yang tampil di bawah header (mobile) / di bawah menu navigasi (desktop).</p>
+        <label>Isi Pengumuman</label>
+        <input type="text" id="settingsAnnouncementText" class="info-text-input" placeholder="Contoh: Event Natal sedang berlangsung, cek game-game terbaru!">
+        <label style="margin-top:12px;">Link Tujuan (Opsional)</label>
+        <input type="text" id="settingsAnnouncementLink" class="info-text-input" placeholder="https://...">
+        <div class="onoff-toggle" id="settingsAnnouncementActiveToggle" style="margin-top:14px;">
+          <button type="button" class="onoff-btn" data-value="1">Aktifkan</button>
+          <button type="button" class="onoff-btn" data-value="0">Matikan</button>
+        </div>
+        <button type="button" class="btn-primary" id="btnSaveAnnouncement" style="width:100%;margin-top:14px;">Simpan</button>
+      </div>
+
+      <div class="settings-section">
+        <div class="subsection-title">Teks Sidebar</div>
+        <p class="backup-desc">Teks copyright yang tampil di bagian bawah sidebar situs.</p>
+        <input type="text" id="settingsSidebarText" class="info-text-input" placeholder="© 2026 Fueeru Game. Semua hak dilindungi.">
+        <button type="button" class="btn-primary" id="btnSaveSidebarText" style="width:100%;margin-top:14px;">Simpan</button>
+      </div>
+
+      <div class="settings-section">
+        <div class="subsection-title">Teks Footer</div>
+        <p class="backup-desc">Teks tagline di footer, dan link sosial media (opsional).</p>
+        <input type="text" id="settingsFooterText" class="info-text-input" placeholder="Download Game Erotic Android & PC Bahasa Indonesia">
+        <label style="margin-top:12px;">Link Sosial Media (Opsional)</label>
+        <div id="settingsFooterSocialList"></div>
+        <button type="button" class="btn-cancel" id="btnAddFooterSocialLink" style="width:100%;margin-top:10px;">+ Tambah Link</button>
+        <button type="button" class="btn-primary" id="btnSaveFooterText" style="width:100%;margin-top:14px;">Simpan</button>
+      </div>
+    </div>
+
+    <!-- ===== VIEW: Pengaturan Keamanan ===== -->
+    <div id="viewPengaturanKeamanan" class="admin-panel-card hidden">
+      <div class="admin-subheader">
+        <button type="button" class="btn-back-mini" id="btnBackFromPengaturanKeamanan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1>Pengaturan Keamanan</h1>
+      </div>
+
+      <div class="settings-section">
+        <div class="subsection-title" style="margin-top:4px;">Kata Sandi Admin</div>
+        <p class="backup-desc" style="margin-top:2px;">Kata Sandi saat ini: <strong id="settingsCurrentPassword" style="color:var(--ink);"></strong></p>
+        <button type="button" class="btn-cancel" id="btnToggleSettingsPasswordVisibility" style="width:100%;margin-top:4px;">Lihat Kata Sandi</button>
+        <div class="info-row" style="margin-top:14px;"><span>Terakhir Kali Diganti</span><strong id="settingsPasswordChangedAt">—</strong></div>
+        <div class="subsection-title" style="margin-top:14px;">Ganti Kata Sandi</div>
+        <input type="text" id="settingsNewPasswordInput" class="info-text-input" placeholder="Kata sandi baru" autocomplete="off">
+        <button type="button" class="btn-primary" id="btnSaveSettingsPassword" style="width:100%;margin-top:12px;">Simpan</button>
+        <div class="backup-status" id="settingsPasswordStatus"></div>
+      </div>
+
+      <div class="settings-section">
+        <div class="subsection-title">Peringatan Masuk</div>
+        <p class="backup-desc">Window konfirmasi umur (18+) yang tampil untuk pengunjung baru.</p>
+        <div class="onoff-toggle" id="settingsAgeGateActiveToggle">
+          <button type="button" class="onoff-btn" data-value="1">Aktifkan</button>
+          <button type="button" class="onoff-btn" data-value="0">Matikan</button>
+        </div>
+        <label style="margin-top:12px;">Teks Konfirmasi Umur</label>
+        <textarea id="settingsAgeGateText" class="info-text-input" rows="3" placeholder="Situs ini berisi konten yang hanya ditujukan untuk pengunjung berusia 18 tahun ke atas..."></textarea>
+        <button type="button" class="btn-primary" id="btnSaveAgeGate" style="width:100%;margin-top:14px;">Simpan</button>
+      </div>
+
+      <div class="settings-section">
+        <div class="subsection-title">Mode Maintenance</div>
+        <p class="backup-desc">Saat aktif, pengunjung akan melihat halaman "Situs sedang dalam perbaikan". Admin yang sedang login tetap bisa browsing tampilan publik seperti biasa.</p>
+        <div class="onoff-toggle" id="settingsMaintenanceActiveToggle">
+          <button type="button" class="onoff-btn" data-value="1">Aktifkan</button>
+          <button type="button" class="onoff-btn" data-value="0">Matikan</button>
+        </div>
+        <label style="margin-top:12px;">Alasan Maintenance (Opsional)</label>
+        <textarea id="settingsMaintenanceReason" class="info-text-input" rows="3" placeholder="Contoh: Sedang ada perbaikan server, mohon tunggu beberapa saat lagi."></textarea>
+        <button type="button" class="btn-primary" id="btnSaveMaintenance" style="width:100%;margin-top:14px;">Simpan</button>
+      </div>
     </div>
 
     <!-- ===== VIEW: Penampil File (daftar folder/file) ===== -->
@@ -1442,7 +1690,7 @@
 <div class="modal-backdrop" id="previewModalBackdrop">
   <div class="modal-box preview-modal-box">
     <div class="preview-modal-head">
-      <h3>Preview Postingan</h3>
+      <h3 id="previewModalTitle">Preview Postingan</h3>
     </div>
     <div class="preview-device-toggle">
       <button type="button" class="preview-device-btn active" id="btnPreviewMobile">Mobile</button>
@@ -1742,10 +1990,10 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="js/data.js?v=20260902"></script>
+<script src="js/data.js?v=20260910"></script>
 <script src="js/vfs.js?v=20260821"></script>
 <script src="js/ziputil.js?v=20260821"></script>
 <script src="js/redirect-widget.js?v=20260826"></script>
-<script src="js/admin.js?v=20260902"></script>
+<script src="js/admin.js?v=20260910"></script>
 </body>
 </html>

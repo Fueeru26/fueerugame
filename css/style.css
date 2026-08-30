@@ -81,6 +81,7 @@
 }
 
 :root {
+  --font-family: 'Qanelas', sans-serif;
   --ink: #0b2947;
   --ink-soft: #4a6a89;
   --sky-50: #f2faff;
@@ -163,7 +164,7 @@ html { scroll-behavior: smooth; }
 
 body {
   margin: 0;
-  font-family: 'Qanelas', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-family: var(--font-family, 'Qanelas'), system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   color: var(--ink);
   background: linear-gradient(180deg, var(--sky-50) 0%, var(--surface) 340px, var(--surface) 100%);
   min-height: 100vh;
@@ -172,7 +173,7 @@ body {
 }
 
 h1, h2, h3, h4, .brand-font {
-  font-family: 'Qanelas', sans-serif;
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
   margin: 0;
   color: var(--ink);
 }
@@ -302,7 +303,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   flex: 0 0 auto;
 }
 .sidebar-head .brand-name {
-  font-family: 'Qanelas', sans-serif;
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
   font-weight: 800;
   font-size: 1.15rem;
   letter-spacing: .3px;
@@ -548,7 +549,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 #randomHeading,
 #updateHeading {
-  font-family: 'Qanelas', sans-serif;
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
   letter-spacing: .1px;
 }
 .section-head::before {
@@ -619,7 +620,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   min-height: 0;
 }
 .game-card .gc-title {
-  font-family: 'Qanelas', sans-serif;
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
   font-weight: 600;
   font-size: .8rem;
   line-height: 1.28;
@@ -687,7 +688,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 .post-row .prow-body { min-width: 0; flex: 1; }
 .post-row .prow-title {
-  font-family: 'Qanelas', sans-serif;
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
   font-weight: 600;
   font-size: 1.02rem;
   color: var(--sky-700);
@@ -795,7 +796,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   justify-content: center;
   background: var(--sky-100);
   color: var(--sky-700);
-  font-family: 'Qanelas', sans-serif;
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
   font-weight: 700;
   font-size: .8rem;
 }
@@ -873,7 +874,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .info-item-icon.type-info-admin { background: linear-gradient(135deg, #7fd4c0, #2f9d82); }
 .info-item-headtext { flex: 1 1 auto; min-width: 0; padding-top: 6px; }
 .info-item-title {
-  font-family: 'Qanelas', sans-serif;
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
   font-weight: 800;
   font-size: 1.02rem;
   color: var(--ink);
@@ -924,11 +925,23 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   background: var(--sky-50);
 }
 .site-footer .foot-brand {
-  font-family: 'Qanelas', sans-serif;
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
   font-weight: 800;
   color: var(--sky-700);
   margin-bottom: 4px;
 }
+.site-footer .foot-social-links {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.site-footer .foot-social-links a {
+  color: var(--sky-700);
+  font-weight: 700;
+}
+.site-footer .foot-social-links a:hover { color: var(--sky-500); }
 
 /* ---------------- Generic page / card ---------------- */
 .page-card {
@@ -967,7 +980,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   border-radius: var(--radius-md);
   background: linear-gradient(155deg, var(--sky-400), var(--sky-600));
   color: #fff;
-  font-family: 'Qanelas', sans-serif;
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
   font-weight: 700;
   font-size: 1rem;
   box-shadow: var(--shadow-card);
@@ -1009,7 +1022,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .jenis-grid .category-card { padding: 34px 12px; font-size: 1.15rem; }
 
 .subsection-title {
-  font-family: 'Qanelas', sans-serif;
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
   font-weight: 800;
   color: var(--sky-700);
   font-size: 1.15rem;
@@ -1075,7 +1088,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   color: var(--sky-700);
   font-weight: 700;
   font-size: .85rem;
-  font-family: 'Qanelas', sans-serif;
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
   transition: background .18s ease, border-color .18s ease, transform .18s ease;
 }
 .share-btn:hover { background: var(--sky-50); border-color: var(--sky-300); transform: translateY(-1px); }
@@ -1138,7 +1151,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   padding: 22px 20px;
 }
 .share-modal-title {
-  font-family: 'Qanelas', sans-serif;
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
   font-size: 1.05rem;
   font-weight: 800;
   color: var(--sky-700);
@@ -1197,7 +1210,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   padding: 22px 20px;
 }
 .confirm-dialog-title {
-  font-family: 'Qanelas', sans-serif;
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
   font-size: 1.05rem;
   font-weight: 800;
   color: var(--sky-700);
@@ -1243,7 +1256,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   gap: 6px;
   background: none;
   border: none;
-  font-family: 'Qanelas', sans-serif;
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
   font-size: .7rem;
   font-weight: 600;
   color: var(--sky-700);
@@ -1272,7 +1285,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 
 /* ---------------- Post detail page ---------------- */
 .post-detail-title {
-  font-family: 'Qanelas', sans-serif;
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
   font-size: 1.6rem;
   font-weight: 800;
   color: var(--sky-700);
@@ -1727,6 +1740,37 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .navbar-search input::placeholder { color: #9db6cb; }
 
 /* ---------------- Menu bar kedua (navigasi horizontal desktop) ---------------- */
+/* ---------------- Teks Pengumuman (Pengaturan > Pengaturan Teks) ----------------
+   Muncul di bawah header (mobile) / di bawah menu navigasi (desktop) —
+   1 elemen, posisinya otomatis pas di kedua breakpoint karena .menubar
+   sendiri baru muncul (display:block) di breakpoint desktop. */
+.announcement-bar {
+  background: var(--sky-500);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.announcement-bar-inner { position: relative; }
+.announcement-bar-track {
+  display: inline-flex;
+  align-items: center;
+  gap: 60px;
+  padding: 9px 0;
+  color: #fff;
+  font-weight: 700;
+  font-size: .88rem;
+  animation: announcement-scroll 16s linear infinite;
+  will-change: transform;
+}
+.announcement-bar-track.no-link { cursor: default; }
+.announcement-bar-text { padding-left: 60px; }
+@keyframes announcement-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .announcement-bar-track { animation: none; }
+}
+
 .menubar {
   display: none;
   border-bottom: 1px solid var(--sky-150);
@@ -1826,7 +1870,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .right-aside { display: none; }
 .aside-block { margin-bottom: 28px; }
 .aside-title {
-  font-family: 'Qanelas', sans-serif;
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
   font-weight: 800;
   font-size: 1.05rem;
   color: var(--sky-700);

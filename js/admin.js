@@ -243,6 +243,11 @@ const SUB_VIEWS = [
   "viewFormulir",
   "viewReports",
   "viewInfoAdmin",
+  "viewPengaturan",
+  "viewPengaturanStyle",
+  "viewPengaturanGambar",
+  "viewPengaturanTeks",
+  "viewPengaturanKeamanan",
   "viewFiles",
   "viewFileEdit",
   "viewBackup",
@@ -1025,7 +1030,7 @@ function refreshCustomSelect(select) {
   if (entry) entry.syncLabel();
 }
 
-["fieldPlatform", "fieldBahasa", "fieldJenis", "fileSortSelect", "trashSortSelect", "postViewsSort", "postStatusFilter", "infoAdminTypeFilter", "infoItemType"].forEach(
+["fieldPlatform", "fieldBahasa", "fieldJenis", "fileSortSelect", "trashSortSelect", "postViewsSort", "postStatusFilter", "infoAdminTypeFilter", "infoItemType", "settingsFontSelect"].forEach(
   function (id) {
     const el = document.getElementById(id);
     if (el) buildCustomSelect(el);
@@ -2960,6 +2965,400 @@ function deleteInfoItemConfirm(id) {
     { title: "Hapus Informasi", confirmLabel: "Ya, Hapus" }
   );
 }
+
+// =========================================================
+// PENGATURAN (Admin Panel > Pengaturan) — Style, Gambar, Teks, Keamanan
+// =========================================================
+let cachedSiteSettings = {};
+let pendingSettingsImages = {};
+
+async function refreshCachedSiteSettings() {
+  cachedSiteSettings = await getSettings();
+  return cachedSiteSettings;
+}
+
+document.getElementById("menuPengaturan").addEventListener("click", () => showSub("viewPengaturan"));
+document.getElementById("btnBackFromPengaturan").addEventListener("click", () => showSub("viewMenu"));
+
+document.getElementById("btnOpenPengaturanStyle").addEventListener("click", () => {
+  showSub("viewPengaturanStyle");
+  loadPengaturanStyle();
+});
+document.getElementById("btnBackFromPengaturanStyle").addEventListener("click", () => showSub("viewPengaturan"));
+
+document.getElementById("btnOpenPengaturanGambar").addEventListener("click", () => {
+  showSub("viewPengaturanGambar");
+  loadPengaturanGambar();
+});
+document.getElementById("btnBackFromPengaturanGambar").addEventListener("click", () => showSub("viewPengaturan"));
+
+document.getElementById("btnOpenPengaturanTeks").addEventListener("click", () => {
+  showSub("viewPengaturanTeks");
+  loadPengaturanTeks();
+});
+document.getElementById("btnBackFromPengaturanTeks").addEventListener("click", () => showSub("viewPengaturan"));
+
+document.getElementById("btnOpenPengaturanKeamanan").addEventListener("click", () => {
+  showSub("viewPengaturanKeamanan");
+  loadPengaturanKeamanan();
+});
+document.getElementById("btnBackFromPengaturanKeamanan").addEventListener("click", () => showSub("viewPengaturan"));
+
+function setOnOffToggle(containerId, activeValue) {
+  document.querySelectorAll("#" + containerId + " .onoff-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.getAttribute("data-value") === activeValue);
+  });
+}
+function getOnOffToggleValue(containerId, fallback) {
+  const active = document.querySelector("#" + containerId + " .onoff-btn.active");
+  return active ? active.getAttribute("data-value") : fallback;
+}
+document.querySelectorAll(".onoff-toggle").forEach((wrap) => {
+  wrap.querySelectorAll(".onoff-btn").forEach((btn) => {
+    btn.addEventListener("click", function () {
+      wrap.querySelectorAll(".onoff-btn").forEach((b) => b.classList.remove("active"));
+      this.classList.add("active");
+    });
+  });
+});
+
+/* ---------------- Pengaturan Style ---------------- */
+async function loadPengaturanStyle() {
+  await refreshCachedSiteSettings();
+
+  const fontId = cachedSiteSettings.site_font || "qanelas";
+  document.getElementById("settingsFontSelect").value = fontId;
+  refreshCustomSelect(document.getElementById("settingsFontSelect"));
+
+  const colorHex = cachedSiteSettings.site_color || "#2fa8e0";
+  document.getElementById("settingsColorPicker").value = colorHex;
+  document.getElementById("settingsColorHexInput").value = colorHex;
+
+  setOnOffToggle("settingsThemeDefaultToggle", cachedSiteSettings.theme_default || "dark");
+}
+
+document.getElementById("settingsColorPicker").addEventListener("input", function () {
+  document.getElementById("settingsColorHexInput").value = this.value;
+});
+document.getElementById("settingsColorHexInput").addEventListener("input", function () {
+  if (/^#[0-9a-fA-F]{6}$/.test(this.value)) {
+    document.getElementById("settingsColorPicker").value = this.value;
+  }
+});
+
+document.getElementById("btnSaveFont").addEventListener("click", async function () {
+  const fontId = document.getElementById("settingsFontSelect").value;
+  await saveSettings({ site_font: fontId });
+  applySiteFont(fontId);
+  showToast("Font situs disimpan");
+});
+
+document.getElementById("btnSaveColor").addEventListener("click", async function () {
+  const hex = document.getElementById("settingsColorHexInput").value;
+  if (!/^#[0-9a-fA-F]{6}$/i.test(hex)) {
+    showToast("Format warna tidak valid");
+    return;
+  }
+  await saveSettings({ site_color: hex });
+  applySiteColor(hex);
+  showToast("Warna situs disimpan");
+});
+
+document.getElementById("btnResetColor").addEventListener("click", function () {
+  openConfirmModal(
+    "Kembalikan warna situs ke setelan default?",
+    async function () {
+      await resetSetting("site_color");
+      document.getElementById("settingsColorPicker").value = "#2fa8e0";
+      document.getElementById("settingsColorHexInput").value = "#2fa8e0";
+      applySiteColor(null);
+      showToast("Warna situs dikembalikan ke default");
+    },
+    { title: "Kembalikan ke Default" }
+  );
+});
+
+document.getElementById("btnSaveThemeDefault").addEventListener("click", async function () {
+  const value = getOnOffToggleValue("settingsThemeDefaultToggle", "dark");
+  await saveSettings({ theme_default: value });
+  showToast("Mode tampilan default disimpan");
+});
+
+document.getElementById("btnPreviewFont").addEventListener("click", function () {
+  openStylePreview({ fontId: document.getElementById("settingsFontSelect").value });
+});
+document.getElementById("btnPreviewColor").addEventListener("click", function () {
+  openStylePreview({ colorHex: document.getElementById("settingsColorHexInput").value });
+});
+
+/** Preview font/warna di modal Preview yang sama dipakai Preview Postingan
+ * & Halaman — di-scope ke previewViewportInner saja jadi tidak memengaruhi
+ * tampilan Admin Panel di sekitarnya. */
+function openStylePreview(opts) {
+  opts = opts || {};
+  document.getElementById("previewModalTitle").textContent = "Preview Tampilan Website";
+  previewViewportInner.innerHTML = `
+    <div style="padding:20px;background:var(--surface);font-family:var(--font-family, 'Qanelas'), sans-serif;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+        <div style="width:40px;height:40px;border-radius:50%;background:var(--sky-500);flex:0 0 auto;"></div>
+        <div style="font-weight:800;font-size:1.15rem;color:var(--sky-700);">Fueeru Game</div>
+      </div>
+      <h2 style="color:var(--sky-700);font-weight:800;font-size:1.3rem;margin-bottom:14px;">Rekomendasi</h2>
+      <div style="display:flex;gap:12px;margin-bottom:18px;">
+        <div style="flex:1;background:var(--surface);border:1.5px solid var(--sky-150);border-radius:14px;padding:12px;">
+          <div style="width:100%;height:70px;background:var(--sky-100);border-radius:10px;margin-bottom:8px;"></div>
+          <div style="font-weight:700;color:var(--sky-700);font-size:.92rem;">Contoh Judul Game</div>
+        </div>
+        <div style="flex:1;background:var(--surface);border:1.5px solid var(--sky-150);border-radius:14px;padding:12px;">
+          <div style="width:100%;height:70px;background:var(--sky-100);border-radius:10px;margin-bottom:8px;"></div>
+          <div style="font-weight:700;color:var(--sky-700);font-size:.92rem;">Game Lainnya</div>
+        </div>
+      </div>
+      <p style="color:var(--ink-soft);line-height:1.5;margin-bottom:16px;font-size:.92rem;">Ini contoh teks paragraf untuk melihat bagaimana tampilan font dan warna aksen situs setelah diterapkan.</p>
+      <div style="display:flex;gap:10px;">
+        <button style="flex:1;padding:12px;border-radius:10px;border:none;background:var(--sky-500);color:#fff;font-weight:700;font-family:inherit;">Tombol Utama</button>
+        <button style="flex:1;padding:12px;border-radius:10px;border:1.5px solid var(--sky-300);background:none;color:var(--sky-700);font-weight:700;font-family:inherit;">Tombol Kedua</button>
+      </div>
+    </div>`;
+
+  applySiteFont(opts.fontId || cachedSiteSettings.site_font || "qanelas", previewViewportInner);
+  const isDarkNow = document.documentElement.classList.contains("dark");
+  applySiteColor(opts.colorHex || cachedSiteSettings.site_color || null, {
+    scopedEl: previewViewportInner,
+    previewMode: isDarkNow ? "dark" : "light"
+  });
+
+  applyPreviewDeviceMode("mobile");
+  previewModalBackdrop.classList.add("show");
+}
+
+/* ---------------- Pengaturan Gambar ---------------- */
+async function loadPengaturanGambar() {
+  await refreshCachedSiteSettings();
+  document.getElementById("settingsLogoPreview").src = cachedSiteSettings.img_logo || "webpictures/logo.webp";
+  document.getElementById("settingsHeaderPreview").src = cachedSiteSettings.img_header || "webpictures/header.webp";
+  document.getElementById("settings404Preview").src = cachedSiteSettings.img_404 || "webpictures/404.webp";
+  document.getElementById("settingsLogoError").textContent = "";
+  document.getElementById("settingsHeaderError").textContent = "";
+  document.getElementById("settings404Error").textContent = "";
+  pendingSettingsImages = {};
+}
+
+function wireSettingsImageUpload(fileInputId, previewId, errorId, settingKey, maxDim) {
+  document.getElementById(fileInputId).addEventListener("change", async function () {
+    const file = this.files && this.files[0];
+    const errorEl = document.getElementById(errorId);
+    errorEl.textContent = "";
+    if (!file) return;
+    if (file.type !== "image/png" && file.type !== "image/webp") {
+      errorEl.textContent = "Format gambar tidak didukung";
+      this.value = "";
+      return;
+    }
+    try {
+      const dataUrl = await compressImageFile(file, maxDim, 0.85);
+      pendingSettingsImages[settingKey] = dataUrl;
+      document.getElementById(previewId).src = dataUrl;
+    } catch (e) {
+      errorEl.textContent = "Gagal memproses gambar, coba lagi.";
+    }
+  });
+}
+wireSettingsImageUpload("settingsLogoFile", "settingsLogoPreview", "settingsLogoError", "img_logo", 512);
+wireSettingsImageUpload("settingsHeaderFile", "settingsHeaderPreview", "settingsHeaderError", "img_header", 1200);
+wireSettingsImageUpload("settings404File", "settings404Preview", "settings404Error", "img_404", 900);
+
+async function saveSettingsImage(settingKey, errorId, label) {
+  const dataUrl = pendingSettingsImages[settingKey];
+  if (!dataUrl) {
+    showToast("Pilih gambar baru dulu sebelum menyimpan");
+    return;
+  }
+  try {
+    await saveSettings({ [settingKey]: dataUrl });
+    delete pendingSettingsImages[settingKey];
+    showToast(label + " berhasil disimpan");
+  } catch (e) {
+    document.getElementById(errorId).textContent = "Gagal menyimpan, coba lagi.";
+  }
+}
+document.getElementById("btnSaveLogo").addEventListener("click", () =>
+  saveSettingsImage("img_logo", "settingsLogoError", "Logo & favicon")
+);
+document.getElementById("btnSaveHeader").addEventListener("click", () =>
+  saveSettingsImage("img_header", "settingsHeaderError", "Gambar header")
+);
+document.getElementById("btnSave404").addEventListener("click", () =>
+  saveSettingsImage("img_404", "settings404Error", "Gambar 404")
+);
+
+function resetSettingsImage(settingKey, previewId, defaultSrc, label) {
+  openConfirmModal(
+    `Kembalikan ${label.toLowerCase()} ke gambar bawaan?`,
+    async function () {
+      await resetSetting(settingKey);
+      document.getElementById(previewId).src = defaultSrc;
+      delete pendingSettingsImages[settingKey];
+      showToast(label + " dikembalikan ke default");
+    },
+    { title: "Kembalikan ke Default" }
+  );
+}
+document.getElementById("btnResetLogo").addEventListener("click", () =>
+  resetSettingsImage("img_logo", "settingsLogoPreview", "webpictures/logo.webp", "Logo & Favicon")
+);
+document.getElementById("btnResetHeader").addEventListener("click", () =>
+  resetSettingsImage("img_header", "settingsHeaderPreview", "webpictures/header.webp", "Gambar Header")
+);
+document.getElementById("btnReset404").addEventListener("click", () =>
+  resetSettingsImage("img_404", "settings404Preview", "webpictures/404.webp", "Gambar 404")
+);
+
+/* ---------------- Pengaturan Teks ---------------- */
+async function loadPengaturanTeks() {
+  await refreshCachedSiteSettings();
+  document.getElementById("settingsAnnouncementText").value = cachedSiteSettings.text_announcement || "";
+  document.getElementById("settingsAnnouncementLink").value = cachedSiteSettings.text_announcement_link || "";
+  setOnOffToggle(
+    "settingsAnnouncementActiveToggle",
+    cachedSiteSettings.text_announcement_active === "1" ? "1" : "0"
+  );
+
+  document.getElementById("settingsSidebarText").value =
+    cachedSiteSettings.text_sidebar_copyright || "© 2026 Fueeru Game. Semua hak dilindungi.";
+  document.getElementById("settingsFooterText").value =
+    cachedSiteSettings.text_footer || "Download Game Erotic Android & PC Bahasa Indonesia";
+
+  let socialLinks = [];
+  try {
+    socialLinks = JSON.parse(cachedSiteSettings.text_footer_social_links || "[]");
+  } catch (e) {}
+  document.getElementById("settingsFooterSocialList").innerHTML = "";
+  socialLinks.forEach((l) => addFooterSocialRow(l.label, l.url));
+}
+
+document.getElementById("btnSaveAnnouncement").addEventListener("click", async function () {
+  await saveSettings({
+    text_announcement: document.getElementById("settingsAnnouncementText").value.trim(),
+    text_announcement_link: document.getElementById("settingsAnnouncementLink").value.trim(),
+    text_announcement_active: getOnOffToggleValue("settingsAnnouncementActiveToggle", "0")
+  });
+  showToast("Teks pengumuman disimpan");
+});
+
+document.getElementById("btnSaveSidebarText").addEventListener("click", async function () {
+  await saveSettings({ text_sidebar_copyright: document.getElementById("settingsSidebarText").value.trim() });
+  showToast("Teks sidebar disimpan");
+});
+
+function addFooterSocialRow(label, url) {
+  const container = document.getElementById("settingsFooterSocialList");
+  const row = document.createElement("div");
+  row.className = "social-link-row";
+  row.innerHTML = `
+    <input type="text" class="info-text-input social-link-label" placeholder="Nama (mis. Discord)" value="${escapeHtmlAdmin(label || "")}">
+    <input type="text" class="info-text-input social-link-url" placeholder="https://..." value="${escapeHtmlAdmin(url || "")}">
+    <button type="button" class="btn-remove-social" aria-label="Hapus link">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>`;
+  row.querySelector(".btn-remove-social").addEventListener("click", () => row.remove());
+  container.appendChild(row);
+}
+document.getElementById("btnAddFooterSocialLink").addEventListener("click", () => addFooterSocialRow("", ""));
+
+document.getElementById("btnSaveFooterText").addEventListener("click", async function () {
+  const links = [];
+  document.querySelectorAll("#settingsFooterSocialList .social-link-row").forEach((row) => {
+    const label = row.querySelector(".social-link-label").value.trim();
+    const url = row.querySelector(".social-link-url").value.trim();
+    if (label && url) links.push({ label, url });
+  });
+  await saveSettings({
+    text_footer: document.getElementById("settingsFooterText").value.trim(),
+    text_footer_social_links: JSON.stringify(links)
+  });
+  showToast("Teks footer disimpan");
+});
+
+/* ---------------- Pengaturan Keamanan ---------------- */
+async function loadPengaturanKeamanan() {
+  await refreshCachedSiteSettings();
+
+  document.getElementById("settingsCurrentPassword").textContent = "••••••••";
+  document.getElementById("btnToggleSettingsPasswordVisibility").textContent = "Lihat Kata Sandi";
+  document.getElementById("settingsNewPasswordInput").value = "";
+  document.getElementById("settingsPasswordStatus").textContent = "";
+  document.getElementById("settingsPasswordStatus").className = "backup-status";
+  document.getElementById("settingsPasswordChangedAt").textContent = "Memuat…";
+  try {
+    const data = await getLoginFails();
+    document.getElementById("settingsPasswordChangedAt").textContent = data.passwordChangedAt
+      ? formatReportDate(data.passwordChangedAt)
+      : "Belum pernah diganti sejak awal";
+  } catch (e) {
+    document.getElementById("settingsPasswordChangedAt").textContent = "Gagal memuat";
+  }
+
+  setOnOffToggle("settingsAgeGateActiveToggle", cachedSiteSettings.age_gate_active === "0" ? "0" : "1");
+  document.getElementById("settingsAgeGateText").value =
+    cachedSiteSettings.age_gate_text ||
+    "Situs ini berisi konten yang hanya ditujukan untuk pengunjung berusia 18 tahun ke atas. Apakah kamu sudah berumur 18 tahun atau lebih?";
+
+  setOnOffToggle("settingsMaintenanceActiveToggle", cachedSiteSettings.maintenance_active === "1" ? "1" : "0");
+  document.getElementById("settingsMaintenanceReason").value = cachedSiteSettings.maintenance_reason || "";
+}
+
+document.getElementById("btnToggleSettingsPasswordVisibility").addEventListener("click", function () {
+  const el = document.getElementById("settingsCurrentPassword");
+  const isHidden = el.textContent === "••••••••";
+  if (isHidden) {
+    el.textContent = getAdminSessionPassword() || "(tidak diketahui)";
+    this.textContent = "Sembunyikan Kata Sandi";
+  } else {
+    el.textContent = "••••••••";
+    this.textContent = "Lihat Kata Sandi";
+  }
+});
+
+document.getElementById("btnSaveSettingsPassword").addEventListener("click", async function () {
+  const input = document.getElementById("settingsNewPasswordInput");
+  const statusEl = document.getElementById("settingsPasswordStatus");
+  const val = input.value.trim();
+  if (val.length < 4) {
+    statusEl.textContent = "Kata sandi minimal 4 karakter.";
+    statusEl.className = "backup-status error";
+    return;
+  }
+  statusEl.textContent = "Menyimpan…";
+  const ok = await setAdminPassword(val);
+  if (!ok) {
+    statusEl.textContent = "Gagal menyimpan kata sandi. Coba lagi.";
+    statusEl.className = "backup-status error";
+    return;
+  }
+  document.getElementById("settingsCurrentPassword").textContent = "••••••••";
+  document.getElementById("btnToggleSettingsPasswordVisibility").textContent = "Lihat Kata Sandi";
+  input.value = "";
+  statusEl.textContent = "Kata sandi admin berhasil diganti.";
+  statusEl.className = "backup-status success";
+  showToast("Kata sandi admin diperbarui");
+});
+
+document.getElementById("btnSaveAgeGate").addEventListener("click", async function () {
+  await saveSettings({
+    age_gate_active: getOnOffToggleValue("settingsAgeGateActiveToggle", "1"),
+    age_gate_text: document.getElementById("settingsAgeGateText").value.trim()
+  });
+  showToast("Pengaturan Peringatan Masuk disimpan");
+});
+
+document.getElementById("btnSaveMaintenance").addEventListener("click", async function () {
+  await saveSettings({
+    maintenance_active: getOnOffToggleValue("settingsMaintenanceActiveToggle", "0"),
+    maintenance_reason: document.getElementById("settingsMaintenanceReason").value.trim()
+  });
+  showToast("Pengaturan Mode Maintenance disimpan");
+});
 
 // =========================================================
 // PENAMPIL FILE (read-only, data live dari GitHub — lihat js/vfs.js)

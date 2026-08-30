@@ -10,7 +10,7 @@
    belakang layar.
    ========================================================= */
 
-const CACHE_NAME = "fueeru-game-cache-v11";
+const CACHE_NAME = "fueeru-game-cache-v12";
 
 const PRECACHE_URLS = [
   "./",

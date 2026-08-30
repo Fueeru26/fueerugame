@@ -1306,7 +1306,15 @@ async function handleAuth(request, env, method) {
         .run();
       return unauthorized();
     }
-    return json({ ok: true });
+    // Set cookie "bypass" supaya admin yang sedang login tetap bisa
+    // browsing tampilan publik seperti biasa walau Mode Maintenance aktif
+    // (dicek di gerbang maintenance sebelum menyajikan file statis).
+    const res = json({ ok: true });
+    res.headers.append(
+      "Set-Cookie",
+      "fueeru_admin_bypass=" + encodeURIComponent(current) + "; Path=/; Max-Age=2592000; SameSite=Lax"
+    );
+    return res;
   }
   if (method === "PUT") {
     if (!(await requireAdmin(request, env))) return unauthorized();
@@ -1341,6 +1349,115 @@ async function handleAuth(request, env, method) {
     return json({ ok: true });
   }
   return badRequest("Method tidak didukung");
+}
+
+/* =========================================================
+   Pengaturan Website (Admin Panel > Pengaturan)
+   Disimpan di tabel `settings` yang sama dengan admin_password —
+   key-value sederhana, cukup untuk kebutuhan ini.
+   ========================================================= */
+// key yang TIDAK boleh diubah/dihapus lewat endpoint /api/settings umum
+// (sudah ada endpoint khususnya sendiri: /api/auth untuk password).
+const SETTINGS_PROTECTED_KEYS = new Set(["admin_password", "password_changed_at"]);
+
+/** [PUBLIK: GET, ADMIN: PUT/DELETE] Pengaturan tampilan & konten situs
+ * (font, warna, gambar, teks, keamanan) — key-value generik di tabel
+ * `settings`. GET dipakai halaman publik untuk menerapkan pengaturan aktif,
+ * jadi sengaja tidak butuh login. */
+async function handleSettings(request, env, method) {
+  if (method === "GET") {
+    const { results } = await env.DB.prepare("SELECT key, value FROM settings").all();
+    const obj = {};
+    for (const r of results) {
+      if (SETTINGS_PROTECTED_KEYS.has(r.key)) continue;
+      obj[r.key] = r.value;
+    }
+    return json(obj);
+  }
+  if (method === "PUT") {
+    if (!(await requireAdmin(request, env))) return unauthorized();
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== "object" || Array.isArray(body)) return badRequest("Data tidak valid");
+    const stmts = [];
+    for (const k of Object.keys(body)) {
+      if (SETTINGS_PROTECTED_KEYS.has(k)) continue;
+      stmts.push(
+        env.DB.prepare(
+          "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+        ).bind(k, body[k] == null ? null : String(body[k]))
+      );
+    }
+    if (stmts.length) await env.DB.batch(stmts);
+    return json({ ok: true });
+  }
+  if (method === "DELETE") {
+    // Dipakai tombol "Kembalikan ke Default" — hapus 1 key supaya balik ke
+    // nilai bawaan (fallback di kode, bukan lagi override dari database).
+    if (!(await requireAdmin(request, env))) return unauthorized();
+    const url = new URL(request.url);
+    const key = url.searchParams.get("key");
+    if (!key || SETTINGS_PROTECTED_KEYS.has(key)) return badRequest("key tidak valid");
+    await env.DB.prepare("DELETE FROM settings WHERE key = ?").bind(key).run();
+    return json({ ok: true });
+  }
+  return badRequest("Method tidak didukung");
+}
+
+/** Path gambar situs yang bisa ditimpa lewat Pengaturan > Pengaturan Gambar.
+ * Key di tabel `settings` menyimpan data URL (base64) gambar hasil upload;
+ * kalau ada, request ke path aslinya di bawah ini langsung disajikan dari
+ * database (bukan file statis) — jadi berlaku instan di semua tempat file
+ * itu dipakai (termasuk <link rel="icon"> & og:image), tanpa perlu deploy. */
+const OVERRIDABLE_IMAGE_PATHS = {
+  "/webpictures/logo.webp": "img_logo",
+  "/webpictures/header.webp": "img_header",
+  "/webpictures/404.webp": "img_404"
+};
+
+async function tryServeOverriddenImage(path, env) {
+  const settingKey = OVERRIDABLE_IMAGE_PATHS[path];
+  if (!settingKey) return null;
+  const row = await env.DB.prepare("SELECT value FROM settings WHERE key = ?").bind(settingKey).first();
+  if (!row || !row.value) return null;
+  const m = /^data:([^;]+);base64,(.+)$/.exec(row.value);
+  if (!m) return null;
+  const bytes = Uint8Array.from(atob(m[2]), (c) => c.charCodeAt(0));
+  return new Response(bytes, {
+    headers: { "content-type": m[1], "cache-control": "no-store" }
+  });
+}
+
+/** Gerbang Mode Maintenance — dicek sebelum menyajikan halaman HTML publik.
+ * Admin yang sedang login (ditandai cookie fueeru_admin_bypass, diset saat
+ * login lewat /api/auth) tetap bisa browsing tampilan publik seperti biasa. */
+async function maybeServeMaintenancePage(request, env, path) {
+  // Jangan pernah menggerbangi: API, admin.html sendiri, aset (css/js/gambar/font).
+  if (path.startsWith("/api/")) return null;
+  if (path === "/admin.html" || path === "/admin") return null;
+  if (/\.(css|js|json|webp|png|jpg|jpeg|svg|ico|woff2?|ttf|otf|xml|txt)$/i.test(path)) return null;
+
+  const row = await env.DB.prepare("SELECT value FROM settings WHERE key = 'maintenance_active'").first();
+  if (!row || row.value !== "1") return null;
+
+  // Admin yang sudah login (cookie cocok dengan password admin saat ini) dilewatkan.
+  const cookieHeader = request.headers.get("cookie") || "";
+  const cookieMatch = /(?:^|;\s*)fueeru_admin_bypass=([^;]+)/.exec(cookieHeader);
+  if (cookieMatch) {
+    const passRow = await env.DB.prepare("SELECT value FROM settings WHERE key = 'admin_password'").first();
+    const currentPassword = passRow ? passRow.value : "admin123";
+    if (decodeURIComponent(cookieMatch[1]) === currentPassword) return null;
+  }
+
+  const reasonRow = await env.DB.prepare("SELECT value FROM settings WHERE key = 'maintenance_reason'").first();
+  const reason = reasonRow && reasonRow.value ? reasonRow.value : "";
+  const assetUrl = new URL(request.url);
+  assetUrl.pathname = "/maintenance.html";
+  const maintenanceRes = await env.ASSETS.fetch(new Request(assetUrl.toString(), request));
+  const html = (await maintenanceRes.text()).replace(
+    "__MAINTENANCE_REASON__",
+    reason ? reason.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c])) : ""
+  );
+  return new Response(html, { status: 503, headers: { "content-type": "text/html; charset=utf-8" } });
 }
 
 /** [ADMIN] Log percobaan login gagal (maks 20 terbaru ditampilkan). Baris
@@ -1497,6 +1614,7 @@ export default {
       if (m) return await handleTrashItem(request, env, method, m[1], decodeURIComponent(m[2]));
 
       if (path === "/api/auth") return await handleAuth(request, env, method);
+      if (path === "/api/settings") return await handleSettings(request, env, method);
 
       if (path === "/api/auth/otp/request") return await handleOtpRequest(request, env, method);
       if (path === "/api/auth/otp/verify") return await handleOtpVerify(request, env, method);
@@ -1548,7 +1666,15 @@ export default {
         return env.ASSETS.fetch(new Request(assetUrl.toString(), request));
       }
 
-      // Bukan /api/... -> serve file statis (html/css/js/gambar)
+      // Bukan /api/... -> serve file statis (html/css/js/gambar), tapi cek
+      // dulu apakah gambar ini ditimpa lewat Pengaturan > Pengaturan Gambar,
+      // atau apakah Mode Maintenance sedang aktif.
+      const overriddenImage = await tryServeOverriddenImage(path, env);
+      if (overriddenImage) return overriddenImage;
+
+      const maintenanceRes = await maybeServeMaintenancePage(request, env, path);
+      if (maintenanceRes) return maintenanceRes;
+
       return env.ASSETS.fetch(request);
     } catch (err) {
       return json({ error: "Kesalahan server: " + err.message }, 500);

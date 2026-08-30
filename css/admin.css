@@ -19,7 +19,7 @@ body.admin-body {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: 'Qanelas', sans-serif;
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
   font-weight: 800;
 }
 .admin-topbar .brand-mini img { width: 34px; height: 34px; border-radius: 50%; background: #fff; }
@@ -212,7 +212,7 @@ body.admin-body {
 }
 .admin-post-item .api-body { flex: 1; min-width: 0; }
 .admin-post-item .api-title {
-  font-family: 'Qanelas', sans-serif;
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
   font-weight: 700;
   font-size: .95rem;
   color: var(--ink);
@@ -702,7 +702,7 @@ body.admin-body {
   flex: 0 0 auto;
 }
 .admin-menu-card .amc-icon svg { width: 24px; height: 24px; }
-.admin-menu-card .amc-title { font-family: 'Qanelas', sans-serif; font-weight: 800; font-size: 1.05rem; }
+.admin-menu-card .amc-title { font-family: var(--font-family, 'Qanelas'), sans-serif; font-weight: 800; font-size: 1.05rem; }
 .admin-menu-card .amc-sub { font-size: .8rem; opacity: .85; margin-top: 2px; }
 
 /* ---------------- Kartu menu gradien kolom (dipakai di semua submenu:
@@ -763,7 +763,7 @@ body.admin-body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Qanelas', sans-serif;
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
   font-weight: 800;
   font-size: 1.05rem;
   line-height: 1.3;
@@ -820,9 +820,10 @@ body.admin-body {
 :root.dark .admin-menu-card:nth-child(6) .amc-icon svg,
 :root.dark .gradient-menu-card:nth-child(6) .gmc-icon svg { color: #c39af7; }
 :root.dark .admin-menu-card:nth-child(7) .amc-icon svg,
-:root.dark .gradient-menu-card:nth-child(7) .gmc-icon svg { color: #3ddbc4; }
-:root.dark .admin-menu-card:nth-child(8) .amc-icon svg { color: #ff5f96; }
-:root.dark .admin-menu-card:nth-child(9) .amc-icon svg { color: #6bc8f0; }
+:root.dark .gradient-menu-card:nth-child(7) .gmc-icon svg { color: #f0cf6b; }
+:root.dark .admin-menu-card:nth-child(8) .amc-icon svg { color: #3ddbc4; }
+:root.dark .admin-menu-card:nth-child(9) .amc-icon svg { color: #ff5f96; }
+:root.dark .admin-menu-card:nth-child(10) .amc-icon svg { color: #6bc8f0; }
 
 .admin-subheader {
   display: flex;
@@ -1053,7 +1054,7 @@ body.admin-body {
 }
 .report-item:last-child { border-bottom: none; }
 .report-item .rep-body { flex: 1; min-width: 0; }
-.report-item .rep-title { font-family: 'Qanelas', sans-serif; font-weight: 700; font-size: .95rem; color: var(--ink); }
+.report-item .rep-title { font-family: var(--font-family, 'Qanelas'), sans-serif; font-weight: 700; font-size: .95rem; color: var(--ink); }
 .report-item .rep-meta { font-size: .76rem; color: var(--ink-soft); margin: 3px 0 6px; }
 .report-item .rep-content {
   font-size: .85rem;
@@ -1555,9 +1556,10 @@ body.admin-body {
 .admin-menu-card:nth-child(4) { background: linear-gradient(135deg, #f0b45c, var(--navy-700)); }
 .admin-menu-card:nth-child(5) { background: linear-gradient(135deg, #8f9bd6, var(--navy-700)); }
 .admin-menu-card:nth-child(6) { background: linear-gradient(135deg, #b79cf0, var(--navy-700)); }
-.admin-menu-card:nth-child(7) { background: linear-gradient(135deg, #4fb8a8, var(--navy-700)); }
-.admin-menu-card:nth-child(8) { background: linear-gradient(135deg, #e88fb0, var(--navy-700)); }
-.admin-menu-card:nth-child(9) { background: linear-gradient(135deg, #5cb0e6, var(--navy-700)); }
+.admin-menu-card:nth-child(7) { background: linear-gradient(135deg, #e0b23a, var(--navy-700)); }
+.admin-menu-card:nth-child(8) { background: linear-gradient(135deg, #4fb8a8, var(--navy-700)); }
+.admin-menu-card:nth-child(9) { background: linear-gradient(135deg, #e88fb0, var(--navy-700)); }
+.admin-menu-card:nth-child(10) { background: linear-gradient(135deg, #5cb0e6, var(--navy-700)); }
 
 .backup-section {
   border: 1.5px solid var(--sky-150);
@@ -1566,6 +1568,120 @@ body.admin-body {
   margin-top: 16px;
 }
 .backup-section:first-of-type { margin-top: 4px; }
+
+/* ---------------- Pengaturan (Admin Panel > Pengaturan) ---------------- */
+.settings-section {
+  border: 1.5px solid var(--sky-150);
+  border-radius: var(--radius-md);
+  padding: 16px 18px 18px;
+  margin-top: 16px;
+}
+.settings-section:first-of-type { margin-top: 4px; }
+.settings-btn-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+.settings-btn-row button { flex: 1; }
+.btn-reset-default {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--sky-200);
+  background: none;
+  color: var(--ink-soft);
+  font-weight: 700;
+  font-size: .85rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+.btn-reset-default:hover { background: var(--sky-50); color: var(--ink); }
+.settings-error-text {
+  color: #e0554a;
+  font-size: .82rem;
+  font-weight: 600;
+  min-height: 1.2em;
+  margin-top: 8px;
+}
+.settings-color-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.settings-color-row input[type="color"] {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 1.5px solid var(--sky-200);
+  border-radius: var(--radius-sm);
+  background: none;
+  cursor: pointer;
+}
+.password-field-wrap { position: relative; }
+.password-field-wrap input { padding-right: 44px !important; }
+.btn-toggle-visibility {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--ink-soft);
+  cursor: pointer;
+  padding: 6px;
+}
+.btn-toggle-visibility svg { width: 18px; height: 18px; }
+
+/* Toggle 2 tombol (Aktifkan/Matikan, Terang/Gelap) — dipakai di beberapa
+   fitur Pengaturan. */
+.onoff-toggle {
+  display: flex;
+  gap: 10px;
+}
+.onoff-btn {
+  flex: 1;
+  padding: 11px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--sky-300);
+  background: var(--surface);
+  color: var(--sky-700);
+  font-weight: 800;
+  font-size: .92rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.onoff-btn.active {
+  background: var(--sky-500);
+  border-color: var(--sky-500);
+  color: #fff;
+}
+
+/* Baris 1 link sosial media (Pengaturan Teks > Teks Footer) */
+.social-link-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  align-items: center;
+}
+.social-link-row input { flex: 1; }
+.social-link-row .btn-remove-social {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--sky-200);
+  background: none;
+  color: #e0554a;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.social-link-row .btn-remove-social:hover { background: #fdeceb; }
 .backup-desc {
   font-size: .84rem;
   color: var(--ink-soft);
@@ -1746,7 +1862,7 @@ body.admin-body {
 }
 .info-box:first-of-type { margin-top: 4px; }
 .info-box-title {
-  font-family: 'Qanelas', sans-serif;
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
   font-weight: 800;
   font-size: 1.15rem;
   color: var(--sky-700);
@@ -1926,7 +2042,7 @@ body.admin-body {
 }
 .post-view-item .pvi-body { flex: 1; min-width: 0; }
 .post-view-item .pvi-title {
-  font-family: 'Qanelas', sans-serif;
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
   font-weight: 700;
   font-size: .88rem;
   color: var(--ink);

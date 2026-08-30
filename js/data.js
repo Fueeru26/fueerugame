@@ -727,3 +727,180 @@ async function deleteRedirectLink(id) {
 async function resolveRedirectByCode(code) {
   return apiCall("GET", "/api/redirect/resolve/" + encodeURIComponent(code), undefined, false);
 }
+
+/* =========================================================
+   Pengaturan Website (Admin Panel > Pengaturan)
+   ========================================================= */
+
+/** [PUBLIK] Semua pengaturan situs yang aktif (font, warna, gambar, teks,
+ * keamanan). Key yang tidak pernah diset akan hilang dari objek (artinya
+ * "pakai default bawaan kode"), bukan muncul sebagai null/kosong. */
+async function getSettings() {
+  try {
+    return await apiCall("GET", "/api/settings", undefined, false);
+  } catch (e) {
+    return {};
+  }
+}
+
+/** [ADMIN] Simpan/replace beberapa key pengaturan sekaligus. */
+async function saveSettings(partial) {
+  await apiCall("PUT", "/api/settings", partial, true);
+}
+
+/** [ADMIN] Hapus 1 key pengaturan (dipakai tombol "Kembalikan ke Default"). */
+async function resetSetting(key) {
+  await apiCall("DELETE", "/api/settings?key=" + encodeURIComponent(key), undefined, true);
+}
+
+/* ---------------- Registry Font ----------------
+   Font "default" = Google Fonts (Poppins), dimuat on-demand.
+   Font custom lain sudah dideklarasikan statis via @font-face di
+   css/style.css (folder /font) — daftar di sini cuma referensi id+label
+   untuk ditampilkan di dropdown & dipakai saat menerapkan pilihan.
+   Untuk menambah font baru: taruh file .woff2/.woff/.ttf + @font-face
+   baru di css/style.css, lalu tambah 1 entri di sini. */
+const AVAILABLE_FONTS = [
+  { id: "default", label: "Default (Google Fonts)", cssValue: "'Poppins', sans-serif" },
+  { id: "qanelas", label: "Qanelas", cssValue: "'Qanelas', sans-serif" }
+];
+const GOOGLE_FONT_HREF =
+  "https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap";
+
+/** Terapkan pilihan font ke elemen tertentu (default: seluruh dokumen).
+ * targetEl dipakai supaya bisa juga dipakai untuk preview yang di-scope ke
+ * 1 kontainer saja (tidak memengaruhi tampilan Admin Panel di sekitarnya). */
+function applySiteFont(fontId, targetEl) {
+  const el = targetEl || document.documentElement;
+  const font = AVAILABLE_FONTS.find((f) => f.id === fontId) || AVAILABLE_FONTS[1];
+  if (font.id === "default" && !document.getElementById("dynamicGoogleFontLink")) {
+    const link = document.createElement("link");
+    link.id = "dynamicGoogleFontLink";
+    link.rel = "stylesheet";
+    link.href = GOOGLE_FONT_HREF;
+    document.head.appendChild(link);
+  }
+  el.style.setProperty("--font-family", font.cssValue);
+}
+
+/* ---------------- Palet Warna ----------------
+   1 warna dasar (mewakili sky-500) dirotasi hue-nya ke seluruh tingkatan
+   sky-50..sky-900 (+ navy tetap) memakai saturasi/lightness bawaan yang
+   sudah di-tuning, supaya kontrasnya tetap enak dibaca di semua tingkatan
+   walau huenya diganti. */
+const COLOR_PALETTE_TEMPLATE = {
+  light: {
+    "sky-50": [100, 97], "sky-100": [100, 94], "sky-150": [100, 91], "sky-200": [100, 87],
+    "sky-300": [93, 77], "sky-400": [85, 65], "sky-500": [74, 53], "sky-600": [74, 44],
+    "sky-700": [79, 37], "sky-900": [78, 22]
+  },
+  dark: {
+    "sky-50": [58, 9], "sky-100": [54, 15], "sky-150": [50, 22], "sky-200": [46, 25],
+    "sky-300": [43, 40], "sky-400": [50, 54], "sky-500": [70, 59], "sky-600": [82, 68],
+    "sky-700": [84, 76], "sky-900": [100, 91]
+  }
+};
+
+function hexToHue(hex) {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0;
+  const d = max - min;
+  if (d !== 0) {
+    if (max === r) h = ((g - b) / d) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+  return h;
+}
+function hslToHex(h, s, l) {
+  s /= 100;
+  l /= 100;
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  let r = 0, g = 0, b = 0;
+  if (h < 60) { r = c; g = x; b = 0; }
+  else if (h < 120) { r = x; g = c; b = 0; }
+  else if (h < 180) { r = 0; g = c; b = x; }
+  else if (h < 240) { r = 0; g = x; b = c; }
+  else if (h < 300) { r = x; g = 0; b = c; }
+  else { r = c; g = 0; b = x; }
+  const toHex = (v) => {
+    const n = Math.round((v + m) * 255);
+    return n.toString(16).padStart(2, "0");
+  };
+  return "#" + toHex(r) + toHex(g) + toHex(b);
+}
+
+/** Bangun palet lengkap (light + dark) dari 1 warna dasar (hex). */
+function generateColorPalette(baseHex) {
+  const hue = hexToHue(baseHex);
+  const out = { light: {}, dark: {} };
+  for (const mode of ["light", "dark"]) {
+    for (const key of Object.keys(COLOR_PALETTE_TEMPLATE[mode])) {
+      const [s, l] = COLOR_PALETTE_TEMPLATE[mode][key];
+      out[mode][key] = hslToHex(hue, s, l);
+    }
+  }
+  // Navy selalu tetap (dipakai sidebar/elemen struktural) — pakai versi
+  // "light" dari sky-700/900 terlepas dari mode aktif, sama seperti bawaan.
+  out.navy700 = out.light["sky-700"];
+  out.navy900 = out.light["sky-900"];
+  return out;
+}
+
+/** Terapkan palet warna ke elemen tertentu (default: seluruh dokumen).
+ * Untuk situs publik/Admin Panel sungguhan, ini menyuntikkan <style> global
+ * supaya tetap ikut beradaptasi ke :root.dark toggle. Untuk preview yang
+ * di-scope ke 1 kontainer, cukup pakai inline style 1 mode saja (lihat
+ * parameter previewMode). */
+function applySiteColor(baseHex, opts) {
+  opts = opts || {};
+  if (!baseHex) {
+    const existing = document.getElementById("dynamicColorStyle");
+    if (existing) existing.remove();
+    if (opts.scopedEl) {
+      ["50", "100", "150", "200", "300", "400", "500", "600", "700", "900"].forEach((n) => {
+        opts.scopedEl.style.removeProperty("--sky-" + n);
+      });
+      opts.scopedEl.style.removeProperty("--navy-700");
+      opts.scopedEl.style.removeProperty("--navy-900");
+    }
+    return;
+  }
+  const palette = generateColorPalette(baseHex);
+
+  if (opts.scopedEl) {
+    // Mode preview: cuma 1 varian (sesuai tema aktif saat ini), inline style.
+    const mode = opts.previewMode === "dark" ? "dark" : "light";
+    Object.keys(palette[mode]).forEach((key) => {
+      opts.scopedEl.style.setProperty("--" + key, palette[mode][key]);
+    });
+    opts.scopedEl.style.setProperty("--navy-700", palette.navy700);
+    opts.scopedEl.style.setProperty("--navy-900", palette.navy900);
+    return;
+  }
+
+  // Mode situs sungguhan: suntik <style> global supaya tetap adaptif ke
+  // toggle mode terang/gelap (source order taruh setelah stylesheet utama).
+  let styleEl = document.getElementById("dynamicColorStyle");
+  if (!styleEl) {
+    styleEl = document.createElement("style");
+    styleEl.id = "dynamicColorStyle";
+    document.head.appendChild(styleEl);
+  }
+  const lightVars = Object.keys(palette.light)
+    .map((k) => `--${k}: ${palette.light[k]};`)
+    .join(" ");
+  const darkVars = Object.keys(palette.dark)
+    .map((k) => `--${k}: ${palette.dark[k]};`)
+    .join(" ");
+  styleEl.textContent =
+    `:root { ${lightVars} --navy-700: ${palette.navy700}; --navy-900: ${palette.navy900}; }\n` +
+    `:root.dark { ${darkVars} }`;
+}

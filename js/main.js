@@ -810,3 +810,81 @@ function openShareModal(post) {
 document.addEventListener("DOMContentLoaded", initChrome);
 document.addEventListener("DOMContentLoaded", initPWAInstallMenu);
 document.addEventListener("DOMContentLoaded", renderRightAside);
+document.addEventListener("DOMContentLoaded", applySiteSettings);
+
+/* =========================================================
+   Terapkan Pengaturan Website (Admin Panel > Pengaturan) ke halaman publik:
+   font, warna aksen, teks pengumuman, teks sidebar, teks footer + link
+   sosial media. Dipanggil sekali di setiap halaman publik saat dimuat.
+   ========================================================= */
+async function applySiteSettings() {
+  const settings = await getSettings();
+
+  // ---- Font & warna ----
+  applySiteFont(settings.site_font || "qanelas");
+  if (settings.site_color) applySiteColor(settings.site_color);
+
+  // ---- Mode tampilan default ----
+  // Kalau pengunjung belum pernah memilih mode sendiri (localStorage kosong)
+  // dan admin sudah atur default-nya, ikuti itu. Nilainya juga di-cache
+  // supaya kunjungan berikutnya langsung tepat sejak baris pertama (lihat
+  // script kecil inline di <head> tiap halaman).
+  try {
+    if (settings.theme_default) {
+      localStorage.setItem("fueeru_theme_default_cache", settings.theme_default);
+      if (!localStorage.getItem("fueeru_theme")) {
+        const shouldBeDark = settings.theme_default !== "light";
+        document.documentElement.classList.toggle("dark", shouldBeDark);
+      }
+    }
+  } catch (e) {}
+
+  // ---- Teks Pengumuman ----
+  const bar = document.getElementById("announcementBar");
+  if (bar) {
+    if (settings.text_announcement_active === "1" && settings.text_announcement) {
+      const track = document.getElementById("announcementBarTrack");
+      const t1 = document.getElementById("announcementBarText1");
+      const t2 = document.getElementById("announcementBarText2");
+      t1.textContent = settings.text_announcement;
+      t2.textContent = settings.text_announcement;
+      if (settings.text_announcement_link) {
+        track.href = settings.text_announcement_link;
+        track.classList.remove("no-link");
+      } else {
+        track.removeAttribute("href");
+        track.classList.add("no-link");
+        track.addEventListener("click", (e) => e.preventDefault());
+      }
+      bar.hidden = false;
+    } else {
+      bar.hidden = true;
+    }
+  }
+
+  // ---- Teks Sidebar (copyright) ----
+  const sidebarFoot = document.getElementById("sidebarFootText");
+  if (sidebarFoot && settings.text_sidebar_copyright) {
+    sidebarFoot.textContent = settings.text_sidebar_copyright;
+  }
+
+  // ---- Teks Footer + link sosial media ----
+  const footTagline = document.getElementById("footTaglineText");
+  if (footTagline && settings.text_footer) {
+    footTagline.textContent = settings.text_footer;
+  }
+  const footSocial = document.getElementById("footSocialLinks");
+  if (footSocial && settings.text_footer_social_links) {
+    try {
+      const links = JSON.parse(settings.text_footer_social_links);
+      if (Array.isArray(links) && links.length) {
+        footSocial.innerHTML = links
+          .map(
+            (l) =>
+              `<a href="${escapeHtml(l.url)}" target="_blank" rel="noopener">${escapeHtml(l.label)}</a>`
+          )
+          .join("");
+      }
+    } catch (e) {}
+  }
+}

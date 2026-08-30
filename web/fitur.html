@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<script>(function(){try{var t=localStorage.getItem('fueeru_theme');if(t!=='light'){document.documentElement.classList.add('dark');}}catch(e){}})();</script>
+<script>(function(){try{var t=localStorage.getItem('fueeru_theme');if(!t)t=localStorage.getItem('fueeru_theme_default_cache');if(t!=='light'){document.documentElement.classList.add('dark');}}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fitur Tambahan — Fueeru Game</title>
@@ -68,6 +68,15 @@
   </div>
 </nav>
 
+<div class="announcement-bar" id="announcementBar" hidden>
+  <div class="announcement-bar-inner">
+    <a class="announcement-bar-track" id="announcementBarTrack" href="#">
+      <span class="announcement-bar-text" id="announcementBarText1"></span>
+      <span class="announcement-bar-text" id="announcementBarText2" aria-hidden="true"></span>
+    </a>
+  </div>
+</div>
+
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 <nav class="sidebar" id="sidebar" aria-hidden="true">
   <div class="sidebar-head">
@@ -117,7 +126,7 @@
       </button>
     </div>
   </div>
-  <div class="sidebar-foot">© 2026 Fueeru Game. Semua hak dilindungi.</div>
+  <div class="sidebar-foot" id="sidebarFootText">© 2026 Fueeru Game. Semua hak dilindungi.</div>
 </nav>
 
 <div class="search-backdrop" id="searchBackdrop"></div>
@@ -169,7 +178,8 @@
     </button>
   </div>
   <div class="foot-brand">Fueeru Game</div>
-  Download Game Erotic Android &amp; PC Bahasa Indonesia
+  <div class="foot-tagline" id="footTaglineText">Download Game Erotic Android &amp; PC Bahasa Indonesia</div>
+  <div class="foot-social-links" id="footSocialLinks"></div>
 </footer>
 
 <script>window.ASSET_BASE = "../";</script>
