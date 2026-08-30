@@ -3361,6 +3361,7 @@ async function loadPengaturanKeamanan() {
     "Situs ini berisi konten yang hanya ditujukan untuk pengunjung berusia 18 tahun ke atas. Apakah kamu sudah berumur 18 tahun atau lebih?";
 
   setOnOffToggle("settingsMaintenanceActiveToggle", cachedSiteSettings.maintenance_active === "1" ? "1" : "0");
+  document.getElementById("settingsMaintenanceDescription").value = cachedSiteSettings.maintenance_description || "";
   document.getElementById("settingsMaintenanceReason").value = cachedSiteSettings.maintenance_reason || "";
 }
 
@@ -3411,6 +3412,7 @@ document.getElementById("btnSaveAgeGate").addEventListener("click", async functi
 document.getElementById("btnSaveMaintenance").addEventListener("click", async function () {
   await saveSettings({
     maintenance_active: getOnOffToggleValue("settingsMaintenanceActiveToggle", "0"),
+    maintenance_description: document.getElementById("settingsMaintenanceDescription").value.trim(),
     maintenance_reason: document.getElementById("settingsMaintenanceReason").value.trim()
   });
   showToast("Pengaturan Mode Maintenance disimpan");

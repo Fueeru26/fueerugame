@@ -1434,10 +1434,11 @@ async function tryServeOverriddenImage(path, env) {
  * Worker (bukan lewat env.ASSETS.fetch ke file terpisah) — supaya tidak
  * bergantung pada apakah maintenance.html berhasil ter-deploy sebagai aset
  * statis. Kalau itu gagal/hilang, hasilnya jadi halaman kosong-putih total. */
-function buildMaintenanceHtml(reason) {
-  const safeReason = reason
-    ? reason.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]))
-    : "";
+function buildMaintenanceHtml(reason, description) {
+  const esc = (s) => (s ? s.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c])) : "");
+  const safeReason = esc(reason);
+  const safeDescription =
+    esc(description) || "Maaf, Fueeru Game sedang dalam masa maintenance. Kami akan kembali online secepatnya.";
   return `<!DOCTYPE html>
 <html lang="id">
 <head>
@@ -1450,9 +1451,9 @@ function buildMaintenanceHtml(reason) {
 <meta name="theme-color" content="#2fa8e0">
 <link rel="stylesheet" href="/css/style.css">
 <style>
-  .maint-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; }
+  .maint-wrap { min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 64px 24px; text-align: center; }
   .maint-box { max-width: 440px; }
-  .maint-logo { width: 84px; height: 84px; border-radius: 50%; box-shadow: var(--shadow-card); margin-bottom: 20px; }
+  .maint-logo { width: 116px; height: 116px; border-radius: 50%; box-shadow: var(--shadow-card); margin: 0 auto 22px; display: block; }
   .maint-box h1 { font-size: 1.4rem; color: var(--sky-700); margin-bottom: 12px; }
   .maint-box p { color: var(--ink-soft); line-height: 1.5; font-size: .96rem; margin-bottom: 8px; }
   .maint-reason { margin-top: 16px; padding: 14px 16px; background: var(--sky-100); border-radius: var(--radius-sm); color: var(--ink); font-size: .9rem; line-height: 1.5; }
@@ -1463,7 +1464,7 @@ function buildMaintenanceHtml(reason) {
     <div class="maint-box">
       <img class="maint-logo" src="/webpictures/logo.webp" alt="Logo Fueeru Game">
       <h1>Situs Sedang Dalam Perbaikan</h1>
-      <p>Maaf, Fueeru Game sedang dalam masa maintenance. Kami akan kembali online secepatnya.</p>
+      <p>${safeDescription}</p>
       ${safeReason ? `<div class="maint-reason">${safeReason}</div>` : ""}
     </div>
   </div>
@@ -1491,7 +1492,9 @@ async function maybeServeMaintenancePage(request, env, path) {
 
   const reasonRow = await env.DB.prepare("SELECT value FROM settings WHERE key = 'maintenance_reason'").first();
   const reason = reasonRow ? reasonRow.value : "";
-  const html = buildMaintenanceHtml(reason);
+  const descRow = await env.DB.prepare("SELECT value FROM settings WHERE key = 'maintenance_description'").first();
+  const description = descRow ? descRow.value : "";
+  const html = buildMaintenanceHtml(reason, description);
   // PENTING: status 200, BUKAN 503. Status 5xx sering di-override oleh
   // interstitial bawaan Chrome/Cloudflare sendiri ("Halaman ini tidak
   // berfungsi... HTTP ERROR 503") yang menimpa isi asli halaman ini —
