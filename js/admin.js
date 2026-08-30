@@ -23,6 +23,19 @@ function isLoggedIn() {
   return sessionStorage.getItem(SESSION_KEY) === "1" || localStorage.getItem(REMEMBER_KEY) === "1";
 }
 
+// Admin Panel tidak memuat js/main.js (beda dari halaman publik), jadi
+// terapkan pengaturan Font & Warna situs secara manual di sini juga — tanpa
+// ini, tampilan Admin Panel selalu balik ke warna/font default tiap kali
+// dibuka ulang (cuma berubah sementara saat itu juga sehabis klik Simpan).
+(async function initAdminSiteStyle() {
+  try {
+    const settings = await getSettings();
+    applySiteFont(settings.site_font || "qanelas");
+    if (settings.site_color) applySiteColor(settings.site_color);
+  } catch (e) {}
+})();
+
+
 function doLogin(remember) {
   sessionStorage.setItem(SESSION_KEY, "1");
   if (remember) {
@@ -2975,6 +2988,21 @@ function deleteInfoItemConfirm(id) {
 // PENGATURAN (Admin Panel > Pengaturan) — Style, Gambar, Teks, Keamanan
 // =========================================================
 let cachedSiteSettings = {};
+// Teks default (dipakai kalau field pengaturan teks dikosongkan) — kalau
+// value yang tersimpan di server PERSIS sama dengan teks default ini
+// (misal tersimpan sebelum field ini ada opsi kosong), tampilkan sebagai
+// kosong juga di form supaya konsisten dengan field yang belum pernah diisi.
+const SETTINGS_TEXT_DEFAULTS = {
+  text_sidebar_copyright: "© 2026 Fueeru Game. Semua hak dilindungi.",
+  text_footer: "Download Game Erotic Android & PC Bahasa Indonesia",
+  age_gate_text:
+    "Situs ini berisi konten yang hanya ditujukan untuk pengunjung berusia 18 tahun ke atas. Apakah kamu sudah berumur 18 tahun atau lebih?",
+  maintenance_description: "Maaf, Fueeru Game sedang dalam masa maintenance. Kami akan kembali online secepatnya."
+};
+function settingsTextOrBlank(key) {
+  const val = cachedSiteSettings[key] || "";
+  return val === SETTINGS_TEXT_DEFAULTS[key] ? "" : val;
+}
 let pendingSettingsImages = {};
 
 async function refreshCachedSiteSettings() {
@@ -3282,8 +3310,8 @@ async function loadPengaturanTeks() {
     cachedSiteSettings.text_announcement_active === "1" ? "1" : "0"
   );
 
-  document.getElementById("settingsSidebarText").value = cachedSiteSettings.text_sidebar_copyright || "";
-  document.getElementById("settingsFooterText").value = cachedSiteSettings.text_footer || "";
+  document.getElementById("settingsSidebarText").value = settingsTextOrBlank("text_sidebar_copyright");
+  document.getElementById("settingsFooterText").value = settingsTextOrBlank("text_footer");
 
   let socialLinks = [];
   try {
@@ -3354,10 +3382,10 @@ async function loadPengaturanKeamanan() {
   }
 
   setOnOffToggle("settingsAgeGateActiveToggle", cachedSiteSettings.age_gate_active === "0" ? "0" : "1");
-  document.getElementById("settingsAgeGateText").value = cachedSiteSettings.age_gate_text || "";
+  document.getElementById("settingsAgeGateText").value = settingsTextOrBlank("age_gate_text");
 
   setOnOffToggle("settingsMaintenanceActiveToggle", cachedSiteSettings.maintenance_active === "1" ? "1" : "0");
-  document.getElementById("settingsMaintenanceDescription").value = cachedSiteSettings.maintenance_description || "";
+  document.getElementById("settingsMaintenanceDescription").value = settingsTextOrBlank("maintenance_description");
   document.getElementById("settingsMaintenanceReason").value = cachedSiteSettings.maintenance_reason || "";
 }
 
@@ -5708,6 +5736,14 @@ document.addEventListener("DOMContentLoaded", function () {
     pushBackTrap();
     fetchServerNotifications();
     startServerNotificationsPolling();
+    // Sesi yang dipulihkan (bukan login manual lewat form) tidak pernah
+    // memanggil /api/auth lagi, padahal cookie "bypass" Mode Maintenance
+    // (supaya admin tetap bisa browsing situs publik saat maintenance
+    // aktif) hanya diset di respons endpoint itu. Refresh cookie-nya diam-
+    // diam di background di sini juga, supaya tetap berlaku walau admin
+    // tidak login ulang lewat form tiap kali buka Admin Panel.
+    const savedPassword = getAdminSessionPassword();
+    if (savedPassword) checkAdminPassword(savedPassword);
   } else {
     viewLogin.classList.remove("hidden");
     adminShell.classList.add("hidden");
