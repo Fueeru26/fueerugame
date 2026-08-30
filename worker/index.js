@@ -1430,6 +1430,47 @@ async function tryServeOverriddenImage(path, env) {
 /** Gerbang Mode Maintenance — dicek sebelum menyajikan halaman HTML publik.
  * Admin yang sedang login (ditandai cookie fueeru_admin_bypass, diset saat
  * login lewat /api/auth) tetap bisa browsing tampilan publik seperti biasa. */
+/** Bangun HTML halaman "Situs sedang dalam perbaikan" langsung di dalam
+ * Worker (bukan lewat env.ASSETS.fetch ke file terpisah) — supaya tidak
+ * bergantung pada apakah maintenance.html berhasil ter-deploy sebagai aset
+ * statis. Kalau itu gagal/hilang, hasilnya jadi halaman kosong-putih total. */
+function buildMaintenanceHtml(reason) {
+  const safeReason = reason
+    ? reason.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]))
+    : "";
+  return `<!DOCTYPE html>
+<html lang="id">
+<head>
+<script>(function(){try{var t=localStorage.getItem('fueeru_theme');if(t!=='light'){document.documentElement.classList.add('dark');}}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sedang Dalam Perbaikan — Fueeru Game</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" href="/webpictures/logo.webp">
+<meta name="theme-color" content="#2fa8e0">
+<link rel="stylesheet" href="/css/style.css">
+<style>
+  .maint-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; }
+  .maint-box { max-width: 440px; }
+  .maint-logo { width: 84px; height: 84px; border-radius: 50%; box-shadow: var(--shadow-card); margin-bottom: 20px; }
+  .maint-box h1 { font-size: 1.4rem; color: var(--sky-700); margin-bottom: 12px; }
+  .maint-box p { color: var(--ink-soft); line-height: 1.5; font-size: .96rem; margin-bottom: 8px; }
+  .maint-reason { margin-top: 16px; padding: 14px 16px; background: var(--sky-100); border-radius: var(--radius-sm); color: var(--ink); font-size: .9rem; line-height: 1.5; }
+</style>
+</head>
+<body>
+  <div class="maint-wrap">
+    <div class="maint-box">
+      <img class="maint-logo" src="/webpictures/logo.webp" alt="Logo Fueeru Game">
+      <h1>Situs Sedang Dalam Perbaikan</h1>
+      <p>Maaf, Fueeru Game sedang dalam masa maintenance. Kami akan kembali online secepatnya.</p>
+      ${safeReason ? `<div class="maint-reason">${safeReason}</div>` : ""}
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
 async function maybeServeMaintenancePage(request, env, path) {
   // Jangan pernah menggerbangi: API, admin.html sendiri, aset (css/js/gambar/font).
   if (path.startsWith("/api/")) return null;
@@ -1449,14 +1490,8 @@ async function maybeServeMaintenancePage(request, env, path) {
   }
 
   const reasonRow = await env.DB.prepare("SELECT value FROM settings WHERE key = 'maintenance_reason'").first();
-  const reason = reasonRow && reasonRow.value ? reasonRow.value : "";
-  const assetUrl = new URL(request.url);
-  assetUrl.pathname = "/maintenance.html";
-  const maintenanceRes = await env.ASSETS.fetch(new Request(assetUrl.toString(), request));
-  const html = (await maintenanceRes.text()).replace(
-    "__MAINTENANCE_REASON__",
-    reason ? reason.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c])) : ""
-  );
+  const reason = reasonRow ? reasonRow.value : "";
+  const html = buildMaintenanceHtml(reason);
   // PENTING: status 200, BUKAN 503. Status 5xx sering di-override oleh
   // interstitial bawaan Chrome/Cloudflare sendiri ("Halaman ini tidak
   // berfungsi... HTTP ERROR 503") yang menimpa isi asli halaman ini —

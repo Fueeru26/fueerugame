@@ -838,8 +838,16 @@ function hslToHex(h, s, l) {
   };
   return "#" + toHex(r) + toHex(g) + toHex(b);
 }
+/** Sama seperti hslToHex, tapi hasilnya rgba() dengan alpha tertentu —
+ * dipakai untuk --navbar-bg (header transparan) yang butuh transparansi. */
+function hslToRgba(h, s, l, a) {
+  const hex = hslToHex(h, s, l);
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
 
-/** Bangun palet lengkap (light + dark) dari 1 warna dasar (hex). */
 /** Bangun palet lengkap (light + dark) dari 1 warna dasar (hex), atau dari
  * sentinel khusus "monochrome" untuk tema hitam/putih (saturasi 0 — hasilnya
  * abu-abu netral di semua tingkatan, gelap di mode terang & terang di mode
@@ -858,6 +866,10 @@ function generateColorPalette(baseHex) {
   // "light" dari sky-700/900 terlepas dari mode aktif, sama seperti bawaan.
   out.navy700 = out.light["sky-700"];
   out.navy900 = out.light["sky-900"];
+  // Header (navbar) transparan di mode gelap — dulu warnanya dihardcode
+  // biru navy tetap terlepas dari warna aksen yang dipilih. Sekarang ikut
+  // dirotasi pakai hue + saturasi/lightness yang sama seperti --surface.
+  out.dark["navbar-bg"] = hslToRgba(hue, isMonochrome ? 0 : 49, 12, 0.85);
   return out;
 }
 
@@ -877,6 +889,7 @@ function applySiteColor(baseHex, opts) {
       });
       opts.scopedEl.style.removeProperty("--surface");
       opts.scopedEl.style.removeProperty("--surface-alt");
+      opts.scopedEl.style.removeProperty("--navbar-bg");
       opts.scopedEl.style.removeProperty("--navy-700");
       opts.scopedEl.style.removeProperty("--navy-900");
     }
