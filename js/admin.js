@@ -1243,8 +1243,11 @@ document.getElementById("btnAddPost").addEventListener("click", openAddForm);
  * ukuran maksimum yang wajar & mengompresnya jadi WebP (jauh lebih kecil
  * dari JPEG di kualitas visual yang setara) — dengan fallback otomatis ke
  * JPEG kalau browser-nya kebetulan tidak mendukung ekspor WebP dari canvas.
+ * preserveAlpha: kalau true, transparansi PNG asli dipertahankan (dipakai
+ * untuk logo/gambar situs yang perlu tetap transparan di mode gelap),
+ * fallback-nya PNG (bukan JPEG, karena JPEG tidak punya kanal alpha).
  * Return: Promise<string dataURL>. */
-function compressImageFile(file, maxDim, quality) {
+function compressImageFile(file, maxDim, quality, preserveAlpha) {
   return new Promise(function (resolve, reject) {
     const reader = new FileReader();
     reader.onerror = function () {
@@ -1273,18 +1276,20 @@ function compressImageFile(file, maxDim, quality) {
           canvas.width = w;
           canvas.height = h;
           const ctx = canvas.getContext("2d");
-          // Latar putih dulu, supaya PNG transparan tidak jadi hitam saat
-          // dikonversi ke WebP/JPEG (keduanya dipakai tanpa alpha di sini).
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, w, h);
+          if (!preserveAlpha) {
+            // Latar putih dulu, supaya PNG transparan tidak jadi hitam saat
+            // dikonversi ke WebP/JPEG (keduanya dipakai tanpa alpha di sini).
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, w, h);
+          }
           ctx.drawImage(img, 0, 0, w, h);
           const q = quality || 0.82;
           let dataUrl = canvas.toDataURL("image/webp", q);
           // Sebagian kecil browser lawas diam-diam fallback ke PNG kalau
-          // tidak mendukung ekspor WebP dari canvas — deteksi & pakai JPEG
-          // sebagai cadangan supaya ukurannya tetap kecil.
+          // tidak mendukung ekspor WebP dari canvas — deteksi & pakai
+          // JPEG/PNG sebagai cadangan (PNG kalau perlu tetap transparan).
           if (!dataUrl || dataUrl.indexOf("data:image/webp") !== 0) {
-            dataUrl = canvas.toDataURL("image/jpeg", q);
+            dataUrl = preserveAlpha ? canvas.toDataURL("image/png") : canvas.toDataURL("image/jpeg", q);
           }
           resolve(dataUrl);
         } catch (err) {
@@ -3023,6 +3028,74 @@ document.querySelectorAll(".onoff-toggle").forEach((wrap) => {
 });
 
 /* ---------------- Pengaturan Style ---------------- */
+const COLOR_SWATCHES = [
+  { value: "#e02020", label: "Merah" },
+  { value: "#17d9d9", label: "Cyan" },
+  { value: "#1a4fe0", label: "Biru" },
+  { value: "#22c55e", label: "Hijau" },
+  { value: "#7c3aed", label: "Ungu" },
+  { value: "#d926d9", label: "Magenta" },
+  { value: "#f472b6", label: "Pink" },
+  { value: "#f2600c", label: "Oranye" },
+  { value: "#d4a017", label: "Gold" },
+  { value: "#f5e021", label: "Kuning" },
+  { value: "#7a4a26", label: "Cokelat" },
+  { value: "monochrome", label: "Hitam/Putih" }
+];
+let pendingColorValue = "#2fa8e0";
+
+function updateColorSwatchEl(el, value) {
+  if (value === "monochrome") {
+    el.classList.add("swatch-monochrome");
+    el.style.background = "";
+  } else {
+    el.classList.remove("swatch-monochrome");
+    el.style.background = value;
+  }
+}
+
+function updateColorSwatchTrigger() {
+  updateColorSwatchEl(document.getElementById("settingsColorSwatchPreview"), pendingColorValue);
+}
+
+function renderColorSwatchGrid(selectedValue) {
+  const grid = document.getElementById("colorSwatchGrid");
+  grid.innerHTML = COLOR_SWATCHES.map(
+    (s) =>
+      `<button type="button" class="color-swatch-btn${s.value === "monochrome" ? " swatch-monochrome" : ""}${s.value === selectedValue ? " selected" : ""}" data-value="${s.value}" ${s.value === "monochrome" ? "" : `style="background:${s.value};"`} title="${s.label}" aria-label="${s.label}"></button>`
+  ).join("");
+  grid.querySelectorAll(".color-swatch-btn").forEach((btn) => {
+    btn.addEventListener("click", function () {
+      grid.querySelectorAll(".color-swatch-btn").forEach((b) => b.classList.remove("selected"));
+      this.classList.add("selected");
+      const value = this.getAttribute("data-value");
+      const preview = document.getElementById("colorPickerSelectedPreview");
+      preview.setAttribute("data-value", value);
+      updateColorSwatchEl(preview, value);
+    });
+  });
+}
+
+document.getElementById("btnOpenColorPicker").addEventListener("click", function () {
+  renderColorSwatchGrid(pendingColorValue);
+  const preview = document.getElementById("colorPickerSelectedPreview");
+  preview.setAttribute("data-value", pendingColorValue);
+  updateColorSwatchEl(preview, pendingColorValue);
+  document.getElementById("colorPickerModalBackdrop").classList.add("show");
+});
+document.getElementById("btnCancelColorPicker").addEventListener("click", function () {
+  document.getElementById("colorPickerModalBackdrop").classList.remove("show");
+});
+document.getElementById("colorPickerModalBackdrop").addEventListener("click", function (e) {
+  if (e.target === this) this.classList.remove("show");
+});
+document.getElementById("btnConfirmColorPicker").addEventListener("click", function () {
+  const preview = document.getElementById("colorPickerSelectedPreview");
+  pendingColorValue = preview.getAttribute("data-value") || pendingColorValue;
+  updateColorSwatchTrigger();
+  document.getElementById("colorPickerModalBackdrop").classList.remove("show");
+});
+
 async function loadPengaturanStyle() {
   await refreshCachedSiteSettings();
 
@@ -3030,21 +3103,11 @@ async function loadPengaturanStyle() {
   document.getElementById("settingsFontSelect").value = fontId;
   refreshCustomSelect(document.getElementById("settingsFontSelect"));
 
-  const colorHex = cachedSiteSettings.site_color || "#2fa8e0";
-  document.getElementById("settingsColorPicker").value = colorHex;
-  document.getElementById("settingsColorHexInput").value = colorHex;
+  pendingColorValue = cachedSiteSettings.site_color || "#2fa8e0";
+  updateColorSwatchTrigger();
 
   setOnOffToggle("settingsThemeDefaultToggle", cachedSiteSettings.theme_default || "dark");
 }
-
-document.getElementById("settingsColorPicker").addEventListener("input", function () {
-  document.getElementById("settingsColorHexInput").value = this.value;
-});
-document.getElementById("settingsColorHexInput").addEventListener("input", function () {
-  if (/^#[0-9a-fA-F]{6}$/.test(this.value)) {
-    document.getElementById("settingsColorPicker").value = this.value;
-  }
-});
 
 document.getElementById("btnSaveFont").addEventListener("click", async function () {
   const fontId = document.getElementById("settingsFontSelect").value;
@@ -3054,13 +3117,8 @@ document.getElementById("btnSaveFont").addEventListener("click", async function 
 });
 
 document.getElementById("btnSaveColor").addEventListener("click", async function () {
-  const hex = document.getElementById("settingsColorHexInput").value;
-  if (!/^#[0-9a-fA-F]{6}$/i.test(hex)) {
-    showToast("Format warna tidak valid");
-    return;
-  }
-  await saveSettings({ site_color: hex });
-  applySiteColor(hex);
+  await saveSettings({ site_color: pendingColorValue });
+  applySiteColor(pendingColorValue);
   showToast("Warna situs disimpan");
 });
 
@@ -3069,12 +3127,12 @@ document.getElementById("btnResetColor").addEventListener("click", function () {
     "Kembalikan warna situs ke setelan default?",
     async function () {
       await resetSetting("site_color");
-      document.getElementById("settingsColorPicker").value = "#2fa8e0";
-      document.getElementById("settingsColorHexInput").value = "#2fa8e0";
+      pendingColorValue = "#2fa8e0";
+      updateColorSwatchTrigger();
       applySiteColor(null);
       showToast("Warna situs dikembalikan ke default");
     },
-    { title: "Kembalikan ke Default" }
+    { title: "Kembalikan ke Default", confirmLabel: "Iya" }
   );
 });
 
@@ -3088,7 +3146,7 @@ document.getElementById("btnPreviewFont").addEventListener("click", function () 
   openStylePreview({ fontId: document.getElementById("settingsFontSelect").value });
 });
 document.getElementById("btnPreviewColor").addEventListener("click", function () {
-  openStylePreview({ colorHex: document.getElementById("settingsColorHexInput").value });
+  openStylePreview({ colorHex: pendingColorValue });
 });
 
 /** Preview font/warna di modal Preview yang sama dipakai Preview Postingan
@@ -3156,7 +3214,7 @@ function wireSettingsImageUpload(fileInputId, previewId, errorId, settingKey, ma
       return;
     }
     try {
-      const dataUrl = await compressImageFile(file, maxDim, 0.85);
+      const dataUrl = await compressImageFile(file, maxDim, 0.85, true);
       pendingSettingsImages[settingKey] = dataUrl;
       document.getElementById(previewId).src = dataUrl;
     } catch (e) {
@@ -3201,7 +3259,7 @@ function resetSettingsImage(settingKey, previewId, defaultSrc, label) {
       delete pendingSettingsImages[settingKey];
       showToast(label + " dikembalikan ke default");
     },
-    { title: "Kembalikan ke Default" }
+    { title: "Kembalikan ke Default", confirmLabel: "Iya" }
   );
 }
 document.getElementById("btnResetLogo").addEventListener("click", () =>
@@ -3234,7 +3292,7 @@ async function loadPengaturanTeks() {
     socialLinks = JSON.parse(cachedSiteSettings.text_footer_social_links || "[]");
   } catch (e) {}
   document.getElementById("settingsFooterSocialList").innerHTML = "";
-  socialLinks.forEach((l) => addFooterSocialRow(l.label, l.url));
+  socialLinks.forEach((l) => addFooterSocialRow(typeof l === "string" ? l : l.url));
 }
 
 document.getElementById("btnSaveAnnouncement").addEventListener("click", async function () {
@@ -3251,27 +3309,25 @@ document.getElementById("btnSaveSidebarText").addEventListener("click", async fu
   showToast("Teks sidebar disimpan");
 });
 
-function addFooterSocialRow(label, url) {
+function addFooterSocialRow(url) {
   const container = document.getElementById("settingsFooterSocialList");
   const row = document.createElement("div");
   row.className = "social-link-row";
   row.innerHTML = `
-    <input type="text" class="info-text-input social-link-label" placeholder="Nama (mis. Discord)" value="${escapeHtmlAdmin(label || "")}">
-    <input type="text" class="info-text-input social-link-url" placeholder="https://..." value="${escapeHtmlAdmin(url || "")}">
+    <input type="text" class="info-text-input social-link-url" placeholder="https://facebook.com/namamu" value="${escapeHtmlAdmin(url || "")}" style="flex:1;">
     <button type="button" class="btn-remove-social" aria-label="Hapus link">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>`;
   row.querySelector(".btn-remove-social").addEventListener("click", () => row.remove());
   container.appendChild(row);
 }
-document.getElementById("btnAddFooterSocialLink").addEventListener("click", () => addFooterSocialRow("", ""));
+document.getElementById("btnAddFooterSocialLink").addEventListener("click", () => addFooterSocialRow(""));
 
 document.getElementById("btnSaveFooterText").addEventListener("click", async function () {
   const links = [];
   document.querySelectorAll("#settingsFooterSocialList .social-link-row").forEach((row) => {
-    const label = row.querySelector(".social-link-label").value.trim();
     const url = row.querySelector(".social-link-url").value.trim();
-    if (label && url) links.push({ label, url });
+    if (url) links.push(url);
   });
   await saveSettings({
     text_footer: document.getElementById("settingsFooterText").value.trim(),

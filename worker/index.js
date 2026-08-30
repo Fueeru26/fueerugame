@@ -1457,7 +1457,16 @@ async function maybeServeMaintenancePage(request, env, path) {
     "__MAINTENANCE_REASON__",
     reason ? reason.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c])) : ""
   );
-  return new Response(html, { status: 503, headers: { "content-type": "text/html; charset=utf-8" } });
+  // PENTING: status 200, BUKAN 503. Status 5xx sering di-override oleh
+  // interstitial bawaan Chrome/Cloudflare sendiri ("Halaman ini tidak
+  // berfungsi... HTTP ERROR 503") yang menimpa isi asli halaman ini —
+  // jadi baik pengunjung maupun admin bisa sama sekali tidak melihat
+  // halaman maintenance yang sebenarnya. <meta name="robots" content="noindex">
+  // di maintenance.html sudah cukup untuk mencegah halaman ini diindeks.
+  return new Response(html, {
+    status: 200,
+    headers: { "content-type": "text/html; charset=utf-8", "x-maintenance-mode": "1" }
+  });
 }
 
 /** [ADMIN] Log percobaan login gagal (maks 20 terbaru ditampilkan). Baris

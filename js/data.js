@@ -792,12 +792,14 @@ const COLOR_PALETTE_TEMPLATE = {
   light: {
     "sky-50": [100, 97], "sky-100": [100, 94], "sky-150": [100, 91], "sky-200": [100, 87],
     "sky-300": [93, 77], "sky-400": [85, 65], "sky-500": [74, 53], "sky-600": [74, 44],
-    "sky-700": [79, 37], "sky-900": [78, 22]
+    "sky-700": [79, 37], "sky-900": [78, 22],
+    "surface-alt": [100, 98]
   },
   dark: {
     "sky-50": [58, 9], "sky-100": [54, 15], "sky-150": [50, 22], "sky-200": [46, 25],
     "sky-300": [43, 40], "sky-400": [50, 54], "sky-500": [70, 59], "sky-600": [82, 68],
-    "sky-700": [84, 76], "sky-900": [100, 91]
+    "sky-700": [84, 76], "sky-900": [100, 91],
+    "surface": [49, 12], "surface-alt": [54, 11]
   }
 };
 
@@ -838,13 +840,18 @@ function hslToHex(h, s, l) {
 }
 
 /** Bangun palet lengkap (light + dark) dari 1 warna dasar (hex). */
+/** Bangun palet lengkap (light + dark) dari 1 warna dasar (hex), atau dari
+ * sentinel khusus "monochrome" untuk tema hitam/putih (saturasi 0 — hasilnya
+ * abu-abu netral di semua tingkatan, gelap di mode terang & terang di mode
+ * gelap, mengikuti kurva lightness bawaan). */
 function generateColorPalette(baseHex) {
-  const hue = hexToHue(baseHex);
+  const isMonochrome = baseHex === "monochrome";
+  const hue = isMonochrome ? 0 : hexToHue(baseHex);
   const out = { light: {}, dark: {} };
   for (const mode of ["light", "dark"]) {
     for (const key of Object.keys(COLOR_PALETTE_TEMPLATE[mode])) {
       const [s, l] = COLOR_PALETTE_TEMPLATE[mode][key];
-      out[mode][key] = hslToHex(hue, s, l);
+      out[mode][key] = hslToHex(hue, isMonochrome ? 0 : s, l);
     }
   }
   // Navy selalu tetap (dipakai sidebar/elemen struktural) — pakai versi
@@ -868,6 +875,8 @@ function applySiteColor(baseHex, opts) {
       ["50", "100", "150", "200", "300", "400", "500", "600", "700", "900"].forEach((n) => {
         opts.scopedEl.style.removeProperty("--sky-" + n);
       });
+      opts.scopedEl.style.removeProperty("--surface");
+      opts.scopedEl.style.removeProperty("--surface-alt");
       opts.scopedEl.style.removeProperty("--navy-700");
       opts.scopedEl.style.removeProperty("--navy-900");
     }

@@ -9,8 +9,8 @@
 <link rel="manifest" href="admin-manifest.json">
 <meta name="theme-color" content="#0b2947">
 <link rel="apple-touch-icon" href="webpictures/icon-admin-192.png">
-<link rel="stylesheet" href="css/style.css?v=20260910">
-<link rel="stylesheet" href="css/admin.css?v=20260910">
+<link rel="stylesheet" href="css/style.css?v=20260915">
+<link rel="stylesheet" href="css/admin.css?v=20260915">
 </head>
 <body class="admin-body">
 
@@ -802,10 +802,10 @@
       <div class="settings-section">
         <div class="subsection-title">Ganti Warna Website</div>
         <p class="backup-desc">Pilih 1 warna dasar — semua tingkatan warna aksen situs (terang &amp; gelap) otomatis disesuaikan dari warna ini.</p>
-        <div class="settings-color-row">
-          <input type="color" id="settingsColorPicker" value="#2fa8e0">
-          <input type="text" id="settingsColorHexInput" class="info-text-input" value="#2fa8e0" maxlength="7" style="flex:1;">
-        </div>
+        <button type="button" class="settings-color-trigger" id="btnOpenColorPicker">
+          <span class="settings-color-trigger-swatch" id="settingsColorSwatchPreview"></span>
+          <span>Pilih Warna</span>
+        </button>
         <div class="settings-btn-row">
           <button type="button" class="btn-cancel" id="btnPreviewColor">Preview</button>
           <button type="button" class="btn-primary" id="btnSaveColor">Simpan</button>
@@ -917,6 +917,7 @@
         <p class="backup-desc">Teks tagline di footer, dan link sosial media (opsional).</p>
         <input type="text" id="settingsFooterText" class="info-text-input" placeholder="Download Game Erotic Android & PC Bahasa Indonesia">
         <label style="margin-top:12px;">Link Sosial Media (Opsional)</label>
+        <p class="backup-desc" style="margin-top:0;">Icon platform (Facebook, Instagram, X/Twitter, dll) otomatis dideteksi dan ditampilkan dari link yang dimasukkan.</p>
         <div id="settingsFooterSocialList"></div>
         <button type="button" class="btn-cancel" id="btnAddFooterSocialLink" style="width:100%;margin-top:10px;">+ Tambah Link</button>
         <button type="button" class="btn-primary" id="btnSaveFooterText" style="width:100%;margin-top:14px;">Simpan</button>
@@ -1784,6 +1785,22 @@
   </div>
 </div>
 
+<!-- ===== Modal: Pilih Warna (Pengaturan Style > Ganti Warna Website) ===== -->
+<div class="modal-backdrop" id="colorPickerModalBackdrop">
+  <div class="modal-box color-picker-modal-box">
+    <h3>Pilih Warna</h3>
+    <div class="color-swatch-grid" id="colorSwatchGrid"></div>
+    <div class="color-picker-selected-row">
+      <span>Warna yang dipilih</span>
+      <span class="color-swatch-preview" id="colorPickerSelectedPreview"></span>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="btnCancelColorPicker" style="flex:1;">Batal</button>
+      <button type="button" class="btn-primary" id="btnConfirmColorPicker" style="flex:1;">Simpan</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== Modal: Tambahkan/Edit Informasi (Update Info) ===== -->
 <div class="modal-backdrop" id="infoItemModalBackdrop">
   <div class="modal-box">
@@ -1990,10 +2007,10 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="js/data.js?v=20260910"></script>
+<script src="js/data.js?v=20260915"></script>
 <script src="js/vfs.js?v=20260821"></script>
 <script src="js/ziputil.js?v=20260821"></script>
 <script src="js/redirect-widget.js?v=20260826"></script>
-<script src="js/admin.js?v=20260910"></script>
+<script src="js/admin.js?v=20260915"></script>
 </body>
 </html>
