@@ -3282,10 +3282,8 @@ async function loadPengaturanTeks() {
     cachedSiteSettings.text_announcement_active === "1" ? "1" : "0"
   );
 
-  document.getElementById("settingsSidebarText").value =
-    cachedSiteSettings.text_sidebar_copyright || "© 2026 Fueeru Game. Semua hak dilindungi.";
-  document.getElementById("settingsFooterText").value =
-    cachedSiteSettings.text_footer || "Download Game Erotic Android & PC Bahasa Indonesia";
+  document.getElementById("settingsSidebarText").value = cachedSiteSettings.text_sidebar_copyright || "";
+  document.getElementById("settingsFooterText").value = cachedSiteSettings.text_footer || "";
 
   let socialLinks = [];
   try {
@@ -3356,9 +3354,7 @@ async function loadPengaturanKeamanan() {
   }
 
   setOnOffToggle("settingsAgeGateActiveToggle", cachedSiteSettings.age_gate_active === "0" ? "0" : "1");
-  document.getElementById("settingsAgeGateText").value =
-    cachedSiteSettings.age_gate_text ||
-    "Situs ini berisi konten yang hanya ditujukan untuk pengunjung berusia 18 tahun ke atas. Apakah kamu sudah berumur 18 tahun atau lebih?";
+  document.getElementById("settingsAgeGateText").value = cachedSiteSettings.age_gate_text || "";
 
   setOnOffToggle("settingsMaintenanceActiveToggle", cachedSiteSettings.maintenance_active === "1" ? "1" : "0");
   document.getElementById("settingsMaintenanceDescription").value = cachedSiteSettings.maintenance_description || "";

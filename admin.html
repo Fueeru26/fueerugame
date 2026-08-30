@@ -9,8 +9,8 @@
 <link rel="manifest" href="admin-manifest.json">
 <meta name="theme-color" content="#0b2947">
 <link rel="apple-touch-icon" href="webpictures/icon-admin-192.png">
-<link rel="stylesheet" href="css/style.css?v=20260916">
-<link rel="stylesheet" href="css/admin.css?v=20260915">
+<link rel="stylesheet" href="css/style.css?v=20260917">
+<link rel="stylesheet" href="css/admin.css?v=20260917">
 </head>
 <body class="admin-body">
 
@@ -895,9 +895,9 @@
         <div class="subsection-title" style="margin-top:4px;">Teks Pengumuman</div>
         <p class="backup-desc">Running text yang tampil di bawah header (mobile) / di bawah menu navigasi (desktop).</p>
         <label>Isi Pengumuman</label>
-        <input type="text" id="settingsAnnouncementText" class="info-text-input" placeholder="Contoh: Event Natal sedang berlangsung, cek game-game terbaru!">
+        <input type="text" id="settingsAnnouncementText" class="info-text-input" placeholder="Contoh: Event Natal sedang berlangsung, cek game-game terbaru!" autocomplete="off">
         <label style="margin-top:12px;">Link Tujuan (Opsional)</label>
-        <input type="text" id="settingsAnnouncementLink" class="info-text-input" placeholder="https://...">
+        <input type="text" id="settingsAnnouncementLink" class="info-text-input" placeholder="https://..." autocomplete="off">
         <div class="onoff-toggle" id="settingsAnnouncementActiveToggle" style="margin-top:14px;">
           <button type="button" class="onoff-btn" data-value="1">Aktifkan</button>
           <button type="button" class="onoff-btn" data-value="0">Matikan</button>
@@ -908,14 +908,14 @@
       <div class="settings-section">
         <div class="subsection-title">Teks Sidebar</div>
         <p class="backup-desc">Teks copyright yang tampil di bagian bawah sidebar situs.</p>
-        <input type="text" id="settingsSidebarText" class="info-text-input" placeholder="© 2026 Fueeru Game. Semua hak dilindungi.">
+        <input type="text" id="settingsSidebarText" class="info-text-input" placeholder="© 2026 Fueeru Game. Semua hak dilindungi." autocomplete="off">
         <button type="button" class="btn-primary" id="btnSaveSidebarText" style="width:100%;margin-top:14px;">Simpan</button>
       </div>
 
       <div class="settings-section">
         <div class="subsection-title">Teks Footer</div>
         <p class="backup-desc">Teks tagline di footer, dan link sosial media (opsional).</p>
-        <input type="text" id="settingsFooterText" class="info-text-input" placeholder="Download Game Erotic Android & PC Bahasa Indonesia">
+        <input type="text" id="settingsFooterText" class="info-text-input" placeholder="Download Game Erotic Android & PC Bahasa Indonesia" autocomplete="off">
         <label style="margin-top:12px;">Link Sosial Media (Opsional)</label>
         <p class="backup-desc" style="margin-top:0;">Icon platform (Facebook, Instagram, X/Twitter, dll) otomatis dideteksi dan ditampilkan dari link yang dimasukkan.</p>
         <div id="settingsFooterSocialList"></div>
@@ -952,7 +952,7 @@
           <button type="button" class="onoff-btn" data-value="0">Matikan</button>
         </div>
         <label style="margin-top:12px;">Teks Konfirmasi Umur</label>
-        <textarea id="settingsAgeGateText" class="info-text-input" rows="3" placeholder="Situs ini berisi konten yang hanya ditujukan untuk pengunjung berusia 18 tahun ke atas..."></textarea>
+        <textarea id="settingsAgeGateText" class="info-text-input" rows="3" placeholder="Situs ini berisi konten yang hanya ditujukan untuk pengunjung berusia 18 tahun ke atas..." autocomplete="off"></textarea>
         <button type="button" class="btn-primary" id="btnSaveAgeGate" style="width:100%;margin-top:14px;">Simpan</button>
       </div>
 
@@ -964,9 +964,9 @@
           <button type="button" class="onoff-btn" data-value="0">Matikan</button>
         </div>
         <label style="margin-top:12px;">Deskripsi</label>
-        <textarea id="settingsMaintenanceDescription" class="info-text-input" rows="3" placeholder="Maaf, Fueeru Game sedang dalam masa maintenance. Kami akan kembali online secepatnya."></textarea>
+        <textarea id="settingsMaintenanceDescription" class="info-text-input" rows="3" placeholder="Maaf, Fueeru Game sedang dalam masa maintenance. Kami akan kembali online secepatnya." autocomplete="off"></textarea>
         <label style="margin-top:12px;">Alasan Maintenance (Opsional)</label>
-        <textarea id="settingsMaintenanceReason" class="info-text-input" rows="3" placeholder="Contoh: Sedang ada perbaikan server, mohon tunggu beberapa saat lagi."></textarea>
+        <textarea id="settingsMaintenanceReason" class="info-text-input" rows="3" placeholder="Contoh: Sedang ada perbaikan server, mohon tunggu beberapa saat lagi." autocomplete="off"></textarea>
         <button type="button" class="btn-primary" id="btnSaveMaintenance" style="width:100%;margin-top:14px;">Simpan</button>
       </div>
     </div>

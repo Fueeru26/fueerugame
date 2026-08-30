@@ -1955,6 +1955,14 @@ body.admin-body {
   color: var(--ink);
 }
 .info-text-input:focus { border-color: var(--sky-500); }
+.info-text-input:-webkit-autofill,
+.info-text-input:-webkit-autofill:hover,
+.info-text-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ink);
+  -webkit-box-shadow: 0 0 0 1000px var(--surface) inset;
+  box-shadow: 0 0 0 1000px var(--surface) inset;
+  transition: background-color 9999s ease-in-out 0s;
+}
 
 /* Bar list sederhana (breakdown device/referrer/lokasi/genre/populer) */
 .info-bar-list { display: flex; flex-direction: column; gap: 12px; }

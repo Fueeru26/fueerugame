@@ -212,7 +212,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   background: var(--navbar-bg);
   backdrop-filter: blur(14px) saturate(160%);
   -webkit-backdrop-filter: blur(14px) saturate(160%);
-  border-bottom: 1px solid rgba(143, 214, 251, 0.45);
+  border-bottom: 1px solid var(--sky-300);
 }
 
 .icon-btn {
