@@ -35,9 +35,9 @@ function initChrome() {
     if (pageMatch) logPageView(pageMatch[1]);
   }
 
-  // ---------------- Dark mode toggle (satu ikon Matahari/Bulan di header) ----------------
+  // ---------------- Dark mode toggle (1 tombol ikon di header, ganti sun/moon) ----------------
   const THEME_KEY = "fueeru_theme";
-  const themeToggleBtn = document.getElementById("btnThemeToggle");
+  const themeToggleBtns = document.querySelectorAll(".theme-toggle-btn");
 
   function getCurrentTheme() {
     return document.documentElement.classList.contains("dark") ? "dark" : "light";
@@ -45,8 +45,8 @@ function initChrome() {
   function applyTheme(theme) {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }
-  if (themeToggleBtn) {
-    themeToggleBtn.addEventListener("click", () => {
+  themeToggleBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
       const next = getCurrentTheme() === "dark" ? "light" : "dark";
       try {
         localStorage.setItem(THEME_KEY, next);
@@ -55,7 +55,7 @@ function initChrome() {
       }
       applyTheme(next);
     });
-  }
+  });
   applyTheme(getCurrentTheme());
 
   const sidebar = document.getElementById("sidebar");
@@ -240,23 +240,88 @@ function thumbFallbackAttr() {
   return `onerror="this.onerror=null;this.src='${resolveAsset('webpictures/postplaceholder.webp')}';"`;
 }
 
-function renderCarousel(containerId, posts) {
+/** Carousel "Rekomendasi" — 1 slide per tampilan (landscape), geser
+ * kiri/kanan manual atau otomatis tiap beberapa detik, dengan titik
+ * penanda posisi slide di bawahnya. */
+function initFeaturedCarousel(trackId, dotsId, prevId, nextId, posts, intervalMs) {
+  const track = document.getElementById(trackId);
+  const dotsWrap = document.getElementById(dotsId);
+  const prevBtn = document.getElementById(prevId);
+  const nextBtn = document.getElementById(nextId);
+  if (!track || !posts.length) return;
+
+  track.innerHTML = posts
+    .map(
+      (p) => `
+    <a class="featured-slide" href="${siteBase()}post.html?id=${encodeURIComponent(p.id)}">
+      <img class="featured-slide-img" src="${resolveAsset(p.thumbnail)}" alt="Thumbnail ${escapeHtml(p.title)}" loading="lazy" ${thumbFallbackAttr()}>
+      <div class="featured-slide-title">${escapeHtml(p.title)}</div>
+    </a>`
+    )
+    .join("");
+
+  if (dotsWrap) {
+    dotsWrap.innerHTML = posts
+      .map((_, i) => `<button type="button" class="carousel-dot" data-i="${i}" aria-label="Ke slide ${i + 1}"></button>`)
+      .join("");
+  }
+  // Kalau cuma 1 postingan, tombol panah & titik penanda tidak perlu tampil.
+  const multiSlide = posts.length > 1;
+  if (prevBtn) prevBtn.style.display = multiSlide ? "" : "none";
+  if (nextBtn) nextBtn.style.display = multiSlide ? "" : "none";
+  if (dotsWrap) dotsWrap.style.display = multiSlide ? "" : "none";
+
+  let index = 0;
+  let timer = null;
+
+  function update() {
+    track.style.transform = "translateX(-" + index * 100 + "%)";
+    if (dotsWrap) {
+      dotsWrap.querySelectorAll(".carousel-dot").forEach((d, i) => d.classList.toggle("active", i === index));
+    }
+  }
+  function goTo(i) {
+    index = (i + posts.length) % posts.length;
+    update();
+    resetTimer();
+  }
+  function resetTimer() {
+    if (timer) clearInterval(timer);
+    if (multiSlide) timer = setInterval(() => goTo(index + 1), intervalMs || 5000);
+  }
+
+  if (prevBtn) prevBtn.addEventListener("click", () => goTo(index - 1));
+  if (nextBtn) nextBtn.addEventListener("click", () => goTo(index + 1));
+  if (dotsWrap) {
+    dotsWrap.querySelectorAll(".carousel-dot").forEach((d) => {
+      d.addEventListener("click", () => goTo(parseInt(d.getAttribute("data-i"), 10)));
+    });
+  }
+
+  update();
+  resetTimer();
+}
+
+/** Render kartu untuk carousel "Postingan Terkait" (multi-kartu, scroll
+ * horizontal) — dipakai di halaman detail post, beda gaya dari carousel
+ * "Rekomendasi" di homepage (lihat initFeaturedCarousel). */
+function renderRelatedCarousel(containerId, posts) {
   const track = document.getElementById(containerId);
   if (!track) return;
   track.innerHTML = posts
     .map(
       (p) => `
-    <a class="game-card" href="${siteBase()}post.html?id=${encodeURIComponent(p.id)}">
+    <a class="related-card" href="${siteBase()}post.html?id=${encodeURIComponent(p.id)}">
       <img class="thumb" src="${resolveAsset(p.thumbnail)}" alt="Thumbnail ${escapeHtml(p.title)}" loading="lazy" ${thumbFallbackAttr()}>
-      <div class="gc-body">
-        <div class="gc-title">${escapeHtml(p.title)}</div>
+      <div class="rc-body">
+        <div class="rc-title">${escapeHtml(p.title)}</div>
       </div>
     </a>`
     )
     .join("");
 }
 
-function initCarouselArrows(trackId, prevId, nextId) {
+function initRelatedCarouselArrows(trackId, prevId, nextId) {
   const track = document.getElementById(trackId);
   const prev = document.getElementById(prevId);
   const next = document.getElementById(nextId);
@@ -264,70 +329,6 @@ function initCarouselArrows(trackId, prevId, nextId) {
   const scrollAmount = 220;
   if (prev) prev.addEventListener("click", () => track.scrollBy({ left: -scrollAmount, behavior: "smooth" }));
   if (next) next.addEventListener("click", () => track.scrollBy({ left: scrollAmount, behavior: "smooth" }));
-}
-
-/** Kartu tunggal "Rekomendasi" di beranda: landscape, geser kiri/kanan,
- * penanda bulat, dan geser otomatis tiap 5 detik. Ukuran kartu tetap
- * (aspect-ratio gambar + tinggi judul 3 baris), isi kontennya saja yang
- * berganti saat pindah slide. */
-function initFeatureCarousel(posts) {
-  const card = document.getElementById("featureCard");
-  if (!card || !posts || posts.length === 0) return;
-
-  const thumb = document.getElementById("featureThumb");
-  const mediaLink = document.getElementById("featureLink");
-  const titleLink = document.getElementById("featureTitleLink");
-  const titleEl = document.getElementById("featureTitle");
-  const dotsWrap = document.getElementById("featureDots");
-  const prevBtn = document.getElementById("featurePrev");
-  const nextBtn = document.getElementById("featureNext");
-
-  const total = posts.length;
-  let index = 0;
-  let timer = null;
-
-  dotsWrap.innerHTML = posts
-    .map((_, i) => `<button type="button" class="feature-dot" aria-label="Ke slide ${i + 1}"></button>`)
-    .join("");
-  const dots = dotsWrap.querySelectorAll(".feature-dot");
-
-  function render() {
-    const p = posts[index];
-    const href = `${siteBase()}post.html?id=${encodeURIComponent(p.id)}`;
-    thumb.src = resolveAsset(p.thumbnail);
-    thumb.alt = `Thumbnail ${p.title}`;
-    thumb.onerror = function () {
-      this.onerror = null;
-      this.src = resolveAsset("webpictures/postplaceholder.webp");
-    };
-    if (mediaLink) mediaLink.href = href;
-    if (titleLink) titleLink.href = href;
-    if (titleEl) titleEl.textContent = p.title;
-    dots.forEach((d, i) => d.classList.toggle("active", i === index));
-  }
-
-  function resetAutoplay() {
-    if (timer) clearInterval(timer);
-    if (total > 1) {
-      timer = setInterval(() => {
-        index = (index + 1) % total;
-        render();
-      }, 5000);
-    }
-  }
-
-  function goTo(i) {
-    index = (i + total) % total;
-    render();
-    resetAutoplay();
-  }
-
-  dots.forEach((d, i) => d.addEventListener("click", () => goTo(i)));
-  if (prevBtn) prevBtn.addEventListener("click", () => goTo(index - 1));
-  if (nextBtn) nextBtn.addEventListener("click", () => goTo(index + 1));
-
-  render();
-  resetAutoplay();
 }
 
 /** Ikon-ikon kecil untuk meta info postingan (tanggal & kategori). */

@@ -3070,7 +3070,7 @@ const COLOR_SWATCHES = [
   { value: "#7a4a26", label: "Cokelat" },
   { value: "monochrome", label: "Hitam/Putih" }
 ];
-let pendingColorValue = "#2fa8e0";
+let pendingColorValue = "#1a5ad1";
 
 function updateColorSwatchEl(el, value) {
   if (value === "monochrome") {
@@ -3131,7 +3131,7 @@ async function loadPengaturanStyle() {
   document.getElementById("settingsFontSelect").value = fontId;
   refreshCustomSelect(document.getElementById("settingsFontSelect"));
 
-  pendingColorValue = cachedSiteSettings.site_color || "#2fa8e0";
+  pendingColorValue = cachedSiteSettings.site_color || "#1a5ad1";
   updateColorSwatchTrigger();
 
   setOnOffToggle("settingsThemeDefaultToggle", cachedSiteSettings.theme_default || "dark");
@@ -3155,7 +3155,7 @@ document.getElementById("btnResetColor").addEventListener("click", function () {
     "Kembalikan warna situs ke setelan default?",
     async function () {
       await resetSetting("site_color");
-      pendingColorValue = "#2fa8e0";
+      pendingColorValue = "#1a5ad1";
       updateColorSwatchTrigger();
       applySiteColor(null);
       showToast("Warna situs dikembalikan ke default");
