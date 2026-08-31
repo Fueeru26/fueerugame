@@ -82,48 +82,39 @@
 
 :root {
   --font-family: 'Qanelas', sans-serif;
-  --ink: #0c1e35;
-  --ink-soft: #526884;
-  --sky-50: #f1f7fd;
-  --sky-100: #e2edfa;
-  --sky-150: #d1e4f7;
-  --sky-200: #b7d6f2;
-  --sky-300: #7fb8e8;
-  --sky-400: #4497dd;
-  --sky-500: #1279c9;
-  --sky-600: #0d63a8;
-  --sky-700: #0a4c82;
-  --sky-900: #082747;
+  --ink: #0b2947;
+  --ink-soft: #4a6a89;
+  --sky-50: #f2faff;
+  --sky-100: #e2f4ff;
+  --sky-150: #d3edff;
+  --sky-200: #bfe7ff;
+  --sky-300: #8fd6fb;
+  --sky-400: #5cc2f2;
+  --sky-500: #2fa8e0;
+  --sky-600: #1d8bc4;
+  --sky-700: #146aa8;
+  --sky-900: #0c3a63;
   --amber: #ffb648;
-  --amber-dark: #dd8f2c;
+  --amber-dark: #e2933a;
   --white: #ffffff;
   /* Warna navy tetap (tidak berubah di dark mode) — dipakai untuk elemen
-     struktural yang memang selalu gelap: sidebar, background admin, toast,
-     dan hero. */
-  --navy-700: #0a4c82;
-  --navy-900: #071c33;
-  /* Palet khusus hero — pita "portal malam" yang jadi satu-satunya momen
-     berani di halaman, tidak ikut berubah oleh toggle terang/gelap. */
-  --hero-1: #071427;
-  --hero-2: #0f2b52;
-  --hero-3: #1a4fa0;
-  --hero-glow: #4fd1ff;
-  --hero-ink: #eef6ff;
-  --hero-ink-soft: #a9c2e2;
+     struktural yang memang selalu gelap: sidebar, background admin, toast. */
+  --navy-700: #146aa8;
+  --navy-900: #0c3a63;
   /* Warna permukaan (surface) — beradaptasi antara light/dark mode */
   --surface: #ffffff;
-  --surface-alt: #f6f9fd;
-  --navbar-bg: rgba(255, 255, 255, 0.8);
+  --surface-alt: #f7fbff;
+  --navbar-bg: rgba(255, 255, 255, 0.78);
   --input-bg: #ffffff;
   --radius-lg: 22px;
   --radius-md: 16px;
   --radius-sm: 10px;
-  --shadow-soft: 0 10px 30px -12px rgba(10, 76, 130, 0.3);
-  --shadow-card: 0 6px 18px -8px rgba(7, 20, 39, 0.2);
+  --shadow-soft: 0 10px 30px -12px rgba(20, 106, 168, 0.28);
+  --shadow-card: 0 6px 18px -8px rgba(11, 41, 71, 0.18);
   --container: 1080px;
   /* Border tipis + "warna inner" (inner glow) untuk kartu game/postingan */
   --card-border-color: var(--sky-150);
-  --shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.75), inset 0 -6px 14px -10px rgba(10, 76, 130, 0.16);
+  --shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.75), inset 0 -6px 14px -10px rgba(20, 106, 168, 0.16);
 }
 
 /* ---------------- Dark mode ---------------- */
@@ -250,119 +241,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   height: 66px;
   width: auto;
   object-fit: contain;
-}
-
-/* ---------------- Hero ---------------- */
-.hero {
-  position: relative;
-  background:
-    radial-gradient(560px 320px at 88% -10%, rgba(79, 209, 255, 0.28), transparent 70%),
-    linear-gradient(155deg, var(--hero-1) 0%, var(--hero-2) 55%, var(--hero-3) 130%);
-  overflow: hidden;
-  isolation: isolate;
-}
-.hero::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.16) 1px, transparent 1px);
-  background-size: 22px 22px;
-  opacity: .35;
-  mask-image: linear-gradient(180deg, rgba(0,0,0,.9), transparent 85%);
-  pointer-events: none;
-}
-.hero-inner {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: 1.1fr .9fr;
-  align-items: center;
-  gap: 20px;
-  padding: 34px 18px 40px;
-}
-.hero-copy h1 {
-  font-family: var(--font-family, 'Qanelas'), sans-serif;
-  color: var(--hero-ink);
-  font-weight: 800;
-  font-size: clamp(1.6rem, 4.6vw, 2.5rem);
-  line-height: 1.15;
-  letter-spacing: -.2px;
-  max-width: 15ch;
-}
-.hero-copy p {
-  color: var(--hero-ink-soft);
-  font-size: .96rem;
-  line-height: 1.55;
-  max-width: 46ch;
-  margin: 12px 0 20px;
-}
-.hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 24px;
-}
-.btn-hero-primary, .btn-hero-secondary {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border-radius: 999px;
-  font-weight: 700;
-  font-size: .92rem;
-  transition: transform .2s ease, background .2s ease, border-color .2s ease;
-}
-.btn-hero-primary {
-  background: var(--amber);
-  color: #2b1a02;
-}
-.btn-hero-primary:hover { background: #ffc669; transform: translateY(-2px); }
-.btn-hero-secondary {
-  background: rgba(255,255,255,0.08);
-  border: 1.5px solid rgba(255,255,255,0.28);
-  color: var(--hero-ink);
-}
-.btn-hero-secondary:hover { background: rgba(255,255,255,0.16); transform: translateY(-2px); }
-.hero-stats {
-  display: flex;
-  gap: 26px;
-}
-.hero-stat strong {
-  display: block;
-  font-family: var(--font-family, 'Qanelas'), sans-serif;
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--hero-glow);
-  line-height: 1.1;
-}
-.hero-stat span {
-  font-size: .78rem;
-  color: var(--hero-ink-soft);
-}
-.hero-visual {
-  position: relative;
-  height: 230px;
-}
-.hero-visual .hv-card {
-  position: absolute;
-  width: 118px;
-  height: 168px;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  box-shadow: 0 20px 40px -14px rgba(0,0,0,.55);
-  border: 1px solid rgba(255,255,255,0.18);
-  background: var(--sky-100);
-}
-.hero-visual .hv-card img { width: 100%; height: 100%; object-fit: cover; }
-.hero-visual .hv-card:nth-child(1) { left: 6%; top: 34px; transform: rotate(-9deg); z-index: 1; }
-.hero-visual .hv-card:nth-child(2) { left: 38%; top: 4px; transform: rotate(3deg); z-index: 2; }
-.hero-visual .hv-card:nth-child(3) { left: 66%; top: 46px; transform: rotate(12deg); z-index: 1; }
-@media (max-width: 760px) {
-  .hero-inner { grid-template-columns: 1fr; padding: 26px 18px 30px; }
-  .hero-visual { height: 150px; margin-top: 4px; }
-  .hero-visual .hv-card { width: 96px; height: 136px; }
-  .hero-copy h1 { max-width: 100%; }
-  .hero-stats { gap: 20px; }
 }
 
 /* ---------------- Sidebar (off-canvas) ---------------- */
@@ -655,30 +533,33 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 /* ---------------- Section heading with wave ---------------- */
 .section-head {
   position: relative;
-  margin: 30px 0 14px;
+  text-align: center;
+  margin: 22px 0 14px;
 }
 .section-head-tight { margin-top: 4px; }
 .section-head h2 {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  font-size: 1.3rem;
+  display: inline-block;
+  font-size: 1.5rem;
   font-weight: 800;
-  color: var(--ink);
-  padding-left: 3px;
-}
-.section-head h2::before {
-  content: "";
-  width: 5px;
-  height: 22px;
-  border-radius: 3px;
-  background: linear-gradient(180deg, var(--sky-500), var(--amber));
-  flex: 0 0 auto;
+  color: var(--sky-700);
+  background: var(--surface);
+  padding: 0 18px;
+  position: relative;
+  z-index: 2;
 }
 #randomHeading,
 #updateHeading {
   font-family: var(--font-family, 'Qanelas'), sans-serif;
   letter-spacing: .1px;
+}
+.section-head::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 50%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--sky-300), var(--sky-500), var(--sky-300), transparent);
+  z-index: 1;
+  border-radius: 3px;
 }
 
 .wave-divider {
