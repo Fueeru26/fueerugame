@@ -99,8 +99,8 @@
   --white: #ffffff;
   /* Warna navy tetap (tidak berubah di dark mode) — dipakai untuk elemen
      struktural yang memang selalu gelap: header, sidebar, section-head, admin, toast. */
-  --navy-700: #163f77;
-  --navy-900: #081b36;
+  --navy-700: #1c4a86;
+  --navy-900: #0d3269;
   /* Warna permukaan (surface) — beradaptasi antara light/dark mode */
   --surface: #ffffff;
   --surface-alt: #f2f6fb;
@@ -514,13 +514,13 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   margin: 22px 0 16px;
   background: linear-gradient(135deg, var(--navy-700) 0%, var(--navy-900) 100%);
   border-radius: var(--radius-lg);
-  padding: 16px 22px;
+  padding: 13px 20px;
   box-shadow: var(--shadow-card);
 }
 .section-head-tight { margin-top: 30px; }
 .section-head h2 {
   display: block;
-  font-size: 1.28rem;
+  font-size: 1.05rem;
   font-weight: 800;
   color: #fff;
   background: none;
@@ -625,8 +625,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .carousel-arrow.next { right: -6px; }
 .carousel-arrow svg { width: 20px; height: 20px; }
 
-/* ---------------- Rekomendasi: kartu tunggal landscape (feature carousel) ---------------- */
+/* ---------------- Rekomendasi: kartu tunggal landscape (feature carousel) ----------------
+   Ukuran kartu HARUS tetap/fix di semua slide, berapa pun rasio gambar
+   aslinya — dipakai teknik "padding-top" (bukan properti aspect-ratio)
+   supaya didukung semua browser dan lebar gambar selalu 100% kartu. */
 .feature-card {
+  width: 100%;
   background: var(--surface);
   border: 1.5px solid var(--card-border-color);
   border-radius: var(--radius-lg);
@@ -636,15 +640,25 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .feature-media {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  height: 0;
+  padding-top: 56.25%; /* rasio 16:9, tetap di semua slide */
   background: var(--sky-100);
   overflow: hidden;
 }
-.feature-media-link { display: block; width: 100%; height: 100%; }
+.feature-media-link {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
 .feature-thumb {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
   display: block;
 }
 .feature-title-link { display: block; }
