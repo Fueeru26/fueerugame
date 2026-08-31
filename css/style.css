@@ -115,6 +115,13 @@
   /* Border tipis + "warna inner" (inner glow) untuk kartu game/postingan */
   --card-border-color: var(--sky-150);
   --shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.75), inset 0 -6px 14px -10px rgba(20, 106, 168, 0.16);
+  /* Biru navy solid untuk header & bar judul section (tidak berubah di dark mode) */
+  --bar-navy-1: #0d2f66;
+  --bar-navy-2: #123a78;
+  /* Biru terang untuk judul/badge/ikon di dalam kartu (beradaptasi di dark mode) */
+  --accent-blue: #1450e0;
+  --accent-blue-soft: #4d7fe3;
+  --accent-blue-bg: #ffffff;
 }
 
 /* ---------------- Dark mode ---------------- */
@@ -141,6 +148,9 @@
   --shadow-card: 0 6px 18px -8px rgba(0, 0, 0, 0.5);
   --card-border-color: var(--sky-200);
   --shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 0 -6px 14px -10px rgba(0, 0, 0, 0.45);
+  --accent-blue: #6fa2ff;
+  --accent-blue-soft: #8fadeb;
+  --accent-blue-bg: #14243a;
 }
 
 :root.dark body {
@@ -207,12 +217,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px 18px;
-  background: var(--navbar-bg);
-  backdrop-filter: blur(14px) saturate(160%);
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
-  border-bottom: 1px solid var(--sky-300);
+  gap: 8px;
+  padding: 10px 14px;
+  background: linear-gradient(180deg, var(--bar-navy-2) 0%, var(--bar-navy-1) 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.25);
 }
 
 .icon-btn {
@@ -230,6 +238,13 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 .icon-btn:hover { background: var(--sky-200); transform: translateY(-1px); }
 .icon-btn svg { width: 20px; height: 20px; }
+
+/* Ikon di dalam navbar (di atas navy) tampil putih polos, tanpa lingkaran */
+.navbar .icon-btn {
+  background: transparent;
+  color: #ffffff;
+}
+.navbar .icon-btn:hover { background: rgba(255, 255, 255, 0.14); }
 
 .brand-link {
   flex: 1 1 auto;
@@ -530,36 +545,27 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .search-close-btn svg { width: 17px; height: 17px; }
 .search-close-btn:hover { background: var(--sky-100); }
 
-/* ---------------- Section heading with wave ---------------- */
+/* ---------------- Section heading: bar navy solid ---------------- */
 .section-head {
   position: relative;
-  text-align: center;
-  margin: 22px 0 14px;
+  margin: 18px 0 16px;
 }
 .section-head-tight { margin-top: 4px; }
 .section-head h2 {
-  display: inline-block;
-  font-size: 1.5rem;
+  display: block;
+  font-size: 1.08rem;
   font-weight: 800;
-  color: var(--sky-700);
-  background: var(--surface);
-  padding: 0 18px;
-  position: relative;
-  z-index: 2;
+  color: #ffffff;
+  background: linear-gradient(180deg, var(--bar-navy-2) 0%, var(--bar-navy-1) 100%);
+  padding: 14px 20px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  text-align: left;
 }
 #randomHeading,
 #updateHeading {
   font-family: var(--font-family, 'Qanelas'), sans-serif;
   letter-spacing: .1px;
-}
-.section-head::before {
-  content: "";
-  position: absolute;
-  left: 0; right: 0; top: 50%;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, var(--sky-300), var(--sky-500), var(--sky-300), transparent);
-  z-index: 1;
-  border-radius: 3px;
 }
 
 .wave-divider {
@@ -654,6 +660,98 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .carousel-arrow.next { right: -6px; }
 .carousel-arrow svg { width: 20px; height: 20px; }
 
+/* ---------------- Hero slider "Rekomendasi" (1 slide penuh) ---------------- */
+.hero-slider-card {
+  position: relative;
+  background: var(--surface);
+  border: 1.5px solid var(--card-border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card), var(--shadow-inner);
+  overflow: hidden;
+}
+.hero-slider-viewport { position: relative; }
+.hero-slider-track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hero-slider-track::-webkit-scrollbar { display: none; }
+.hero-slide {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  display: block;
+  line-height: 0;
+}
+.hero-slide-img {
+  width: 100%;
+  aspect-ratio: 2.15 / 1;
+  object-fit: cover;
+  display: block;
+  background: var(--sky-100);
+}
+.hero-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 4px 14px -4px rgba(0, 0, 0, 0.35);
+  color: var(--bar-navy-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hero-arrow.prev { left: 12px; }
+.hero-arrow.next { right: 12px; }
+.hero-arrow svg { width: 19px; height: 19px; }
+.hero-slide-info {
+  display: block;
+  padding: 16px 18px 8px;
+  color: inherit;
+  text-decoration: none;
+}
+.hero-slide-title {
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
+  font-weight: 800;
+  font-size: 1.12rem;
+  color: var(--accent-blue);
+  margin-bottom: 6px;
+  transition: color .2s ease;
+}
+.hero-slide-info:hover .hero-slide-title { color: var(--sky-500); }
+.hero-slide-desc {
+  font-size: .86rem;
+  line-height: 1.5;
+  color: var(--accent-blue-soft);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.hero-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 0 16px;
+}
+.hero-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--sky-200);
+  transition: background .2s ease, transform .2s ease;
+}
+.hero-dot.active { background: var(--accent-blue); transform: scale(1.2); }
+
 /* ---------------- New Update list ---------------- */
 .post-list {
   display: flex;
@@ -678,8 +776,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 .post-row .thumb {
   flex: 0 0 auto;
-  width: 96px;
-  height: 96px;
+  width: 92px;
+  height: 92px;
   border-radius: var(--radius-sm);
   object-fit: cover;
   background: var(--sky-100);
@@ -689,10 +787,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .post-row .prow-body { min-width: 0; flex: 1; }
 .post-row .prow-title {
   font-family: var(--font-family, 'Qanelas'), sans-serif;
-  font-weight: 600;
-  font-size: 1.02rem;
-  color: var(--sky-700);
-  margin-bottom: 4px;
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.32;
+  color: var(--accent-blue);
+  margin-bottom: 6px;
   transition: color .2s ease;
 }
 .post-row a:hover .prow-title { color: var(--sky-500); }
@@ -709,28 +808,35 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .meta-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   flex-wrap: wrap;
-  font-size: .76rem;
-  color: var(--ink-soft);
+  font-size: .78rem;
+  color: var(--accent-blue);
+  font-weight: 600;
+}
+/* Tanggal selalu ambil baris sendiri, badge jenis/platform/bahasa di baris berikutnya */
+.meta-row .meta-date {
+  flex-basis: 100%;
+  margin-bottom: 2px;
 }
 .pill {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: var(--sky-100);
-  color: var(--sky-700);
-  padding: 3px 10px;
+  background: var(--accent-blue-bg);
+  color: var(--accent-blue);
+  border: 1.5px solid var(--accent-blue);
+  padding: 4px 12px;
   border-radius: 999px;
   font-weight: 600;
 }
-.pill-icon { width: 13px; height: 13px; flex: 0 0 auto; opacity: .9; }
+.pill-icon { width: 13px; height: 13px; flex: 0 0 auto; opacity: .95; }
 .meta-row .meta-date, .post-detail-meta .meta-date {
   display: inline-flex;
   align-items: center;
   gap: 5px;
 }
-.meta-icon { width: 14px; height: 14px; flex: 0 0 auto; opacity: .8; }
+.meta-icon { width: 14px; height: 14px; flex: 0 0 auto; opacity: .9; }
 
 /* ---------------- Pagination ---------------- */
 .pagination {
@@ -1714,36 +1820,35 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 
 /* ---------------- Navbar: toggle mode & search (desktop) ---------------- */
 .navbar-theme-toggle {
-  display: none;
+  display: flex;
   align-items: center;
   gap: 3px;
-  background: var(--sky-100);
-  border-radius: 999px;
-  padding: 4px;
   flex: 0 0 auto;
 }
 .navbar-theme-toggle .theme-btn {
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   border: none;
   background: transparent;
-  color: var(--sky-700);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background .2s ease, color .2s ease;
 }
-.navbar-theme-toggle .theme-btn svg { width: 18px; height: 18px; }
-.navbar-theme-toggle .theme-btn.active[data-theme="light"] { background: var(--amber); color: #3a2400; }
-.navbar-theme-toggle .theme-btn.active[data-theme="dark"] { background: var(--navy-900); color: #fff; }
+.navbar-theme-toggle .theme-btn:hover { background: rgba(255, 255, 255, 0.14); }
+.navbar-theme-toggle .theme-btn svg { width: 20px; height: 20px; }
+/* Mobile: hanya 1 ikon terlihat (ikon aksi lawan tema saat ini —
+   mis. ikon bulan tampil saat mode terang, artinya "klik utk gelap") */
+.navbar-theme-toggle .theme-btn.active { display: none; }
 
 .navbar-search {
   display: none;
   align-items: center;
   gap: 8px;
-  background: var(--sky-50);
-  border: 1.5px solid var(--sky-200);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
   border-radius: 999px;
   padding: 5px 5px 5px 18px;
   flex: 0 1 380px;
@@ -1757,10 +1862,13 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   outline: none;
   font-size: .95rem;
   font-family: inherit;
-  color: var(--ink);
+  color: #ffffff;
   padding: 8px 0;
 }
-.navbar-search input::placeholder { color: #9db6cb; }
+.navbar-search input::placeholder { color: rgba(255, 255, 255, 0.65); }
+.navbar-search .search-submit { background: rgba(255, 255, 255, 0.16); color: #fff; }
+.navbar-search .search-submit:hover { background: rgba(255, 255, 255, 0.28); }
+.navbar-search svg { color: rgba(255, 255, 255, 0.85) !important; }
 
 /* ---------------- Menu bar kedua (navigasi horizontal desktop) ---------------- */
 /* ---------------- Teks Pengumuman (Pengaturan > Pengaturan Teks) ----------------
@@ -1971,7 +2079,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 
 @media (min-width: 980px) {
   #btnOpenSidebar, #btnOpenSearch { display: none; }
-  .navbar-theme-toggle { display: flex; }
+  .navbar-theme-toggle {
+    display: flex;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    padding: 4px;
+  }
+  .navbar-theme-toggle .theme-btn { width: 34px; height: 34px; }
+  .navbar-theme-toggle .theme-btn.active { display: flex; background: rgba(255, 255, 255, 0.22); }
   .navbar-search { display: flex; }
   .navbar { padding: 12px 24px; }
   .menubar { display: block; }

@@ -19,7 +19,10 @@
   <button class="icon-btn" id="btnOpenSidebar" aria-label="Buka menu">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
   </button>
-  <div class="navbar-theme-toggle" id="themeToggleTop">
+    <a href="index.html" class="brand-link" aria-label="Fueeru Game — Beranda">
+    <img src="webpictures/header.webp" alt="Fueeru Game">
+  </a>
+<div class="navbar-theme-toggle" id="themeToggleTop">
     <button type="button" class="theme-btn" data-theme="light" aria-label="Mode Terang">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/><line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/><line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/><line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/></svg>
     </button>
@@ -27,9 +30,6 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
     </button>
   </div>
-  <a href="index.html" class="brand-link" aria-label="Fueeru Game — Beranda">
-    <img src="webpictures/header.webp" alt="Fueeru Game">
-  </a>
   <button class="icon-btn" id="btnOpenSearch" aria-label="Buka atau tutup pencarian">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
   </button>
@@ -149,14 +149,21 @@
 
   <section aria-labelledby="randomHeading">
     <div class="section-head"><h2 id="randomHeading">Rekomendasi</h2></div>
-    <div class="carousel-wrap">
-      <button class="carousel-arrow prev" id="randomPrev" aria-label="Geser ke kiri">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
-      <div class="carousel-track" id="randomTrack"></div>
-      <button class="carousel-arrow next" id="randomNext" aria-label="Geser ke kanan">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </button>
+    <div class="hero-slider-card">
+      <div class="hero-slider-viewport">
+        <div class="hero-slider-track" id="randomTrack"></div>
+        <button class="hero-arrow prev" id="randomPrev" aria-label="Geser ke kiri">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button class="hero-arrow next" id="randomNext" aria-label="Geser ke kanan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+      <a class="hero-slide-info" id="randomInfo" href="#">
+        <div class="hero-slide-title" id="randomInfoTitle"></div>
+        <div class="hero-slide-desc" id="randomInfoDesc"></div>
+      </a>
+      <div class="hero-dots" id="randomDots"></div>
     </div>
   </section>
 
@@ -190,10 +197,18 @@
 
   const allPosts = await getPublishedPosts();
 
-  // Random Game: sampai 10 post acak
+  // Random Game: sampai 10 post acak, tampil sebagai hero slider 1 slide
   const randomPosts = shuffleArray(allPosts).slice(0, 10);
-  renderCarousel("randomTrack", randomPosts);
-  initCarouselArrows("randomTrack", "randomPrev", "randomNext");
+  initHeroSlider({
+    trackId: "randomTrack",
+    prevId: "randomPrev",
+    nextId: "randomNext",
+    dotsId: "randomDots",
+    infoId: "randomInfo",
+    infoTitleId: "randomInfoTitle",
+    infoDescId: "randomInfoDesc",
+    posts: randomPosts,
+  });
 
   // Recent Update: terbaru dulu, dengan pagination (hanya judul, tanggal, jenis)
   const sortedPosts = allPosts.slice().sort((a, b) => new Date(b.date) - new Date(a.date));

@@ -269,6 +269,77 @@ function initCarouselArrows(trackId, prevId, nextId) {
   if (next) next.addEventListener("click", () => track.scrollBy({ left: scrollAmount, behavior: "smooth" }));
 }
 
+/** Hero slider "Rekomendasi" (beranda): 1 slide penuh per layar, dengan
+ * kotak judul + deskripsi + titik indikator di bawah gambar.
+ * opts: { trackId, prevId, nextId, dotsId, infoId, infoTitleId, infoDescId, posts } */
+function initHeroSlider(opts) {
+  const track = document.getElementById(opts.trackId);
+  const dotsWrap = document.getElementById(opts.dotsId);
+  const infoLink = document.getElementById(opts.infoId);
+  const infoTitle = document.getElementById(opts.infoTitleId);
+  const infoDesc = document.getElementById(opts.infoDescId);
+  const prevBtn = document.getElementById(opts.prevId);
+  const nextBtn = document.getElementById(opts.nextId);
+  const posts = opts.posts || [];
+  if (!track) return;
+
+  const card = track.closest(".hero-slider-card");
+  if (!posts.length) {
+    if (card) card.style.display = "none";
+    return;
+  }
+  if (card) card.style.display = "";
+
+  track.innerHTML = posts
+    .map(
+      (p) => `
+    <a class="hero-slide" href="${siteBase()}post.html?id=${encodeURIComponent(p.id)}" tabindex="-1">
+      <img class="hero-slide-img" src="${resolveAsset(p.thumbnail)}" alt="Thumbnail ${escapeHtml(p.title)}" loading="lazy" ${thumbFallbackAttr()}>
+    </a>`
+    )
+    .join("");
+
+  if (dotsWrap) {
+    dotsWrap.innerHTML = posts
+      .map((_, i) => `<button type="button" class="hero-dot" aria-label="Ke slide ${i + 1}"></button>`)
+      .join("");
+  }
+  const dots = dotsWrap ? Array.from(dotsWrap.children) : [];
+
+  let current = 0;
+  function setInfo(i) {
+    const p = posts[i];
+    if (!p) return;
+    if (infoTitle) infoTitle.textContent = p.title;
+    if (infoDesc) infoDesc.textContent = makePreview(p.content, 120);
+    if (infoLink) infoLink.href = `${siteBase()}post.html?id=${encodeURIComponent(p.id)}`;
+    dots.forEach((d, di) => d.classList.toggle("active", di === i));
+  }
+  setInfo(0);
+
+  let rafId = null;
+  track.addEventListener("scroll", () => {
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => {
+      const w = track.clientWidth || 1;
+      const i = Math.max(0, Math.min(posts.length - 1, Math.round(track.scrollLeft / w)));
+      if (i !== current) {
+        current = i;
+        setInfo(current);
+      }
+    });
+  });
+
+  function goTo(i) {
+    current = (i + posts.length) % posts.length;
+    track.scrollTo({ left: current * track.clientWidth, behavior: "smooth" });
+    setInfo(current);
+  }
+  if (prevBtn) prevBtn.addEventListener("click", () => goTo(current - 1));
+  if (nextBtn) nextBtn.addEventListener("click", () => goTo(current + 1));
+  dots.forEach((d, i) => d.addEventListener("click", () => goTo(i)));
+}
+
 /** Ikon-ikon kecil untuk meta info postingan (tanggal & kategori). */
 function calendarIconSvg() {
   return `<svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
