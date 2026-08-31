@@ -35,30 +35,27 @@ function initChrome() {
     if (pageMatch) logPageView(pageMatch[1]);
   }
 
-  // ---------------- Dark mode toggle ----------------
+  // ---------------- Dark mode toggle (satu ikon Matahari/Bulan di header) ----------------
   const THEME_KEY = "fueeru_theme";
-  const themeButtons = document.querySelectorAll(".theme-btn");
+  const themeToggleBtn = document.getElementById("btnThemeToggle");
 
   function getCurrentTheme() {
     return document.documentElement.classList.contains("dark") ? "dark" : "light";
   }
   function applyTheme(theme) {
     document.documentElement.classList.toggle("dark", theme === "dark");
-    themeButtons.forEach((btn) => {
-      btn.classList.toggle("active", btn.getAttribute("data-theme") === theme);
-    });
   }
-  themeButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const theme = btn.getAttribute("data-theme");
+  if (themeToggleBtn) {
+    themeToggleBtn.addEventListener("click", () => {
+      const next = getCurrentTheme() === "dark" ? "light" : "dark";
       try {
-        localStorage.setItem(THEME_KEY, theme);
+        localStorage.setItem(THEME_KEY, next);
       } catch (e) {
         /* localStorage tidak tersedia, abaikan */
       }
-      applyTheme(theme);
+      applyTheme(next);
     });
-  });
+  }
   applyTheme(getCurrentTheme());
 
   const sidebar = document.getElementById("sidebar");
@@ -269,75 +266,68 @@ function initCarouselArrows(trackId, prevId, nextId) {
   if (next) next.addEventListener("click", () => track.scrollBy({ left: scrollAmount, behavior: "smooth" }));
 }
 
-/** Hero slider "Rekomendasi" (beranda): 1 slide penuh per layar, dengan
- * kotak judul + deskripsi + titik indikator di bawah gambar.
- * opts: { trackId, prevId, nextId, dotsId, infoId, infoTitleId, infoDescId, posts } */
-function initHeroSlider(opts) {
-  const track = document.getElementById(opts.trackId);
-  const dotsWrap = document.getElementById(opts.dotsId);
-  const infoLink = document.getElementById(opts.infoId);
-  const infoTitle = document.getElementById(opts.infoTitleId);
-  const infoDesc = document.getElementById(opts.infoDescId);
-  const prevBtn = document.getElementById(opts.prevId);
-  const nextBtn = document.getElementById(opts.nextId);
-  const posts = opts.posts || [];
-  if (!track) return;
+/** Kartu tunggal "Rekomendasi" di beranda: landscape, geser kiri/kanan,
+ * penanda bulat, dan geser otomatis tiap 5 detik. Ukuran kartu tetap
+ * (aspect-ratio gambar + tinggi judul 3 baris), isi kontennya saja yang
+ * berganti saat pindah slide. */
+function initFeatureCarousel(posts) {
+  const card = document.getElementById("featureCard");
+  if (!card || !posts || posts.length === 0) return;
 
-  const card = track.closest(".hero-slider-card");
-  if (!posts.length) {
-    if (card) card.style.display = "none";
-    return;
-  }
-  if (card) card.style.display = "";
+  const thumb = document.getElementById("featureThumb");
+  const mediaLink = document.getElementById("featureLink");
+  const titleLink = document.getElementById("featureTitleLink");
+  const titleEl = document.getElementById("featureTitle");
+  const dotsWrap = document.getElementById("featureDots");
+  const prevBtn = document.getElementById("featurePrev");
+  const nextBtn = document.getElementById("featureNext");
 
-  track.innerHTML = posts
-    .map(
-      (p) => `
-    <a class="hero-slide" href="${siteBase()}post.html?id=${encodeURIComponent(p.id)}" tabindex="-1">
-      <img class="hero-slide-img" src="${resolveAsset(p.thumbnail)}" alt="Thumbnail ${escapeHtml(p.title)}" loading="lazy" ${thumbFallbackAttr()}>
-    </a>`
-    )
+  const total = posts.length;
+  let index = 0;
+  let timer = null;
+
+  dotsWrap.innerHTML = posts
+    .map((_, i) => `<button type="button" class="feature-dot" aria-label="Ke slide ${i + 1}"></button>`)
     .join("");
+  const dots = dotsWrap.querySelectorAll(".feature-dot");
 
-  if (dotsWrap) {
-    dotsWrap.innerHTML = posts
-      .map((_, i) => `<button type="button" class="hero-dot" aria-label="Ke slide ${i + 1}"></button>`)
-      .join("");
+  function render() {
+    const p = posts[index];
+    const href = `${siteBase()}post.html?id=${encodeURIComponent(p.id)}`;
+    thumb.src = resolveAsset(p.thumbnail);
+    thumb.alt = `Thumbnail ${p.title}`;
+    thumb.onerror = function () {
+      this.onerror = null;
+      this.src = resolveAsset("webpictures/postplaceholder.webp");
+    };
+    if (mediaLink) mediaLink.href = href;
+    if (titleLink) titleLink.href = href;
+    if (titleEl) titleEl.textContent = p.title;
+    dots.forEach((d, i) => d.classList.toggle("active", i === index));
   }
-  const dots = dotsWrap ? Array.from(dotsWrap.children) : [];
 
-  let current = 0;
-  function setInfo(i) {
-    const p = posts[i];
-    if (!p) return;
-    if (infoTitle) infoTitle.textContent = p.title;
-    if (infoDesc) infoDesc.textContent = makePreview(p.content, 120);
-    if (infoLink) infoLink.href = `${siteBase()}post.html?id=${encodeURIComponent(p.id)}`;
-    dots.forEach((d, di) => d.classList.toggle("active", di === i));
+  function resetAutoplay() {
+    if (timer) clearInterval(timer);
+    if (total > 1) {
+      timer = setInterval(() => {
+        index = (index + 1) % total;
+        render();
+      }, 5000);
+    }
   }
-  setInfo(0);
-
-  let rafId = null;
-  track.addEventListener("scroll", () => {
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(() => {
-      const w = track.clientWidth || 1;
-      const i = Math.max(0, Math.min(posts.length - 1, Math.round(track.scrollLeft / w)));
-      if (i !== current) {
-        current = i;
-        setInfo(current);
-      }
-    });
-  });
 
   function goTo(i) {
-    current = (i + posts.length) % posts.length;
-    track.scrollTo({ left: current * track.clientWidth, behavior: "smooth" });
-    setInfo(current);
+    index = (i + total) % total;
+    render();
+    resetAutoplay();
   }
-  if (prevBtn) prevBtn.addEventListener("click", () => goTo(current - 1));
-  if (nextBtn) nextBtn.addEventListener("click", () => goTo(current + 1));
+
   dots.forEach((d, i) => d.addEventListener("click", () => goTo(i)));
+  if (prevBtn) prevBtn.addEventListener("click", () => goTo(index - 1));
+  if (nextBtn) nextBtn.addEventListener("click", () => goTo(index + 1));
+
+  render();
+  resetAutoplay();
 }
 
 /** Ikon-ikon kecil untuk meta info postingan (tanggal & kategori). */

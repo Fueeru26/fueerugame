@@ -82,79 +82,67 @@
 
 :root {
   --font-family: 'Qanelas', sans-serif;
-  --ink: #0b2947;
-  --ink-soft: #4a6a89;
-  --sky-50: #f2faff;
-  --sky-100: #e2f4ff;
-  --sky-150: #d3edff;
-  --sky-200: #bfe7ff;
-  --sky-300: #8fd6fb;
-  --sky-400: #5cc2f2;
-  --sky-500: #2fa8e0;
-  --sky-600: #1d8bc4;
-  --sky-700: #146aa8;
-  --sky-900: #0c3a63;
+  --ink: #0a2036;
+  --ink-soft: #4c6482;
+  --sky-50: #eaf1fa;
+  --sky-100: #d7e5f5;
+  --sky-150: #c2d7ef;
+  --sky-200: #a9c7e6;
+  --sky-300: #6f9dd2;
+  --sky-400: #3f76b8;
+  --sky-500: #1f5aa0;
+  --sky-600: #17487f;
+  --sky-700: #123967;
+  --sky-900: #081b33;
   --amber: #ffb648;
   --amber-dark: #e2933a;
   --white: #ffffff;
   /* Warna navy tetap (tidak berubah di dark mode) — dipakai untuk elemen
-     struktural yang memang selalu gelap: sidebar, background admin, toast. */
-  --navy-700: #146aa8;
-  --navy-900: #0c3a63;
+     struktural yang memang selalu gelap: header, sidebar, section-head, admin, toast. */
+  --navy-700: #163f77;
+  --navy-900: #081b36;
   /* Warna permukaan (surface) — beradaptasi antara light/dark mode */
   --surface: #ffffff;
-  --surface-alt: #f7fbff;
-  --navbar-bg: rgba(255, 255, 255, 0.78);
+  --surface-alt: #f2f6fb;
   --input-bg: #ffffff;
   --radius-lg: 22px;
   --radius-md: 16px;
   --radius-sm: 10px;
-  --shadow-soft: 0 10px 30px -12px rgba(20, 106, 168, 0.28);
-  --shadow-card: 0 6px 18px -8px rgba(11, 41, 71, 0.18);
+  --shadow-soft: 0 10px 30px -12px rgba(8, 27, 54, 0.32);
+  --shadow-card: 0 6px 18px -8px rgba(8, 27, 54, 0.2);
   --container: 1080px;
   /* Border tipis + "warna inner" (inner glow) untuk kartu game/postingan */
   --card-border-color: var(--sky-150);
-  --shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.75), inset 0 -6px 14px -10px rgba(20, 106, 168, 0.16);
-  /* Biru navy solid untuk header & bar judul section (tidak berubah di dark mode) */
-  --bar-navy-1: #0d2f66;
-  --bar-navy-2: #123a78;
-  /* Biru terang untuk judul/badge/ikon di dalam kartu (beradaptasi di dark mode) */
-  --accent-blue: #1450e0;
-  --accent-blue-soft: #4d7fe3;
-  --accent-blue-bg: #ffffff;
+  --shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.75), inset 0 -6px 14px -10px rgba(8, 27, 54, 0.16);
 }
 
-/* ---------------- Dark mode ---------------- */
+/* ---------------- Dark mode (abu-abu gelap) ---------------- */
 :root.dark {
-  --ink: #eaf3fb;
-  --ink-soft: #93b0c9;
-  --sky-50: #0a1826;
-  --sky-100: #12283d;
-  --sky-150: #1c3a55;
-  --sky-200: #23445f;
-  --sky-300: #3a6a92;
-  --sky-400: #4f8fc4;
-  --sky-500: #4fa8e0;
-  --sky-600: #6bbdf0;
-  --sky-700: #8ed0f5;
-  --sky-900: #cfeaff;
+  --ink: #eaedf0;
+  --ink-soft: #9aa3ad;
+  --sky-50: #16181b;
+  --sky-100: #1e2124;
+  --sky-150: #282b2f;
+  --sky-200: #33373c;
+  --sky-300: #454b52;
+  --sky-400: #4f7fb8;
+  --sky-500: #3d7fd6;
+  --sky-600: #5c96e0;
+  --sky-700: #7fb0ec;
+  --sky-900: #d8e6f7;
   --amber: #ffcf7d;
   --amber-dark: #f0b555;
-  --surface: #10202f;
-  --surface-alt: #0d1c2b;
-  --navbar-bg: rgba(9, 20, 32, 0.85);
-  --input-bg: #0d2136;
-  --shadow-soft: 0 10px 30px -12px rgba(0, 0, 0, 0.55);
-  --shadow-card: 0 6px 18px -8px rgba(0, 0, 0, 0.5);
+  --surface: #1a1c1f;
+  --surface-alt: #17191c;
+  --input-bg: #212427;
+  --shadow-soft: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 6px 18px -8px rgba(0, 0, 0, 0.55);
   --card-border-color: var(--sky-200);
-  --shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 0 -6px 14px -10px rgba(0, 0, 0, 0.45);
-  --accent-blue: #6fa2ff;
-  --accent-blue-soft: #8fadeb;
-  --accent-blue-bg: #14243a;
+  --shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.04), inset 0 -6px 14px -10px rgba(0, 0, 0, 0.5);
 }
 
 :root.dark body {
-  background: linear-gradient(180deg, var(--sky-50) 0%, var(--surface) 340px, var(--surface) 100%);
+  background: var(--surface);
 }
 
 * { box-sizing: border-box; }
@@ -176,7 +164,7 @@ body {
   margin: 0;
   font-family: var(--font-family, 'Qanelas'), system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   color: var(--ink);
-  background: linear-gradient(180deg, var(--sky-50) 0%, var(--surface) 340px, var(--surface) 100%);
+  background: linear-gradient(180deg, var(--sky-50) 0%, var(--surface) 280px, var(--surface) 100%);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   transition: background-color .25s ease, color .25s ease;
@@ -217,10 +205,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 10px 14px;
-  background: linear-gradient(180deg, var(--bar-navy-2) 0%, var(--bar-navy-1) 100%);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+  gap: 10px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, var(--navy-700) 0%, var(--navy-900) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow-card);
 }
 
 .icon-btn {
@@ -239,12 +228,26 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .icon-btn:hover { background: var(--sky-200); transform: translateY(-1px); }
 .icon-btn svg { width: 20px; height: 20px; }
 
-/* Ikon di dalam navbar (di atas navy) tampil putih polos, tanpa lingkaran */
+/* Tombol ikon di dalam header (background navy gelap) butuh kontras berbeda
+   dari .icon-btn biasa yang dipakai di atas permukaan terang. */
 .navbar .icon-btn {
-  background: transparent;
-  color: #ffffff;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
 }
-.navbar .icon-btn:hover { background: rgba(255, 255, 255, 0.14); }
+.navbar .icon-btn:hover { background: rgba(255, 255, 255, 0.24); }
+
+/* ---------------- Toggle mode gelap/terang (satu ikon Matahari/Bulan) ---------------- */
+.theme-toggle-btn { position: relative; }
+.theme-toggle-btn .icon-sun,
+.theme-toggle-btn .icon-moon {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+}
+.theme-toggle-btn .icon-sun { display: none; }
+.theme-toggle-btn .icon-moon { display: block; }
+:root.dark .theme-toggle-btn .icon-sun { display: block; }
+:root.dark .theme-toggle-btn .icon-moon { display: none; }
 
 .brand-link {
   flex: 1 1 auto;
@@ -411,47 +414,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   opacity: .6;
 }
 
-/* ---------------- Theme toggle (sidebar) ---------------- */
-.theme-toggle-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 14px 14px;
-  margin-top: 6px;
-  border-top: 1px solid rgba(255,255,255,0.18);
-}
-.theme-toggle-label {
-  font-size: .86rem;
-  font-weight: 600;
-  opacity: .85;
-}
-.theme-toggle {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  background: rgba(255,255,255,0.12);
-  border-radius: 999px;
-  padding: 3px;
-}
-.theme-btn {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  color: rgba(255,255,255,0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background .2s ease, color .2s ease;
-}
-.theme-btn svg { width: 17px; height: 17px; }
-.theme-btn.active {
-  background: var(--amber);
-  color: #3a2400;
-}
-
 /* ---------------- Search overlay ---------------- */
 .search-backdrop {
   position: fixed;
@@ -545,22 +507,25 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .search-close-btn svg { width: 17px; height: 17px; }
 .search-close-btn:hover { background: var(--sky-100); }
 
-/* ---------------- Section heading: bar navy solid ---------------- */
+/* ---------------- Section heading (banner navy tua) ---------------- */
 .section-head {
   position: relative;
-  margin: 18px 0 16px;
+  text-align: left;
+  margin: 22px 0 16px;
+  background: linear-gradient(135deg, var(--navy-700) 0%, var(--navy-900) 100%);
+  border-radius: var(--radius-lg);
+  padding: 16px 22px;
+  box-shadow: var(--shadow-card);
 }
-.section-head-tight { margin-top: 4px; }
+.section-head-tight { margin-top: 30px; }
 .section-head h2 {
   display: block;
-  font-size: 1.08rem;
+  font-size: 1.28rem;
   font-weight: 800;
-  color: #ffffff;
-  background: linear-gradient(180deg, var(--bar-navy-2) 0%, var(--bar-navy-1) 100%);
-  padding: 14px 20px;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
-  text-align: left;
+  color: #fff;
+  background: none;
+  padding: 0;
+  position: static;
 }
 #randomHeading,
 #updateHeading {
@@ -660,38 +625,63 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .carousel-arrow.next { right: -6px; }
 .carousel-arrow svg { width: 20px; height: 20px; }
 
-/* ---------------- Hero slider "Rekomendasi" (1 slide penuh) ---------------- */
-.hero-slider-card {
-  position: relative;
+/* ---------------- Rekomendasi: kartu tunggal landscape (feature carousel) ---------------- */
+.feature-card {
   background: var(--surface);
   border: 1.5px solid var(--card-border-color);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card), var(--shadow-inner);
   overflow: hidden;
 }
-.hero-slider-viewport { position: relative; }
-.hero-slider-track {
-  display: flex;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.hero-slider-track::-webkit-scrollbar { display: none; }
-.hero-slide {
-  flex: 0 0 100%;
-  scroll-snap-align: start;
-  display: block;
-  line-height: 0;
-}
-.hero-slide-img {
+.feature-media {
+  position: relative;
   width: 100%;
-  aspect-ratio: 2.15 / 1;
+  aspect-ratio: 16 / 9;
+  background: var(--sky-100);
+  overflow: hidden;
+}
+.feature-media-link { display: block; width: 100%; height: 100%; }
+.feature-thumb {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   display: block;
-  background: var(--sky-100);
 }
-.hero-arrow {
+.feature-title-link { display: block; }
+.feature-title {
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
+  padding: 16px 20px 6px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  line-height: 1.4;
+  color: var(--sky-700);
+  min-height: calc(1.4em * 3);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: color .2s ease;
+}
+.feature-title-link:hover .feature-title { color: var(--sky-500); }
+.feature-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 0 18px;
+}
+.feature-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: var(--sky-200);
+  cursor: pointer;
+  transition: background .2s ease, width .2s ease;
+}
+.feature-dot.active { width: 22px; background: var(--sky-500); }
+.feature-arrow {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
@@ -700,57 +690,17 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   height: 38px;
   border-radius: 50%;
   border: none;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 4px 14px -4px rgba(0, 0, 0, 0.35);
-  color: var(--bar-navy-1);
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--navy-900);
+  box-shadow: var(--shadow-card);
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.hero-arrow.prev { left: 12px; }
-.hero-arrow.next { right: 12px; }
-.hero-arrow svg { width: 19px; height: 19px; }
-.hero-slide-info {
-  display: block;
-  padding: 16px 18px 8px;
-  color: inherit;
-  text-decoration: none;
-}
-.hero-slide-title {
-  font-family: var(--font-family, 'Qanelas'), sans-serif;
-  font-weight: 800;
-  font-size: 1.12rem;
-  color: var(--accent-blue);
-  margin-bottom: 6px;
-  transition: color .2s ease;
-}
-.hero-slide-info:hover .hero-slide-title { color: var(--sky-500); }
-.hero-slide-desc {
-  font-size: .86rem;
-  line-height: 1.5;
-  color: var(--accent-blue-soft);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.hero-dots {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 6px;
-  padding: 12px 0 16px;
-}
-.hero-dot {
-  width: 8px;
-  height: 8px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: var(--sky-200);
-  transition: background .2s ease, transform .2s ease;
-}
-.hero-dot.active { background: var(--accent-blue); transform: scale(1.2); }
+.feature-arrow:hover { background: #fff; }
+.feature-arrow.prev { left: 10px; }
+.feature-arrow.next { right: 10px; }
+.feature-arrow svg { width: 18px; height: 18px; }
 
 /* ---------------- New Update list ---------------- */
 .post-list {
@@ -776,8 +726,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 .post-row .thumb {
   flex: 0 0 auto;
-  width: 92px;
-  height: 92px;
+  width: 96px;
+  height: 96px;
   border-radius: var(--radius-sm);
   object-fit: cover;
   background: var(--sky-100);
@@ -787,11 +737,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .post-row .prow-body { min-width: 0; flex: 1; }
 .post-row .prow-title {
   font-family: var(--font-family, 'Qanelas'), sans-serif;
-  font-weight: 700;
-  font-size: 1rem;
-  line-height: 1.32;
-  color: var(--accent-blue);
-  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 1.02rem;
+  color: var(--sky-700);
+  margin-bottom: 4px;
   transition: color .2s ease;
 }
 .post-row a:hover .prow-title { color: var(--sky-500); }
@@ -808,35 +757,28 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .meta-row {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   flex-wrap: wrap;
-  font-size: .78rem;
-  color: var(--accent-blue);
-  font-weight: 600;
-}
-/* Tanggal selalu ambil baris sendiri, badge jenis/platform/bahasa di baris berikutnya */
-.meta-row .meta-date {
-  flex-basis: 100%;
-  margin-bottom: 2px;
+  font-size: .76rem;
+  color: var(--ink-soft);
 }
 .pill {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: var(--accent-blue-bg);
-  color: var(--accent-blue);
-  border: 1.5px solid var(--accent-blue);
-  padding: 4px 12px;
+  background: var(--sky-100);
+  color: var(--sky-700);
+  padding: 3px 10px;
   border-radius: 999px;
   font-weight: 600;
 }
-.pill-icon { width: 13px; height: 13px; flex: 0 0 auto; opacity: .95; }
+.pill-icon { width: 13px; height: 13px; flex: 0 0 auto; opacity: .9; }
 .meta-row .meta-date, .post-detail-meta .meta-date {
   display: inline-flex;
   align-items: center;
   gap: 5px;
 }
-.meta-icon { width: 14px; height: 14px; flex: 0 0 auto; opacity: .9; }
+.meta-icon { width: 14px; height: 14px; flex: 0 0 auto; opacity: .8; }
 
 /* ---------------- Pagination ---------------- */
 .pagination {
@@ -1819,41 +1761,18 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
    ========================================================= */
 
 /* ---------------- Navbar: toggle mode & search (desktop) ---------------- */
-.navbar-theme-toggle {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  flex: 0 0 auto;
-}
-.navbar-theme-toggle .theme-btn {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background .2s ease, color .2s ease;
-}
-.navbar-theme-toggle .theme-btn:hover { background: rgba(255, 255, 255, 0.14); }
-.navbar-theme-toggle .theme-btn svg { width: 20px; height: 20px; }
-/* Mobile: hanya 1 ikon terlihat (ikon aksi lawan tema saat ini —
-   mis. ikon bulan tampil saat mode terang, artinya "klik utk gelap") */
-.navbar-theme-toggle .theme-btn.active { display: none; }
-
 .navbar-search {
   display: none;
   align-items: center;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.14);
   border: 1.5px solid rgba(255, 255, 255, 0.22);
   border-radius: 999px;
   padding: 5px 5px 5px 18px;
   flex: 0 1 380px;
   min-width: 0;
 }
+.navbar-search > svg { color: rgba(255, 255, 255, 0.75) !important; }
 .navbar-search input {
   flex: 1;
   min-width: 0;
@@ -1862,13 +1781,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   outline: none;
   font-size: .95rem;
   font-family: inherit;
-  color: #ffffff;
+  color: #fff;
   padding: 8px 0;
 }
 .navbar-search input::placeholder { color: rgba(255, 255, 255, 0.65); }
-.navbar-search .search-submit { background: rgba(255, 255, 255, 0.16); color: #fff; }
-.navbar-search .search-submit:hover { background: rgba(255, 255, 255, 0.28); }
-.navbar-search svg { color: rgba(255, 255, 255, 0.85) !important; }
 
 /* ---------------- Menu bar kedua (navigasi horizontal desktop) ---------------- */
 /* ---------------- Teks Pengumuman (Pengaturan > Pengaturan Teks) ----------------
@@ -2079,14 +1995,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 
 @media (min-width: 980px) {
   #btnOpenSidebar, #btnOpenSearch { display: none; }
-  .navbar-theme-toggle {
-    display: flex;
-    background: rgba(255, 255, 255, 0.12);
-    border-radius: 999px;
-    padding: 4px;
-  }
-  .navbar-theme-toggle .theme-btn { width: 34px; height: 34px; }
-  .navbar-theme-toggle .theme-btn.active { display: flex; background: rgba(255, 255, 255, 0.22); }
   .navbar-search { display: flex; }
   .navbar { padding: 12px 24px; }
   .menubar { display: block; }

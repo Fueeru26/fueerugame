@@ -10,7 +10,7 @@
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#2fa8e0">
 <link rel="apple-touch-icon" href="../webpictures/icon-192.png">
-<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/style.css?v=20260901r1">
 
 </head>
 <body>
@@ -19,17 +19,13 @@
   <button class="icon-btn" id="btnOpenSidebar" aria-label="Buka menu">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
   </button>
-    <a href="../index.html" class="brand-link" aria-label="Fueeru Game — Beranda">
+  <a href="../index.html" class="brand-link" aria-label="Fueeru Game — Beranda">
     <img src="../webpictures/header.webp" alt="Fueeru Game">
   </a>
-<div class="navbar-theme-toggle" id="themeToggleTop">
-    <button type="button" class="theme-btn" data-theme="light" aria-label="Mode Terang">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/><line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/><line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/><line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/></svg>
-    </button>
-    <button type="button" class="theme-btn" data-theme="dark" aria-label="Mode Gelap">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
-    </button>
-  </div>
+  <button type="button" class="icon-btn theme-toggle-btn" id="btnThemeToggle" aria-label="Ganti mode tampilan">
+    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/><line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/><line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/><line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/></svg>
+    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
+  </button>
   <button class="icon-btn" id="btnOpenSearch" aria-label="Buka atau tutup pencarian">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
   </button>
@@ -115,17 +111,6 @@
     <li><a href="donasi.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 10-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 000-7.8z"/></svg>Donasi</a></li>
     <li><a href="tentang.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Tentang</a></li>
   </ul>
-  <div class="theme-toggle-row">
-    <span class="theme-toggle-label">Mode Tampilan</span>
-    <div class="theme-toggle" id="themeToggle">
-      <button type="button" class="theme-btn" data-theme="light" aria-label="Mode Terang">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/><line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/><line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/><line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/></svg>
-      </button>
-      <button type="button" class="theme-btn" data-theme="dark" aria-label="Mode Gelap">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
-      </button>
-    </div>
-  </div>
   <div class="sidebar-foot" id="sidebarFootText">© 2026 Fueeru Game. Semua hak dilindungi.</div>
 </nav>
 
@@ -216,7 +201,7 @@
 
 <script>window.ASSET_BASE = "../";</script>
 <script src="../js/data.js"></script>
-<script src="../js/main.js"></script>
+<script src="../js/main.js?v=20260901r1"></script>
 <script src="../js/agegate.js"></script>
 <script>
   buildCustomSelect(document.getElementById("fieldEngine"));
