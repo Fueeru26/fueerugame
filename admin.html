@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#0b2947">
 <link rel="apple-touch-icon" href="webpictures/icon-admin-192.png">
 <link rel="stylesheet" href="css/style.css?v=20260917">
-<link rel="stylesheet" href="css/admin.css?v=20260917">
+<link rel="stylesheet" href="css/admin.css?v=20260919">
 </head>
 <body class="admin-body">
 
@@ -891,7 +891,7 @@
         <h1>Pengaturan Teks</h1>
       </div>
 
-      <div class="settings-section">
+      <form class="settings-section" autocomplete="off" onsubmit="return false;">
         <div class="subsection-title" style="margin-top:4px;">Teks Pengumuman</div>
         <p class="backup-desc">Running text yang tampil di bawah header (mobile) / di bawah menu navigasi (desktop).</p>
         <label>Isi Pengumuman</label>
@@ -903,16 +903,16 @@
           <button type="button" class="onoff-btn" data-value="0">Matikan</button>
         </div>
         <button type="button" class="btn-primary" id="btnSaveAnnouncement" style="width:100%;margin-top:14px;">Simpan</button>
-      </div>
+      </form>
 
-      <div class="settings-section">
+      <form class="settings-section" autocomplete="off" onsubmit="return false;">
         <div class="subsection-title">Teks Sidebar</div>
         <p class="backup-desc">Teks copyright yang tampil di bagian bawah sidebar situs.</p>
         <input type="text" id="settingsSidebarText" class="info-text-input" placeholder="© 2026 Fueeru Game. Semua hak dilindungi." autocomplete="off">
         <button type="button" class="btn-primary" id="btnSaveSidebarText" style="width:100%;margin-top:14px;">Simpan</button>
-      </div>
+      </form>
 
-      <div class="settings-section">
+      <form class="settings-section" autocomplete="off" onsubmit="return false;">
         <div class="subsection-title">Teks Footer</div>
         <p class="backup-desc">Teks tagline di footer, dan link sosial media (opsional).</p>
         <input type="text" id="settingsFooterText" class="info-text-input" placeholder="Download Game Erotic Android & PC Bahasa Indonesia" autocomplete="off">
@@ -921,7 +921,7 @@
         <div id="settingsFooterSocialList"></div>
         <button type="button" class="btn-cancel" id="btnAddFooterSocialLink" style="width:100%;margin-top:10px;">+ Tambah Link</button>
         <button type="button" class="btn-primary" id="btnSaveFooterText" style="width:100%;margin-top:14px;">Simpan</button>
-      </div>
+      </form>
     </div>
 
     <!-- ===== VIEW: Pengaturan Keamanan ===== -->
@@ -933,7 +933,7 @@
         <h1>Pengaturan Keamanan</h1>
       </div>
 
-      <div class="settings-section">
+      <form class="settings-section" autocomplete="off" onsubmit="return false;">
         <div class="subsection-title" style="margin-top:4px;">Kata Sandi Admin</div>
         <p class="backup-desc" style="margin-top:2px;">Kata Sandi saat ini: <strong id="settingsCurrentPassword" style="color:var(--ink);"></strong></p>
         <button type="button" class="btn-cancel" id="btnToggleSettingsPasswordVisibility" style="width:100%;margin-top:4px;">Lihat Kata Sandi</button>
@@ -942,7 +942,7 @@
         <input type="text" id="settingsNewPasswordInput" class="info-text-input" placeholder="Kata sandi baru" autocomplete="new-password" data-lpignore="true" data-form-type="other">
         <button type="button" class="btn-primary" id="btnSaveSettingsPassword" style="width:100%;margin-top:12px;">Simpan</button>
         <div class="backup-status" id="settingsPasswordStatus"></div>
-      </div>
+      </form>
 
       <div class="settings-section">
         <div class="subsection-title">Peringatan Masuk</div>
