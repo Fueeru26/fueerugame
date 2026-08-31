@@ -8,7 +8,7 @@
 <meta name="description" content="Fueeru Game — kumpulan game terbaru, laporkan masalah, dan info seputar dunia gaming.">
 <link rel="icon" type="image/png" href="webpictures/logo.webp">
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2fa8e0">
+<meta name="theme-color" content="#0f2b52">
 <link rel="apple-touch-icon" href="webpictures/icon-192.png">
 <link rel="stylesheet" href="css/style.css?v=20260917">
 
@@ -145,6 +145,24 @@
   </div>
 </div>
 
+<section class="hero">
+  <div class="container hero-inner">
+    <div class="hero-copy">
+      <h1>Ratusan game &amp; aplikasi, satu tempat unduh.</h1>
+      <p>Fueeru Game merapikan koleksi game dan aplikasi Android &amp; PC ke satu daftar yang gampang dicari, lengkap dengan panduan pasang dan info update terbaru.</p>
+      <div class="hero-actions">
+        <a href="web/list.html" class="btn-hero-primary">Jelajahi Game</a>
+        <a href="web/category.html" class="btn-hero-secondary">Lihat Kategori</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat"><strong id="heroStatTotal">–</strong><span>Game &amp; aplikasi</span></div>
+        <div class="hero-stat"><strong id="heroStatUpdate">–</strong><span>Update 30 hari terakhir</span></div>
+      </div>
+    </div>
+    <div class="hero-visual" id="heroVisual" aria-hidden="true"></div>
+  </div>
+</section>
+
 <main class="container">
 
   <section aria-labelledby="randomHeading">
@@ -194,6 +212,22 @@
   const randomPosts = shuffleArray(allPosts).slice(0, 10);
   renderCarousel("randomTrack", randomPosts);
   initCarouselArrows("randomTrack", "randomPrev", "randomNext");
+
+  // Hero: statistik nyata (bukan angka dekoratif) + 3 thumbnail nyata
+  const heroTotalEl = document.getElementById("heroStatTotal");
+  const heroUpdateEl = document.getElementById("heroStatUpdate");
+  const heroVisualEl = document.getElementById("heroVisual");
+  if (heroTotalEl) heroTotalEl.textContent = allPosts.length;
+  if (heroUpdateEl) {
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    heroUpdateEl.textContent = allPosts.filter(p => new Date(p.date).getTime() >= cutoff).length;
+  }
+  if (heroVisualEl) {
+    const heroPicks = randomPosts.slice(0, 3);
+    heroVisualEl.innerHTML = heroPicks.map(p =>
+      `<div class="hv-card"><img src="${resolveAsset(p.thumbnail)}" alt="" loading="lazy" ${thumbFallbackAttr()}></div>`
+    ).join("");
+  }
 
   // Recent Update: terbaru dulu, dengan pagination (hanya judul, tanggal, jenis)
   const sortedPosts = allPosts.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
