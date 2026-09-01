@@ -10,7 +10,7 @@
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#2fa8e0">
 <link rel="apple-touch-icon" href="../webpictures/icon-192.png">
-<link rel="stylesheet" href="../css/style.css?v=20260901r5">
+<link rel="stylesheet" href="../css/style.css?v=20260901r6">
 
 </head>
 <body>
@@ -36,7 +36,66 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     </button>
   </form>
+  <button type="button" class="icon-btn btn-open-filter" id="btnOpenFilter" aria-label="Buka filter pencarian">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="4 4 20 4 14 12.5 14 19 10 21 10 12.5 4 4"/></svg>
+  </button>
 </header>
+
+<div class="search-drawer" id="searchDrawer">
+  <div class="search-drawer-inner">
+    <div class="search-tabs">
+      <button type="button" class="search-tab active" data-tab="fast">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Cari
+      </button>
+      <button type="button" class="search-tab" data-tab="filter">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="4 4 20 4 14 12.5 14 19 10 21 10 12.5 4 4"/></svg>
+        Filter
+      </button>
+      <button type="button" class="search-drawer-close" id="btnCloseSearchDrawer" aria-label="Tutup pencarian">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="search-tab-panel active" data-panel="fast">
+      <form id="searchForm" role="search" class="fast-search-form">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="18" height="18" style="color:var(--sky-300);flex:0 0 auto;"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" id="searchInput" placeholder="Cari judul game…" aria-label="Cari game">
+        <button type="submit" class="search-submit" aria-label="Cari">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+      </form>
+    </div>
+
+    <div class="search-tab-panel" data-panel="filter">
+      <div class="filter-grid">
+        <div class="filter-field">
+          <label for="filterKeyword">Kata Kunci</label>
+          <input type="text" id="filterKeyword" placeholder="Cari Judul (min 3 karakter)…">
+        </div>
+        <div class="filter-field" id="filterPlatformField">
+          <label>Platform</label>
+        </div>
+        <div class="filter-field" id="filterBahasaField">
+          <label>Bahasa</label>
+        </div>
+        <div class="filter-field" id="filterJenisField">
+          <label>Jenis</label>
+        </div>
+        <div class="filter-field" id="filterGenreField">
+          <label>Genre</label>
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button type="button" class="btn-filter-reset" id="btnResetFilter">Reset</button>
+        <button type="button" class="btn-filter-apply" id="btnApplyFilter">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Terapkan Filter
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <nav class="menubar" aria-label="Menu utama">
   <div class="container menubar-inner">
@@ -114,21 +173,6 @@
   <div class="sidebar-foot" id="sidebarFootText">© 2026 Fueeru Game. Semua hak dilindungi.</div>
 </nav>
 
-<div class="search-backdrop" id="searchBackdrop"></div>
-<div class="search-panel" id="searchPanel">
-  <div class="search-panel-inner">
-    <form id="searchForm" role="search">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="18" height="18" style="color:var(--sky-300);flex:0 0 auto;"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="search" id="searchInput" placeholder="Cari judul game…" aria-label="Cari game">
-      <button type="submit" class="search-submit" aria-label="Cari">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      </button>
-    </form>
-    <button class="search-close-btn" id="btnCloseSearch" type="button" aria-label="Tutup pencarian">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
-  </div>
-</div>
 
 <main class="container" id="postMain">
   <div class="layout-with-aside">
@@ -166,7 +210,7 @@
 
 <script>window.ASSET_BASE = "../";</script>
 <script src="../js/data.js"></script>
-<script src="../js/main.js?v=20260901r5"></script>
+<script src="../js/main.js?v=20260901r6"></script>
 <script src="../js/agegate.js"></script>
 <script>
 (async function () {

@@ -10,7 +10,7 @@
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#2fa8e0">
 <link rel="apple-touch-icon" href="../webpictures/icon-192.png">
-<link rel="stylesheet" href="../css/style.css?v=20260901r5">
+<link rel="stylesheet" href="../css/style.css?v=20260901r6">
 
 </head>
 <body>
@@ -36,7 +36,66 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     </button>
   </form>
+  <button type="button" class="icon-btn btn-open-filter" id="btnOpenFilter" aria-label="Buka filter pencarian">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="4 4 20 4 14 12.5 14 19 10 21 10 12.5 4 4"/></svg>
+  </button>
 </header>
+
+<div class="search-drawer" id="searchDrawer">
+  <div class="search-drawer-inner">
+    <div class="search-tabs">
+      <button type="button" class="search-tab active" data-tab="fast">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Cari
+      </button>
+      <button type="button" class="search-tab" data-tab="filter">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="4 4 20 4 14 12.5 14 19 10 21 10 12.5 4 4"/></svg>
+        Filter
+      </button>
+      <button type="button" class="search-drawer-close" id="btnCloseSearchDrawer" aria-label="Tutup pencarian">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="search-tab-panel active" data-panel="fast">
+      <form id="searchForm" role="search" class="fast-search-form">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="18" height="18" style="color:var(--sky-300);flex:0 0 auto;"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" id="searchInput" placeholder="Cari judul game…" aria-label="Cari game">
+        <button type="submit" class="search-submit" aria-label="Cari">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+      </form>
+    </div>
+
+    <div class="search-tab-panel" data-panel="filter">
+      <div class="filter-grid">
+        <div class="filter-field">
+          <label for="filterKeyword">Kata Kunci</label>
+          <input type="text" id="filterKeyword" placeholder="Cari Judul (min 3 karakter)…">
+        </div>
+        <div class="filter-field" id="filterPlatformField">
+          <label>Platform</label>
+        </div>
+        <div class="filter-field" id="filterBahasaField">
+          <label>Bahasa</label>
+        </div>
+        <div class="filter-field" id="filterJenisField">
+          <label>Jenis</label>
+        </div>
+        <div class="filter-field" id="filterGenreField">
+          <label>Genre</label>
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button type="button" class="btn-filter-reset" id="btnResetFilter">Reset</button>
+        <button type="button" class="btn-filter-apply" id="btnApplyFilter">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Terapkan Filter
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <nav class="menubar" aria-label="Menu utama">
   <div class="container menubar-inner">
@@ -114,21 +173,6 @@
   <div class="sidebar-foot" id="sidebarFootText">© 2026 Fueeru Game. Semua hak dilindungi.</div>
 </nav>
 
-<div class="search-backdrop" id="searchBackdrop"></div>
-<div class="search-panel" id="searchPanel">
-  <div class="search-panel-inner">
-    <form id="searchForm" role="search">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="18" height="18" style="color:var(--sky-300);flex:0 0 auto;"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="search" id="searchInput" placeholder="Cari judul game…" aria-label="Cari game">
-      <button type="submit" class="search-submit" aria-label="Cari">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      </button>
-    </form>
-    <button class="search-close-btn" id="btnCloseSearch" type="button" aria-label="Tutup pencarian">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
-  </div>
-</div>
 
 <main class="container">
   <div class="layout-with-aside">
@@ -177,12 +221,18 @@
 
 <script>window.ASSET_BASE = "../";</script>
 <script src="../js/data.js"></script>
-<script src="../js/main.js?v=20260901r5"></script>
+<script src="../js/main.js?v=20260901r6"></script>
 <script src="../js/agegate.js"></script>
 <script>
 (async function () {
   const params = new URLSearchParams(window.location.search);
   const q = (params.get("q") || "").trim();
+  const platform = params.get("platform") || "";
+  const bahasa = params.get("bahasa") || "";
+  const jenis = params.get("jenis") || "";
+  const genresParam = (params.get("genres") || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const hasAnyFilter = !!(q || platform || bahasa || jenis || genresParam.length);
+
   document.getElementById("pageSearchInput").value = q;
   document.title = (q ? `Hasil "${q}"` : "Pencarian") + " — Fueeru Game";
 
@@ -196,27 +246,49 @@
   const resultList = document.getElementById("resultList");
   const heading = document.getElementById("searchHeading");
 
-  if (!q) {
+  if (!hasAnyFilter) {
     heading.innerHTML = `<h2>Hasil Pencarian</h2>`;
     resultList.innerHTML = `
       <div class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <h3>Mulai pencarianmu</h3>
-        <p>Ketik judul game yang ingin kamu cari.</p>
+        <p>Ketik judul game yang ingin kamu cari, atau gunakan Filter untuk pencarian lanjutan.</p>
       </div>`;
   } else {
-    heading.innerHTML = `<h2>Hasil untuk "${escapeHtml(q)}"</h2>${viewToggleButtonHtml("btnViewToggleSearch")}`;
-    const results = allPosts.filter((p) =>
-      p.title.toLowerCase().includes(q.toLowerCase()) ||
-      p.jenis.toLowerCase().includes(q.toLowerCase()) ||
-      (p.genres || []).some((g) => g.toLowerCase().includes(q.toLowerCase()))
-    );
+    const results = allPosts.filter((p) => {
+      if (q) {
+        const matchesQ =
+          p.title.toLowerCase().includes(q.toLowerCase()) ||
+          p.jenis.toLowerCase().includes(q.toLowerCase()) ||
+          (p.genres || []).some((g) => g.toLowerCase().includes(q.toLowerCase()));
+        if (!matchesQ) return false;
+      }
+      if (platform) {
+        const tags = p.platform || [];
+        if (platform === "Keduanya") {
+          if (!(tags.indexOf("Android") !== -1 && tags.indexOf("PC") !== -1)) return false;
+        } else if (tags.indexOf(platform) === -1) {
+          return false;
+        }
+      }
+      if (bahasa && p.bahasa !== bahasa) return false;
+      if (jenis && p.jenis !== jenis) return false;
+      if (genresParam.length) {
+        const pg = (p.genres || []).map((g) => g.toLowerCase());
+        if (!genresParam.every((g) => pg.indexOf(g.toLowerCase()) !== -1)) return false;
+      }
+      return true;
+    });
+
+    const headingText = q ? `Hasil untuk "${q}"` : "Hasil Filter";
+    heading.innerHTML = `<h2>${escapeHtml(headingText)}</h2>${viewToggleButtonHtml("btnViewToggleSearch")}`;
+
     if (results.length === 0) {
       resultList.innerHTML = `
         <div class="empty-state">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <h3>Tidak ditemukan</h3>
-          <p>Tidak ada game yang cocok dengan "${escapeHtml(q)}". Coba kata kunci lain.</p>
+          <p>Tidak ada game yang cocok dengan pencarian/filter ini. Coba ubah kata kunci atau filter.</p>
         </div>`;
     } else {
       wireViewToggle("btnViewToggleSearch", "resultList");
@@ -227,6 +299,7 @@
         const start = (page - 1) * PAGE_SIZE;
         const pagePosts = results.slice(start, start + PAGE_SIZE);
         resultList.innerHTML = pagePosts.map((p) => postItemHtml(p)).join("");
+        applyTitleClamp(resultList, ".pi-title");
         renderPagination("searchPagination", results.length, PAGE_SIZE, currentPage, renderSearchPage);
       }
       renderSearchPage(1);

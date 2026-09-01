@@ -77,17 +77,21 @@ function initChrome() {
   if (closeBtn) closeBtn.addEventListener("click", closeSidebar);
   if (overlay) overlay.addEventListener("click", closeSidebar);
 
-  // ---------------- Search overlay (mobile) ----------------
-  const searchPanel = document.getElementById("searchPanel");
-  const searchBackdrop = document.getElementById("searchBackdrop");
+  // ---------------- Search & Filter Drawer (mobile & desktop) ----------------
+  // Panel muncul DI BAWAH header (bukan overlay layar penuh) — didorong ke
+  // bawah lewat max-height transition, karena header sudah tidak sticky.
+  const searchDrawer = document.getElementById("searchDrawer");
   const openSearchBtn = document.getElementById("btnOpenSearch");
-  const closeSearchBtn = document.getElementById("btnCloseSearch");
+  const openFilterBtn = document.getElementById("btnOpenFilter");
+  const closeSearchBtn = document.getElementById("btnCloseSearchDrawer");
   const searchForm = document.getElementById("searchForm");
   const searchInput = document.getElementById("searchInput");
+  const searchTabs = document.querySelectorAll(".search-tab");
+  const searchTabPanels = document.querySelectorAll(".search-tab-panel");
 
   // ---------------- Search bar (navbar desktop) ----------------
   // Kotak pencarian yang selalu terlihat di navbar tampilan desktop
-  // (tidak lewat overlay seperti di mobile).
+  // (tidak lewat drawer seperti di mobile).
   const searchFormTop = document.getElementById("searchFormTop");
   if (searchFormTop) {
     searchFormTop.addEventListener("submit", function (e) {
@@ -99,29 +103,42 @@ function initChrome() {
   }
 
   function isSearchOpen() {
-    return searchPanel && searchPanel.classList.contains("open");
+    return searchDrawer && searchDrawer.classList.contains("open");
   }
-  function openSearch() {
-    if (!searchPanel) return;
-    searchPanel.classList.add("open");
-    if (searchBackdrop) searchBackdrop.classList.add("open");
-    setTimeout(() => searchInput && searchInput.focus(), 200);
+  function setActiveTab(tab) {
+    searchTabs.forEach((t) => t.classList.toggle("active", t.getAttribute("data-tab") === tab));
+    searchTabPanels.forEach((p) => p.classList.toggle("active", p.getAttribute("data-panel") === tab));
+  }
+  function openSearch(tab) {
+    if (!searchDrawer) return;
+    setActiveTab(tab || "fast");
+    searchDrawer.classList.add("open");
+    if (tab !== "filter") {
+      setTimeout(() => searchInput && searchInput.focus(), 250);
+    }
   }
   function closeSearch() {
-    if (!searchPanel) return;
-    searchPanel.classList.remove("open");
-    if (searchBackdrop) searchBackdrop.classList.remove("open");
+    if (!searchDrawer) return;
+    searchDrawer.classList.remove("open");
   }
   // Tombol kaca pembesar di navbar berfungsi sebagai toggle:
   // buka jika tertutup, tutup jika sedang terbuka.
   if (openSearchBtn) {
     openSearchBtn.addEventListener("click", function () {
       if (isSearchOpen()) closeSearch();
-      else openSearch();
+      else openSearch("fast");
+    });
+  }
+  if (openFilterBtn) {
+    openFilterBtn.addEventListener("click", function () {
+      if (isSearchOpen()) closeSearch();
+      else openSearch("filter");
     });
   }
   if (closeSearchBtn) closeSearchBtn.addEventListener("click", closeSearch);
-  if (searchBackdrop) searchBackdrop.addEventListener("click", closeSearch);
+  searchTabs.forEach((t) => {
+    t.addEventListener("click", () => setActiveTab(t.getAttribute("data-tab")));
+  });
   if (searchForm) {
     searchForm.addEventListener("submit", function (e) {
       e.preventDefault();
@@ -129,6 +146,212 @@ function initChrome() {
       window.location.href = siteBase() + "search.html" + (q ? "?q=" + encodeURIComponent(q) : "");
     });
   }
+
+  // ---- Tab Filter: dropdown Platform / Bahasa / Jenis / Genre ----
+  const filterState = { platform: "", bahasa: "", jenis: "", genres: [] };
+
+  function buildPublicSelect(container, opts) {
+    // opts: { placeholder, options: [{value,label}], onChange }
+    container.querySelectorAll(".custom-select").forEach((n) => n.remove());
+    const wrap = document.createElement("div");
+    wrap.className = "custom-select";
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "custom-select-btn";
+    btn.innerHTML =
+      '<span class="custom-select-label">' + escapeHtml(opts.placeholder) + '</span>' +
+      '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+    const menu = document.createElement("div");
+    menu.className = "custom-select-menu";
+    menu.innerHTML = opts.options
+      .map((o) => `<button type="button" data-value="${escapeHtml(o.value)}">${escapeHtml(o.label)}</button>`)
+      .join("");
+    wrap.appendChild(btn);
+    wrap.appendChild(menu);
+    container.appendChild(wrap);
+
+    const labelEl = btn.querySelector(".custom-select-label");
+    function closeThis() { menu.classList.remove("show"); btn.classList.remove("open"); }
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isOpen = menu.classList.contains("show");
+      document.querySelectorAll(".custom-select-menu.show, .genre-select-menu.show").forEach((m) => {
+        m.classList.remove("show");
+        if (m.previousElementSibling) m.previousElementSibling.classList.remove("open");
+      });
+      if (!isOpen) { menu.classList.add("show"); btn.classList.add("open"); }
+    });
+    menu.addEventListener("click", (e) => {
+      const optBtn = e.target.closest("button[data-value]");
+      if (!optBtn) return;
+      const value = optBtn.getAttribute("data-value");
+      const label = optBtn.textContent;
+      labelEl.textContent = label;
+      menu.querySelectorAll("button").forEach((b) => b.classList.toggle("selected", b === optBtn));
+      closeThis();
+      if (opts.onChange) opts.onChange(value);
+    });
+    return { setValue(value, label) { labelEl.textContent = label; }, closeThis };
+  }
+
+  function buildGenreSelect(container) {
+    container.querySelectorAll(".custom-select").forEach((n) => n.remove());
+    const wrap = document.createElement("div");
+    wrap.className = "custom-select";
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "custom-select-btn";
+    btn.innerHTML =
+      '<span class="custom-select-label">Pilih Genre</span>' +
+      '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+    const menu = document.createElement("div");
+    menu.className = "custom-select-menu genre-select-menu";
+    menu.innerHTML =
+      '<div class="genre-search-wrap"><input type="text" placeholder="Cari genre…" id="genreSearchInput"></div>' +
+      '<div class="genre-opt-list" id="genreOptList"></div>';
+    wrap.appendChild(btn);
+    wrap.appendChild(menu);
+    container.appendChild(wrap);
+
+    const labelEl = btn.querySelector(".custom-select-label");
+    const searchInp = menu.querySelector("#genreSearchInput");
+    const optList = menu.querySelector("#genreOptList");
+    let allGenres = [];
+
+    function syncLabel() {
+      const n = filterState.genres.length;
+      labelEl.textContent = n === 0 ? "Pilih Genre" : n + " genre dipilih";
+    }
+    function renderOpts(filterText) {
+      const q = (filterText || "").toLowerCase();
+      const filtered = allGenres.filter((g) => g.toLowerCase().includes(q));
+      if (filtered.length === 0) {
+        optList.innerHTML = '<div class="genre-opt-empty">Genre tidak ditemukan</div>';
+        return;
+      }
+      optList.innerHTML = filtered
+        .map((g) => {
+          const isSel = filterState.genres.includes(g);
+          return `<button type="button" class="genre-opt${isSel ? " selected" : ""}" data-genre="${escapeHtml(g)}">
+            <span>${escapeHtml(g)}</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>`;
+        })
+        .join("");
+    }
+    optList.addEventListener("click", (e) => {
+      const optBtn = e.target.closest(".genre-opt[data-genre]");
+      if (!optBtn) return;
+      const g = optBtn.getAttribute("data-genre");
+      const idx = filterState.genres.indexOf(g);
+      if (idx === -1) filterState.genres.push(g);
+      else filterState.genres.splice(idx, 1);
+      optBtn.classList.toggle("selected", filterState.genres.includes(g));
+      syncLabel();
+    });
+    if (searchInp) {
+      searchInp.addEventListener("input", () => renderOpts(searchInp.value));
+      searchInp.addEventListener("click", (e) => e.stopPropagation());
+    }
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isOpen = menu.classList.contains("show");
+      document.querySelectorAll(".custom-select-menu.show").forEach((m) => {
+        m.classList.remove("show");
+        if (m.previousElementSibling) m.previousElementSibling.classList.remove("open");
+      });
+      if (!isOpen) {
+        menu.classList.add("show");
+        btn.classList.add("open");
+        if (allGenres.length === 0) {
+          getAllGenres().then((list) => { allGenres = list; renderOpts(""); });
+        } else {
+          renderOpts(searchInp ? searchInp.value : "");
+        }
+      }
+    });
+    return { syncLabel };
+  }
+
+  const filterPlatformField = document.getElementById("filterPlatformField");
+  const filterBahasaField = document.getElementById("filterBahasaField");
+  const filterJenisField = document.getElementById("filterJenisField");
+  const filterGenreField = document.getElementById("filterGenreField");
+  const filterKeywordInput = document.getElementById("filterKeyword");
+  let genreSelectApi = null;
+
+  if (filterPlatformField) {
+    buildPublicSelect(filterPlatformField, {
+      placeholder: "Semua Platform",
+      options: [{ value: "", label: "Semua Platform" }].concat(
+        (typeof PLATFORM_OPTIONS !== "undefined" ? PLATFORM_OPTIONS : ["Android", "PC", "Keduanya"]).map((v) => ({ value: v, label: v }))
+      ),
+      onChange: (v) => { filterState.platform = v; },
+    });
+  }
+  if (filterBahasaField) {
+    buildPublicSelect(filterBahasaField, {
+      placeholder: "Semua Bahasa",
+      options: [{ value: "", label: "Semua Bahasa" }].concat(
+        (typeof BAHASA_LIST !== "undefined" ? BAHASA_LIST : ["Bahasa Indonesia", "Indonesia & English"]).map((v) => ({ value: v, label: v }))
+      ),
+      onChange: (v) => { filterState.bahasa = v; },
+    });
+  }
+  if (filterJenisField) {
+    buildPublicSelect(filterJenisField, {
+      placeholder: "Semua Jenis",
+      options: [{ value: "", label: "Semua Jenis" }].concat(
+        (typeof JENIS_LIST !== "undefined" ? JENIS_LIST : ["RPGM", "VN"]).map((v) => ({ value: v, label: v }))
+      ),
+      onChange: (v) => { filterState.jenis = v; },
+    });
+  }
+  if (filterGenreField) {
+    genreSelectApi = buildGenreSelect(filterGenreField);
+  }
+
+  const btnResetFilter = document.getElementById("btnResetFilter");
+  const btnApplyFilter = document.getElementById("btnApplyFilter");
+  if (btnResetFilter) {
+    btnResetFilter.addEventListener("click", () => {
+      filterState.platform = "";
+      filterState.bahasa = "";
+      filterState.jenis = "";
+      filterState.genres = [];
+      if (filterKeywordInput) filterKeywordInput.value = "";
+      [filterPlatformField, filterBahasaField, filterJenisField].forEach((f) => {
+        if (!f) return;
+        const menu = f.querySelector(".custom-select-menu");
+        if (menu) menu.querySelectorAll("button").forEach((b) => b.classList.toggle("selected", b.getAttribute("data-value") === ""));
+      });
+      if (filterPlatformField) filterPlatformField.querySelector(".custom-select-label").textContent = "Semua Platform";
+      if (filterBahasaField) filterBahasaField.querySelector(".custom-select-label").textContent = "Semua Bahasa";
+      if (filterJenisField) filterJenisField.querySelector(".custom-select-label").textContent = "Semua Jenis";
+      if (genreSelectApi) genreSelectApi.syncLabel();
+    });
+  }
+  if (btnApplyFilter) {
+    btnApplyFilter.addEventListener("click", () => {
+      const params = new URLSearchParams();
+      const kw = (filterKeywordInput && filterKeywordInput.value || "").trim();
+      if (kw) params.set("q", kw);
+      if (filterState.platform) params.set("platform", filterState.platform);
+      if (filterState.bahasa) params.set("bahasa", filterState.bahasa);
+      if (filterState.jenis) params.set("jenis", filterState.jenis);
+      if (filterState.genres.length) params.set("genres", filterState.genres.join(","));
+      const qs = params.toString();
+      window.location.href = siteBase() + "search.html" + (qs ? "?" + qs : "");
+    });
+  }
+
+  // Klik di luar dropdown menutup semua dropdown yang sedang terbuka
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".custom-select-menu.show").forEach((m) => {
+      m.classList.remove("show");
+      if (m.previousElementSibling) m.previousElementSibling.classList.remove("open");
+    });
+  });
 
   // Escape closes overlays
   document.addEventListener("keydown", function (e) {
@@ -302,7 +525,7 @@ function initFeatureCarousel(posts) {
     };
     if (mediaLink) mediaLink.href = href;
     if (titleLink) titleLink.href = href;
-    if (titleEl) titleEl.textContent = p.title;
+    if (titleEl) truncateToFit(titleEl, p.title);
     dots.forEach((d, i) => d.classList.toggle("active", i === index));
   }
 
@@ -358,6 +581,38 @@ function metaRowInnerHtml(p) {
     <span class="pill">${jenisIconSvg()}${escapeHtml(p.jenis)}</span>
     ${(p.platform || []).map((t) => `<span class="pill">${platformIconSvg(t)}${escapeHtml(t)}</span>`).join("")}
     ${p.bahasa ? `<span class="pill">${bahasaIconSvg()}${escapeHtml(p.bahasa)}</span>` : ""}`;
+}
+
+/** Potong teks (mis. judul) supaya pas persis di tinggi box-nya (elemen
+ * dengan `height` tetap) dan tambahkan "…" di akhir kalimat yang masih
+ * termuat — dipakai untuk judul di kartu Rekomendasi & daftar postingan
+ * yang lebih dari 3 baris. Pakai binary search: cari potongan teks
+ * terpanjang yang, setelah ditambah "…", masih muat (scrollHeight <=
+ * clientHeight). Jika teks aslinya sudah muat penuh, dibiarkan apa adanya. */
+function truncateToFit(el, fullText) {
+  if (!el) return;
+  el.textContent = fullText;
+  if (el.scrollHeight <= el.clientHeight + 1) return;
+  const ellipsis = "…";
+  let lo = 0;
+  let hi = fullText.length;
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2);
+    el.textContent = fullText.slice(0, mid).trimEnd() + ellipsis;
+    if (el.scrollHeight <= el.clientHeight + 1) lo = mid;
+    else hi = mid - 1;
+  }
+  el.textContent = fullText.slice(0, lo).trimEnd() + ellipsis;
+}
+
+/** Terapkan truncateToFit ke semua elemen `selector` di dalam containerEl
+ * (dipanggil sekali setelah render daftar/kartu, karena butuh elemen
+ * sudah ter-layout di DOM untuk mengukur clientHeight/scrollHeight). */
+function applyTitleClamp(containerEl, selector) {
+  if (!containerEl) return;
+  containerEl.querySelectorAll(selector).forEach((el) => {
+    truncateToFit(el, el.textContent);
+  });
 }
 
 /** Render 1 kartu post untuk daftar postingan (Update Terbaru, Kategori,

@@ -197,16 +197,18 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
 }
 
-/* ---------------- Navbar ---------------- */
+/* ---------------- Navbar ----------------
+   Header TIDAK sticky — ikut ke-scroll bersama halaman (bukan nempel
+   di atas terus). Ukurannya juga dibuat lebih ramping (padding, logo,
+   dan ikon diperkecil) dibanding sebelumnya. */
 .navbar {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 40;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 10px 16px;
+  gap: 8px;
+  padding: 7px 14px;
   background: linear-gradient(135deg, var(--navy-700) 0%, var(--navy-900) 100%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: var(--shadow-card);
@@ -229,11 +231,15 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .icon-btn svg { width: 20px; height: 20px; }
 
 /* Tombol ikon di dalam header (background navy gelap) butuh kontras berbeda
-   dari .icon-btn biasa yang dipakai di atas permukaan terang. */
+   dari .icon-btn biasa yang dipakai di atas permukaan terang — dan dibuat
+   sedikit lebih kecil supaya sepadan dengan header yang lebih ramping. */
 .navbar .icon-btn {
+  width: 34px;
+  height: 34px;
   background: rgba(255, 255, 255, 0.14);
   color: #fff;
 }
+.navbar .icon-btn svg { width: 17px; height: 17px; }
 .navbar .icon-btn:hover { background: rgba(255, 255, 255, 0.24); }
 
 /* ---------------- Toggle mode gelap/terang (satu ikon Matahari/Bulan) ---------------- */
@@ -256,7 +262,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   min-width: 0;
 }
 .brand-link img {
-  height: 66px;
+  height: 46px;
   width: auto;
   object-fit: contain;
 }
@@ -414,42 +420,53 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   opacity: .6;
 }
 
-/* ---------------- Search overlay ---------------- */
-.search-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(11, 41, 71, 0.32);
-  backdrop-filter: blur(2px);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .25s ease;
-  z-index: 49;
-}
-.search-backdrop.open { opacity: 1; pointer-events: auto; }
-
-.search-panel {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 52;
+/* ---------------- Search & Filter Drawer ----------------
+   Panel pencarian sekarang muncul DI BAWAH header (bukan overlay penuh
+   layar) — mendorong konten ke bawah saat dibuka, karena header sudah
+   tidak sticky lagi. Ada 2 tab: "Cari" (pencarian cepat) & "Filter"
+   (pencarian lanjutan: kata kunci, platform, bahasa, jenis, genre). */
+.search-drawer {
+  max-height: 0;
+  overflow: hidden;
   background: var(--surface);
-  box-shadow: var(--shadow-soft);
-  padding: 16px 18px;
-  transform: translateY(-100%);
-  transition: transform .28s cubic-bezier(.2,.8,.2,1);
-  border-bottom: 1px solid var(--sky-150);
+  border-bottom: 1px solid var(--card-border-color);
+  transition: max-height .3s cubic-bezier(.2,.8,.2,1);
 }
-.search-panel.open { transform: translateY(0); }
-.search-panel-inner {
+.search-drawer.open { max-height: 900px; }
+.search-drawer-inner {
   max-width: var(--container);
   margin: 0 auto;
+  padding: 16px 18px 20px;
+}
+.search-tabs {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  gap: 22px;
+  border-bottom: 1.5px solid var(--card-border-color);
+  margin-bottom: 16px;
 }
-.search-panel form {
+.search-tab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: none;
+  background: none;
+  color: var(--ink-soft);
+  font-weight: 700;
+  font-size: .88rem;
+  letter-spacing: .2px;
+  padding: 4px 2px 12px;
+  margin-bottom: -1.5px;
+  border-bottom: 2.5px solid transparent;
+  transition: color .18s ease, border-color .18s ease;
+}
+.search-tab svg { width: 16px; height: 16px; }
+.search-tab.active { color: var(--sky-500); border-bottom-color: var(--sky-500); }
+
+.search-tab-panel { display: none; }
+.search-tab-panel.active { display: block; }
+
+.fast-search-form {
   flex: 1 1 200px;
   display: flex;
   align-items: center;
@@ -457,22 +474,20 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   background: var(--sky-50);
   border: 1.5px solid var(--sky-200);
   border-radius: 999px;
-  padding: 6px 6px 6px 18px;
-  min-width: 0;
+  padding: 5px 5px 5px 18px;
 }
-.search-panel input {
+.fast-search-form input {
   flex: 1;
   min-width: 0;
   border: none;
   background: transparent;
   outline: none;
-  font-size: 1rem;
+  font-size: .96rem;
   font-family: inherit;
   color: var(--ink);
   padding: 8px 0;
 }
-.search-panel input::placeholder { color: #9db6cb; }
-.search-panel button.search-submit,
+.fast-search-form input::placeholder { color: #9db6cb; }
 .search-submit {
   border: none;
   background: var(--sky-500);
@@ -486,26 +501,191 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   flex: 0 0 auto;
   transition: background .2s ease;
 }
-.search-panel button.search-submit:hover,
 .search-submit:hover { background: var(--sky-600); }
-.search-panel button.search-submit svg,
 .search-submit svg { width: 18px; height: 18px; }
 
-.search-close-btn {
+.search-drawer-close {
+  margin-left: auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  border: 1.5px solid var(--sky-200);
-  background: var(--surface);
-  color: var(--sky-700);
+  border: none;
+  background: none;
+  color: var(--ink-soft);
   transition: background .2s ease;
 }
-.search-close-btn svg { width: 17px; height: 17px; }
-.search-close-btn:hover { background: var(--sky-100); }
+.search-drawer-close svg { width: 16px; height: 16px; }
+.search-drawer-close:hover { background: var(--sky-100); }
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+.filter-field label {
+  display: block;
+  font-size: .74rem;
+  font-weight: 700;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+}
+.filter-field input[type="text"] {
+  width: 100%;
+  border: 1.5px solid var(--sky-200);
+  background: var(--input-bg);
+  border-radius: var(--radius-sm);
+  padding: 11px 14px;
+  font-size: .92rem;
+  font-family: inherit;
+  color: var(--ink);
+  outline: none;
+  transition: border-color .18s ease;
+}
+.filter-field input[type="text"]:focus { border-color: var(--sky-500); }
+.filter-field input[type="text"]::placeholder { color: #9db6cb; }
+
+.filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+.btn-filter-reset {
+  flex: 0 0 auto;
+  border: 1.5px solid var(--sky-200);
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-weight: 700;
+  font-size: .88rem;
+  padding: 12px 18px;
+  border-radius: var(--radius-sm);
+  transition: background .18s ease;
+}
+.btn-filter-reset:hover { background: var(--sky-50); }
+.btn-filter-apply {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  background: var(--sky-500);
+  color: #fff;
+  font-weight: 700;
+  font-size: .88rem;
+  padding: 12px 18px;
+  border-radius: var(--radius-sm);
+  transition: background .18s ease;
+}
+.btn-filter-apply svg { width: 16px; height: 16px; }
+.btn-filter-apply:hover { background: var(--sky-600); }
+
+/* ---- Custom select (pengganti dropdown bawaan browser) ---- */
+.custom-select {
+  position: relative;
+  width: 100%;
+}
+.custom-select-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 11px 14px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--sky-200);
+  background: var(--input-bg);
+  color: var(--ink);
+  font-size: .92rem;
+  font-family: inherit;
+  font-weight: 600;
+  text-align: left;
+  transition: border-color .18s ease;
+}
+.custom-select-btn:hover, .custom-select-btn.open { border-color: var(--sky-500); }
+.custom-select-btn svg { flex: 0 0 auto; color: var(--sky-500); transition: transform .18s ease; }
+.custom-select-btn.open svg { transform: rotate(180deg); }
+.custom-select-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.custom-select-menu {
+  position: absolute;
+  left: 0; right: 0;
+  top: calc(100% + 6px);
+  background: var(--surface);
+  border: 1.5px solid var(--sky-200);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-soft);
+  z-index: 30;
+  max-height: 240px;
+  overflow-y: auto;
+  display: none;
+}
+.custom-select-menu.show { display: block; }
+.custom-select-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 11px 15px;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: .87rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.custom-select-menu button:hover { background: var(--sky-50); }
+.custom-select-menu button.selected { color: var(--sky-700); background: var(--sky-50); font-weight: 800; }
+
+/* ---- Genre: multi-select dengan pencarian & centang ---- */
+.genre-select-menu { padding: 0; }
+.genre-search-wrap { padding: 10px; border-bottom: 1px solid var(--card-border-color); }
+.genre-search-wrap input {
+  width: 100%;
+  border: 1.5px solid var(--sky-200);
+  background: var(--sky-50);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: .86rem;
+  font-family: inherit;
+  color: var(--ink);
+  outline: none;
+}
+.genre-opt-list { max-height: 220px; overflow-y: auto; }
+.genre-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  text-align: left;
+  padding: 10px 15px;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: .87rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.genre-opt:hover { background: var(--sky-50); }
+.genre-opt.selected { color: var(--sky-500); }
+.genre-opt svg { width: 15px; height: 15px; flex: 0 0 auto; opacity: 0; color: var(--sky-500); }
+.genre-opt.selected svg { opacity: 1; }
+.genre-opt-empty { padding: 16px; text-align: center; font-size: .84rem; color: var(--ink-soft); }
+
+/* ---- Tombol ikon filter (desktop, di samping bar pencarian) ---- */
+.btn-open-filter { display: none; }
+
+@media (min-width: 980px) {
+  .search-drawer-inner { padding: 20px 24px 26px; }
+  .search-tabs { display: none; }
+  .search-tab-panel { display: none !important; }
+  .search-tab-panel[data-panel="filter"] { display: block !important; }
+  .filter-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+}
 
 /* ---------------- Section heading (banner navy tua) ---------------- */
 .section-head {
@@ -1851,7 +2031,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 @media (min-width: 980px) {
   .category-grid { grid-template-columns: repeat(4, 1fr); }
-  .brand-link img { height: 78px; }
+  .brand-link img { height: 54px; }
 }
 
 /* =========================================================
@@ -2093,7 +2273,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 @media (min-width: 980px) {
   #btnOpenSidebar, #btnOpenSearch { display: none; }
   .navbar-search { display: flex; }
-  .navbar { padding: 12px 24px; }
+  .btn-open-filter { display: flex; }
+  .navbar { padding: 8px 24px; }
   .menubar { display: block; }
 
   .layout-with-aside {
