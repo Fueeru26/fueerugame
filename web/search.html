@@ -10,7 +10,7 @@
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#2fa8e0">
 <link rel="apple-touch-icon" href="../webpictures/icon-192.png">
-<link rel="stylesheet" href="../css/style.css?v=20260901r3">
+<link rel="stylesheet" href="../css/style.css?v=20260901r4">
 
 </head>
 <body>
@@ -143,7 +143,8 @@
     </button>
   </form>
 
-  <div class="post-list" id="resultList"></div>
+  <div class="post-items" id="resultList"></div>
+  <div class="pagination" id="searchPagination"></div>
     </div>
     <aside class="right-aside" id="rightAside">
       <div class="aside-block">
@@ -176,7 +177,7 @@
 
 <script>window.ASSET_BASE = "../";</script>
 <script src="../js/data.js"></script>
-<script src="../js/main.js?v=20260901r2"></script>
+<script src="../js/main.js?v=20260901r4"></script>
 <script src="../js/agegate.js"></script>
 <script>
 (async function () {
@@ -204,7 +205,7 @@
         <p>Ketik judul game yang ingin kamu cari.</p>
       </div>`;
   } else {
-    heading.innerHTML = `<h2>Hasil untuk "${escapeHtml(q)}"</h2>`;
+    heading.innerHTML = `<h2>Hasil untuk "${escapeHtml(q)}"</h2>${viewToggleButtonHtml("btnViewToggleSearch")}`;
     const results = allPosts.filter((p) =>
       p.title.toLowerCase().includes(q.toLowerCase()) ||
       p.jenis.toLowerCase().includes(q.toLowerCase()) ||
@@ -218,7 +219,17 @@
           <p>Tidak ada game yang cocok dengan "${escapeHtml(q)}". Coba kata kunci lain.</p>
         </div>`;
     } else {
-      resultList.innerHTML = results.map((p) => postRowHtml(p)).join("");
+      wireViewToggle("btnViewToggleSearch", "resultList");
+      let currentPage = 1;
+      function renderSearchPage(page) {
+        currentPage = page;
+        const PAGE_SIZE = getPostPageSize();
+        const start = (page - 1) * PAGE_SIZE;
+        const pagePosts = results.slice(start, start + PAGE_SIZE);
+        resultList.innerHTML = pagePosts.map((p) => postItemHtml(p)).join("");
+        renderPagination("searchPagination", results.length, PAGE_SIZE, currentPage, renderSearchPage);
+      }
+      renderSearchPage(1);
     }
   }
 })();

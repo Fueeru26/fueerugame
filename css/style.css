@@ -153,7 +153,7 @@
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: default;
 }
-a, button, img, .icon-btn, .game-card, .post-row, .category-card,
+a, button, img, .icon-btn, .game-card, .post-item, .category-card,
 .carousel-arrow, .search-close-btn, .theme-btn, .genre-tag, .pill {
   -webkit-tap-highlight-color: transparent;
 }
@@ -639,9 +639,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 .feature-media {
   position: relative;
-  width: 100%;
+  width: calc(100% - 20px);
   height: 0;
+  margin: 10px 10px 0;
   padding-top: 56.25%; /* rasio 16:9, tetap di semua slide */
+  border-radius: var(--radius-md);
   background: var(--sky-100);
   overflow: hidden;
 }
@@ -717,58 +719,104 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .feature-arrow.next { right: 10px; }
 .feature-arrow svg { width: 18px; height: 18px; }
 
-/* ---------------- New Update list ---------------- */
-.post-list {
+/* ---------------- Daftar postingan (Update Terbaru, Kategori, Pencarian)
+   Kartu List & Grid pakai markup HTML yang sama (.post-item) — tampilannya
+   murni diatur lewat atribut data-view di kontainer .post-items, supaya
+   toggle List/Grid tidak perlu render ulang, cuma ganti CSS. Ukuran kartu
+   selalu tetap (fixed) di semua item: thumbnail + judul maks 3 baris +
+   tanggal, TANPA tag kategori. ---------------- */
+.post-items {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
-.post-row {
+.post-item {
   display: flex;
-  gap: 14px;
-  padding: 14px;
-  align-items: flex-start;
   background: var(--surface);
   border: 1.5px solid var(--card-border-color);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card), var(--shadow-inner);
   transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+  text-decoration: none;
+  overflow: hidden;
 }
-.post-row:hover, .post-row:active {
-  transform: translateX(8px);
+.post-item:hover, .post-item:active {
   box-shadow: var(--shadow-soft), var(--shadow-inner);
   border-color: var(--sky-300);
 }
-.post-row .thumb {
+.pi-title {
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
+  font-weight: 600;
+  font-size: .98rem;
+  line-height: 1.38;
+  color: var(--sky-700);
+  overflow: hidden;
+  height: calc(1.38em * 3);
+  transition: color .2s ease;
+}
+.post-item:hover .pi-title { color: var(--sky-500); }
+.pi-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .78rem;
+  color: var(--ink-soft);
   flex: 0 0 auto;
-  width: 96px;
-  height: 96px;
+}
+.pi-date svg { width: 14px; height: 14px; flex: 0 0 auto; opacity: .8; }
+
+/* --- Tampilan List --- */
+.post-items[data-view="list"] { gap: 12px; }
+.post-items[data-view="list"] .post-item {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+}
+.post-items[data-view="list"]:hover .post-item,
+.post-items[data-view="list"] .post-item:hover { transform: translateX(6px); }
+.post-items[data-view="list"] .pi-thumb {
+  flex: 0 0 auto;
+  width: 98px;
+  height: 98px;
   border-radius: var(--radius-sm);
   object-fit: cover;
   background: var(--sky-100);
-  box-shadow: var(--shadow-card);
   border: 1px solid var(--card-border-color);
 }
-.post-row .prow-body { min-width: 0; flex: 1; }
-.post-row .prow-title {
-  font-family: var(--font-family, 'Qanelas'), sans-serif;
-  font-weight: 600;
-  font-size: 1.02rem;
-  color: var(--sky-700);
-  margin-bottom: 4px;
-  transition: color .2s ease;
+.post-items[data-view="list"] .pi-body {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
-.post-row a:hover .prow-title { color: var(--sky-500); }
-.post-row .prow-preview {
-  font-size: .87rem;
-  color: var(--ink-soft);
-  line-height: 1.45;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  margin-bottom: 8px;
+.post-items[data-view="list"] .pi-date { margin-top: 10px; }
+
+/* --- Tampilan Grid --- */
+.post-items[data-view="grid"] {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
 }
+.post-items[data-view="grid"] .post-item {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 10px;
+}
+.post-items[data-view="grid"] .post-item:hover { transform: translateY(-4px); }
+.post-items[data-view="grid"] .pi-thumb {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--sky-100);
+  margin-bottom: 10px;
+}
+.post-items[data-view="grid"] .pi-body { display: flex; flex-direction: column; }
+.post-items[data-view="grid"] .pi-title { font-size: .92rem; }
+.post-items[data-view="grid"] .pi-date { margin-top: 8px; }
+
 .meta-row {
   display: flex;
   align-items: center;
@@ -794,6 +842,32 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   gap: 5px;
 }
 .meta-icon { width: 14px; height: 14px; flex: 0 0 auto; opacity: .8; }
+
+/* ---------------- Section-head: judul kiri + tombol aksi (toggle List/Grid) kanan ---------------- */
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.section-head .icon-btn {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+}
+.section-head .icon-btn:hover { background: rgba(255, 255, 255, 0.28); }
+.view-toggle-btn { position: relative; }
+.view-toggle-btn .icon-grid,
+.view-toggle-btn .icon-list {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+}
+.view-toggle-btn .icon-grid, .view-toggle-btn .icon-list { display: none; }
+.view-toggle-btn[data-view="list"] .icon-grid { display: block; }
+.view-toggle-btn[data-view="grid"] .icon-list { display: block; }
 
 /* ---------------- Pagination ---------------- */
 .pagination {
@@ -1763,7 +1837,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 /* ---------------- Responsive (tablet/desktop) ---------------- */
 @media (min-width: 720px) {
   .category-grid { grid-template-columns: repeat(3, 1fr); }
-  .post-row .thumb { width: 130px; height: 130px; }
+  .post-items[data-view="list"] .pi-thumb { width: 130px; height: 130px; }
   .game-card { width: 172px; }
 }
 @media (min-width: 980px) {
@@ -2005,8 +2079,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .aside-genre a:hover { background: var(--sky-200); }
 .aside-genre a .count { color: var(--sky-500); font-weight: 600; }
 
-/* ---------------- Recent Update: grid 3 kolom x 5 baris (index) ---------------- */
-.post-grid .post-row { transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease; }
+/* ---------------- Daftar postingan (desktop): List = 2 kolom, Grid = 4 kolom ---------------- */
 
 @media (min-width: 980px) {
   #btnOpenSidebar, #btnOpenSearch { display: none; }
@@ -2022,21 +2095,17 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   }
   .right-aside { display: flex; flex-direction: column; padding-top: 28px; }
 
-  .post-list.post-grid {
+  .post-items[data-view="list"] {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .post-items[data-view="list"] .pi-thumb { width: 108px; height: 108px; }
+
+  .post-items[data-view="grid"] {
+    grid-template-columns: repeat(4, 1fr);
     gap: 18px;
   }
-  .post-grid .post-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .post-grid .post-row:hover, .post-grid .post-row:active { transform: translateY(-5px); }
-  .post-grid .post-row .thumb {
-    width: 100%;
-    height: 152px;
-  }
-  .post-grid .post-row .prow-body { width: 100%; }
 }
 
 /* ---------- Peringatan Konten Dewasa (Age Gate) ---------- */

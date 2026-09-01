@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2fa8e0">
 <link rel="apple-touch-icon" href="webpictures/icon-192.png">
-<link rel="stylesheet" href="css/style.css?v=20260901r3">
+<link rel="stylesheet" href="css/style.css?v=20260901r4">
 
 </head>
 <body>
@@ -154,8 +154,14 @@
   </section>
 
   <section aria-labelledby="updateHeading">
-    <div class="section-head section-head-tight"><h2 id="updateHeading">Update Terbaru</h2></div>
-    <div class="post-list post-grid" id="updateList"></div>
+    <div class="section-head section-head-tight">
+      <h2 id="updateHeading">Update Terbaru</h2>
+      <button type="button" class="icon-btn view-toggle-btn" id="btnViewToggleUpdate" aria-label="Ganti tampilan daftar postingan">
+        <svg class="icon-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <svg class="icon-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="post-items" id="updateList"></div>
     <div class="pagination" id="updatePagination"></div>
   </section>
 </main>
@@ -174,11 +180,10 @@
 
 <script>window.SITE_BASE = "web/";</script>
 <script src="js/data.js?v=20260918"></script>
-<script src="js/main.js?v=20260901r2"></script>
+<script src="js/main.js?v=20260901r4"></script>
 <script src="js/agegate.js"></script>
 <script>
 (async function () {
-  const PAGE_SIZE = 15; // 5 baris x 3 kolom di tampilan desktop
   let currentPage = 1;
 
   const allPosts = await getPublishedPosts();
@@ -187,18 +192,21 @@
   const randomPosts = shuffleArray(allPosts).slice(0, 5);
   initFeatureCarousel(randomPosts);
 
-  // Recent Update: terbaru dulu, dengan pagination (hanya judul, tanggal, jenis)
+  // Update Terbaru: terbaru dulu, dengan pagination + toggle List/Grid
+  // (10 post/halaman di mobile, 20 post/halaman di desktop)
   const sortedPosts = allPosts.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+  wireViewToggle("btnViewToggleUpdate", "updateList");
 
   function renderUpdatePage(page) {
     currentPage = page;
+    const PAGE_SIZE = getPostPageSize();
     const start = (page - 1) * PAGE_SIZE;
     const pagePosts = sortedPosts.slice(start, start + PAGE_SIZE);
     const list = document.getElementById("updateList");
     if (pagePosts.length === 0) {
       list.innerHTML = `<div class="empty-state"><h3>Belum ada postingan</h3><p>Silakan tambahkan postingan lewat Admin Panel.</p></div>`;
     } else {
-      list.innerHTML = pagePosts.map((p) => postRowHtml(p, { showPreview: false, showGenres: false })).join("");
+      list.innerHTML = pagePosts.map((p) => postItemHtml(p)).join("");
     }
     renderPagination("updatePagination", sortedPosts.length, PAGE_SIZE, currentPage, renderUpdatePage);
   }

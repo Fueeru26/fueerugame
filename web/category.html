@@ -10,7 +10,7 @@
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#2fa8e0">
 <link rel="apple-touch-icon" href="../webpictures/icon-192.png">
-<link rel="stylesheet" href="../css/style.css?v=20260901r3">
+<link rel="stylesheet" href="../css/style.css?v=20260901r4">
 
 </head>
 <body>
@@ -166,7 +166,7 @@
 
 <script>window.ASSET_BASE = "../";</script>
 <script src="../js/data.js"></script>
-<script src="../js/main.js?v=20260901r2"></script>
+<script src="../js/main.js?v=20260901r4"></script>
 <script src="../js/agegate.js"></script>
 <script>
 (async function () {
@@ -225,20 +225,32 @@
     const filtered = allPosts.filter(filterFn).sort((a, b) => new Date(b.date) - new Date(a.date));
 
     catContent.innerHTML = `
-      <div class="section-head"><h2>${escapeHtml(heading)}</h2></div>
-      <div class="post-list" id="catPostList"></div>`;
+      ${sectionHeadWithViewToggleHtml(`<h2>${escapeHtml(heading)}</h2>`, "btnViewToggleCat")}
+      <div class="post-items" id="catPostList"></div>
+      <div class="pagination" id="catPagination"></div>`;
 
-    const listEl = document.getElementById("catPostList");
-    if (filtered.length === 0) {
-      listEl.innerHTML = `
-        <div class="empty-state">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-          <h3>Belum ada postingan</h3>
-          <p>Belum ada game yang cocok. Coba pilihan lain.</p>
-        </div>`;
-    } else {
-      listEl.innerHTML = filtered.map((p) => postRowHtml(p)).join("");
+    wireViewToggle("btnViewToggleCat", "catPostList");
+    let currentPage = 1;
+
+    function renderCatPage(page) {
+      currentPage = page;
+      const PAGE_SIZE = getPostPageSize();
+      const start = (page - 1) * PAGE_SIZE;
+      const pagePosts = filtered.slice(start, start + PAGE_SIZE);
+      const listEl = document.getElementById("catPostList");
+      if (filtered.length === 0) {
+        listEl.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            <h3>Belum ada postingan</h3>
+            <p>Belum ada game yang cocok. Coba pilihan lain.</p>
+          </div>`;
+      } else {
+        listEl.innerHTML = pagePosts.map((p) => postItemHtml(p)).join("");
+      }
+      renderPagination("catPagination", filtered.length, PAGE_SIZE, currentPage, renderCatPage);
     }
+    renderCatPage(1);
   }
 
   if (platformParam) {

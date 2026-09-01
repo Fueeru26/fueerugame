@@ -351,7 +351,7 @@ function bahasaIconSvg() {
   return `<svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a14 14 0 010 18a14 14 0 010-18"/></svg>`;
 }
 /** Baris meta info (tanggal + jenis + platform + bahasa) dengan ikon,
- * dipakai bareng di daftar postingan (postRowHtml) & halaman detail post. */
+ * dipakai bareng di daftar postingan (postItemHtml) & halaman detail post. */
 function metaRowInnerHtml(p) {
   return `
     <span class="meta-date">${calendarIconSvg()}${escapeHtml(formatDate(p.date))}</span>
@@ -360,30 +360,82 @@ function metaRowInnerHtml(p) {
     ${p.bahasa ? `<span class="pill">${bahasaIconSvg()}${escapeHtml(p.bahasa)}</span>` : ""}`;
 }
 
-/** Render 1 baris post (dipakai New Update, Jenis/Genre, Search).
- * opts.showPreview: tampilkan preview isi (default true)
- * opts.showGenres: tampilkan chip genre (default true)
- */
-function postRowHtml(p, opts) {
-  opts = opts || {};
-  const showPreview = opts.showPreview !== false;
-  const showGenres = opts.showGenres !== false;
-  const genres = p.genres || [];
-
+/** Render 1 kartu post untuk daftar postingan (Update Terbaru, Kategori,
+ * Pencarian). Hanya thumbnail + judul (maks 3 baris) + tanggal — tanpa
+ * tag kategori/genre — supaya ukuran kartu selalu tetap. Markup SAMA
+ * persis untuk tampilan List & Grid; bedanya murni CSS lewat atribut
+ * data-view di kontainer (lihat .post-items[data-view]). */
+function postItemHtml(p) {
+  const href = `${siteBase()}post.html?id=${encodeURIComponent(p.id)}`;
   return `
-    <div class="post-row">
-      <a href="${siteBase()}post.html?id=${encodeURIComponent(p.id)}" style="flex:0 0 auto;">
-        <img class="thumb" src="${resolveAsset(p.thumbnail)}" alt="Thumbnail ${escapeHtml(p.title)}" loading="lazy" ${thumbFallbackAttr()}>
-      </a>
-      <div class="prow-body">
-        <a href="${siteBase()}post.html?id=${encodeURIComponent(p.id)}">
-          <div class="prow-title">${escapeHtml(p.title)}</div>
-        </a>
-        ${showPreview ? `<div class="prow-preview">${escapeHtml(makePreview(p.content))}</div>` : ""}
-        <div class="meta-row">${metaRowInnerHtml(p)}</div>
-        ${showGenres && genres.length ? `<div class="genre-chip-row">${genres.map((g) => `<span class="genre-chip">${escapeHtml(g)}</span>`).join("")}</div>` : ""}
+    <a class="post-item" href="${href}">
+      <img class="pi-thumb" src="${resolveAsset(p.thumbnail)}" alt="Thumbnail ${escapeHtml(p.title)}" loading="lazy" ${thumbFallbackAttr()}>
+      <div class="pi-body">
+        <div class="pi-title">${escapeHtml(p.title)}</div>
+        <div class="pi-date">${calendarIconSvg()}${escapeHtml(formatDate(p.date))}</div>
       </div>
+    </a>`;
+}
+
+/** Tombol toggle tampilan List/Grid (icon Matahari/Bulan-style: 1 tombol,
+ * ikonnya gantian sesuai tampilan aktif saat ini). */
+function viewToggleButtonHtml(toggleBtnId) {
+  return `
+    <button type="button" class="icon-btn view-toggle-btn" id="${toggleBtnId}" aria-label="Ganti tampilan daftar postingan">
+      <svg class="icon-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      <svg class="icon-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+    </button>`;
+}
+
+/** HTML section-head yang punya tombol toggle tampilan List/Grid di
+ * ujung kanan — dipakai di semua halaman daftar postingan. */
+function sectionHeadWithViewToggleHtml(headingHtml, toggleBtnId, extraClass) {
+  return `
+    <div class="section-head${extraClass ? " " + extraClass : ""}">
+      ${headingHtml}
+      ${viewToggleButtonHtml(toggleBtnId)}
     </div>`;
+}
+
+/** Preferensi tampilan List/Grid pengunjung (localStorage), fallback ke
+ * default yang diatur Admin (Pengaturan > Style), fallback akhir "list". */
+function getPostViewPreference() {
+  try {
+    const v = localStorage.getItem("fueeru_postview");
+    if (v === "list" || v === "grid") return v;
+    if (localStorage.getItem("fueeru_postview_default_cache") === "grid") return "grid";
+  } catch (e) {}
+  return "list";
+}
+function setPostViewPreference(v) {
+  try { localStorage.setItem("fueeru_postview", v); } catch (e) {}
+}
+
+/** Pasang tombol toggle List/Grid pada 1 kontainer daftar postingan.
+ * Cukup 1x panggil setelah listEl & btn ada di DOM (boleh sebelum atau
+ * sesudah listEl diisi kartu, karena yang berubah cuma atribut data-view). */
+function wireViewToggle(toggleBtnId, listElId) {
+  const btn = document.getElementById(toggleBtnId);
+  const listEl = document.getElementById(listElId);
+  if (!btn || !listEl) return () => "list";
+  let view = getPostViewPreference();
+  function apply() {
+    listEl.setAttribute("data-view", view);
+    btn.setAttribute("data-view", view);
+  }
+  apply();
+  btn.addEventListener("click", () => {
+    view = view === "grid" ? "list" : "grid";
+    setPostViewPreference(view);
+    apply();
+  });
+  return () => view;
+}
+
+/** Jumlah post per halaman untuk daftar postingan: 10 di mobile, 20 di
+ * desktop (breakpoint sama dengan CSS: 980px). */
+function getPostPageSize() {
+  return window.matchMedia && window.matchMedia("(min-width: 980px)").matches ? 20 : 10;
 }
 
 function escapeHtml(str) {
@@ -897,6 +949,15 @@ async function applySiteSettings() {
         const shouldBeDark = settings.theme_default !== "light";
         document.documentElement.classList.toggle("dark", shouldBeDark);
       }
+    }
+  } catch (e) {}
+
+  // ---- Tampilan daftar postingan default (List/Grid) ----
+  // Sama seperti mode tampilan: dicache untuk dipakai daftar postingan
+  // saat visitor belum pernah memilih tampilan sendiri.
+  try {
+    if (settings.postview_default) {
+      localStorage.setItem("fueeru_postview_default_cache", settings.postview_default);
     }
   } catch (e) {}
 

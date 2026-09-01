@@ -3135,6 +3135,7 @@ async function loadPengaturanStyle() {
   updateColorSwatchTrigger();
 
   setOnOffToggle("settingsThemeDefaultToggle", cachedSiteSettings.theme_default || "dark");
+  setOnOffToggle("settingsPostViewDefaultToggle", cachedSiteSettings.postview_default || "list");
 }
 
 document.getElementById("btnSaveFont").addEventListener("click", async function () {
@@ -3168,6 +3169,12 @@ document.getElementById("btnSaveThemeDefault").addEventListener("click", async f
   const value = getOnOffToggleValue("settingsThemeDefaultToggle", "dark");
   await saveSettings({ theme_default: value });
   showToast("Mode tampilan default disimpan");
+});
+
+document.getElementById("btnSavePostViewDefault").addEventListener("click", async function () {
+  const value = getOnOffToggleValue("settingsPostViewDefaultToggle", "list");
+  await saveSettings({ postview_default: value });
+  showToast("Tampilan daftar postingan default disimpan");
 });
 
 document.getElementById("btnPreviewFont").addEventListener("click", function () {
