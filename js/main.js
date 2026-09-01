@@ -377,14 +377,19 @@ function postItemHtml(p) {
     </a>`;
 }
 
-/** Tombol toggle tampilan List/Grid (icon Matahari/Bulan-style: 1 tombol,
- * ikonnya gantian sesuai tampilan aktif saat ini). */
-function viewToggleButtonHtml(toggleBtnId) {
+/** Toggle tampilan List/Grid — segmented control kecil (List di kiri,
+ * Grid di kanan), bukan tombol bulat besar, supaya section-head tetap
+ * pendek/selaras dengan section-head lain yang tanpa toggle. */
+function viewToggleButtonHtml(toggleId) {
   return `
-    <button type="button" class="icon-btn view-toggle-btn" id="${toggleBtnId}" aria-label="Ganti tampilan daftar postingan">
-      <svg class="icon-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-      <svg class="icon-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
-    </button>`;
+    <div class="view-toggle" id="${toggleId}">
+      <button type="button" class="view-toggle-opt" data-value="list" aria-label="Tampilan List">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="4" cy="6" r="1.3" fill="currentColor" stroke="none"/><line x1="9" y1="6" x2="21" y2="6"/><circle cx="4" cy="12" r="1.3" fill="currentColor" stroke="none"/><line x1="9" y1="12" x2="21" y2="12"/><circle cx="4" cy="18" r="1.3" fill="currentColor" stroke="none"/><line x1="9" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <button type="button" class="view-toggle-opt" data-value="grid" aria-label="Tampilan Grid">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      </button>
+    </div>`;
 }
 
 /** HTML section-head yang punya tombol toggle tampilan List/Grid di
@@ -414,20 +419,27 @@ function setPostViewPreference(v) {
 /** Pasang tombol toggle List/Grid pada 1 kontainer daftar postingan.
  * Cukup 1x panggil setelah listEl & btn ada di DOM (boleh sebelum atau
  * sesudah listEl diisi kartu, karena yang berubah cuma atribut data-view). */
-function wireViewToggle(toggleBtnId, listElId) {
-  const btn = document.getElementById(toggleBtnId);
+/** Pasang toggle List/Grid (segmented control 2 tombol) pada 1 kontainer
+ * daftar postingan. Cukup 1x panggil setelah wrap & listEl ada di DOM. */
+function wireViewToggle(toggleWrapId, listElId) {
+  const wrap = document.getElementById(toggleWrapId);
   const listEl = document.getElementById(listElId);
-  if (!btn || !listEl) return () => "list";
+  if (!wrap || !listEl) return () => "list";
+  const opts = wrap.querySelectorAll(".view-toggle-opt");
   let view = getPostViewPreference();
   function apply() {
     listEl.setAttribute("data-view", view);
-    btn.setAttribute("data-view", view);
+    opts.forEach((b) => b.classList.toggle("active", b.getAttribute("data-value") === view));
   }
   apply();
-  btn.addEventListener("click", () => {
-    view = view === "grid" ? "list" : "grid";
-    setPostViewPreference(view);
-    apply();
+  opts.forEach((b) => {
+    b.addEventListener("click", () => {
+      const v = b.getAttribute("data-value");
+      if (v === view) return;
+      view = v;
+      setPostViewPreference(view);
+      apply();
+    });
   });
   return () => view;
 }

@@ -513,8 +513,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   text-align: left;
   margin: 22px 0 16px;
   background: linear-gradient(135deg, var(--navy-700) 0%, var(--navy-900) 100%);
-  border-radius: var(--radius-lg);
-  padding: 13px 20px;
+  border-radius: var(--radius-md);
+  padding: 12px 20px;
   box-shadow: var(--shadow-card);
 }
 .section-head-tight { margin-top: 30px; }
@@ -843,31 +843,40 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 .meta-icon { width: 14px; height: 14px; flex: 0 0 auto; opacity: .8; }
 
-/* ---------------- Section-head: judul kiri + tombol aksi (toggle List/Grid) kanan ---------------- */
+/* ---------------- Section-head: judul kiri + toggle List/Grid kanan ----------------
+   Toggle dibuat sekecil & sependek mungkin (bukan tombol bulat besar)
+   supaya tinggi section-head tidak melar dan tetap selaras dengan
+   section-head yang tanpa toggle (mis. "Rekomendasi"). */
 .section-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
-.section-head .icon-btn {
-  background: rgba(255, 255, 255, 0.16);
-  color: #fff;
-  width: 38px;
-  height: 38px;
+.view-toggle {
+  display: flex;
+  align-items: center;
+  gap: 1px;
   flex: 0 0 auto;
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 2px;
 }
-.section-head .icon-btn:hover { background: rgba(255, 255, 255, 0.28); }
-.view-toggle-btn { position: relative; }
-.view-toggle-btn .icon-grid,
-.view-toggle-btn .icon-list {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
+.view-toggle-opt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  transition: background .2s ease, color .2s ease;
 }
-.view-toggle-btn .icon-grid, .view-toggle-btn .icon-list { display: none; }
-.view-toggle-btn[data-view="list"] .icon-grid { display: block; }
-.view-toggle-btn[data-view="grid"] .icon-list { display: block; }
+.view-toggle-opt svg { width: 12px; height: 12px; }
+.view-toggle-opt:hover { color: #fff; }
+.view-toggle-opt.active { background: #fff; color: var(--navy-900); }
 
 /* ---------------- Pagination ---------------- */
 .pagination {

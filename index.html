@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2fa8e0">
 <link rel="apple-touch-icon" href="webpictures/icon-192.png">
-<link rel="stylesheet" href="css/style.css?v=20260901r4">
+<link rel="stylesheet" href="css/style.css?v=20260901r5">
 
 </head>
 <body>
@@ -156,10 +156,14 @@
   <section aria-labelledby="updateHeading">
     <div class="section-head section-head-tight">
       <h2 id="updateHeading">Update Terbaru</h2>
-      <button type="button" class="icon-btn view-toggle-btn" id="btnViewToggleUpdate" aria-label="Ganti tampilan daftar postingan">
-        <svg class="icon-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-        <svg class="icon-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
-      </button>
+      <div class="view-toggle" id="btnViewToggleUpdate">
+        <button type="button" class="view-toggle-opt" data-value="list" aria-label="Tampilan List">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="4" cy="6" r="1.3" fill="currentColor" stroke="none"/><line x1="9" y1="6" x2="21" y2="6"/><circle cx="4" cy="12" r="1.3" fill="currentColor" stroke="none"/><line x1="9" y1="12" x2="21" y2="12"/><circle cx="4" cy="18" r="1.3" fill="currentColor" stroke="none"/><line x1="9" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <button type="button" class="view-toggle-opt" data-value="grid" aria-label="Tampilan Grid">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        </button>
+      </div>
     </div>
     <div class="post-items" id="updateList"></div>
     <div class="pagination" id="updatePagination"></div>
@@ -180,7 +184,7 @@
 
 <script>window.SITE_BASE = "web/";</script>
 <script src="js/data.js?v=20260918"></script>
-<script src="js/main.js?v=20260901r4"></script>
+<script src="js/main.js?v=20260901r5"></script>
 <script src="js/agegate.js"></script>
 <script>
 (async function () {
