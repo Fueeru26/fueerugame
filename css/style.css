@@ -731,31 +731,46 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   padding: 10px;
   border-top: 1px solid var(--card-border-color);
 }
-.genre-select-reset {
+/* Selector digabung (.genre-select-actions + class tombol + "button")
+   supaya specificity-nya menang melawan ".custom-select-menu button"
+   yang umum (aturan itu tadinya ikut memaksa tombol Reset/Selesai
+   di sini jadi display:block & width:100% sehingga "Selesai" terdorong
+   keluar dan ke-clip oleh overflow-x:hidden). */
+.genre-select-actions button.genre-select-reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
   flex: 0 0 auto;
-  border: none;
-  background: none;
+  border: 1.5px solid var(--sky-200);
+  background: var(--surface);
   color: var(--ink-soft);
   font-weight: 700;
   font-size: .84rem;
   letter-spacing: .2px;
-  padding: 9px 12px;
+  text-align: center;
+  padding: 9px 16px;
   border-radius: var(--radius-sm);
   transition: background .18s ease;
 }
-.genre-select-reset:hover { background: var(--sky-50); }
-.genre-select-done {
+.genre-select-actions button.genre-select-reset:hover { background: var(--sky-50); }
+.genre-select-actions button.genre-select-done {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
   flex: 0 0 auto;
-  border: none;
+  border: 1.5px solid var(--sky-600);
   background: var(--sky-500);
   color: #fff;
   font-weight: 700;
   font-size: .84rem;
+  text-align: center;
   padding: 9px 22px;
   border-radius: var(--radius-sm);
   transition: background .18s ease;
 }
-.genre-select-done:hover { background: var(--sky-600); }
+.genre-select-actions button.genre-select-done:hover { background: var(--sky-600); }
 
 /* ---- Tombol ikon filter (desktop, di samping bar pencarian) ---- */
 .btn-open-filter { display: none; }
