@@ -679,8 +679,17 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
    .custom-select-menu (yang dipakai select biasa) — scroll-nya sudah
    ditangani sendiri oleh .genre-opt-list, supaya baris tombol
    Reset/Selesai di paling bawah selalu ikut terlihat penuh dan
-   dropdown-nya bebas menembus ke bawah kalau perlu. */
-.genre-select-menu { padding: 0; max-height: none; overflow: visible; }
+   dropdown-nya bebas menembus ke bawah kalau perlu.
+   Selector digabung ".custom-select-menu.genre-select-menu" (2 class)
+   supaya specificity-nya menang melawan definisi ".custom-select-menu"
+   umum lain di file ini (yang urutannya ada di bawah, kalau cuma
+   pakai 1 class akan kalah/keteper walau sudah didefinisikan). */
+.custom-select-menu.genre-select-menu {
+  padding: 0;
+  max-height: none;
+  overflow: visible;
+  overflow-x: hidden;
+}
 .genre-search-wrap { padding: 10px; border-bottom: 1px solid var(--card-border-color); }
 .genre-search-wrap input {
   width: 100%;
