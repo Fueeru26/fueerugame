@@ -203,7 +203,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
    dan ikon diperkecil) dibanding sebelumnya. */
 .navbar {
   position: relative;
-  z-index: 40;
+  z-index: 46;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -436,6 +436,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   position: fixed;
   inset: 0;
   background: rgba(8, 20, 40, 0.4);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   z-index: 44;
 }
 .search-drawer-backdrop.open { display: block; }
@@ -448,8 +450,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   background: var(--surface);
   border-bottom: 1.5px solid var(--card-border-color);
   box-shadow: 0 22px 48px -16px rgba(0, 0, 0, 0.4);
-  max-height: 90vh;
-  overflow-y: auto;
+  /* TIDAK dibatasi max-height/overflow di sini — supaya dropdown Genre
+     (dan dropdown lain) bisa menembus keluar dari batas bawah panel ini
+     tanpa perlu men-scroll panel filter itu sendiri. Kalau isinya lebih
+     tinggi dari layar, halaman-lah yang di-scroll, bukan panel ini. */
   opacity: 0;
   visibility: hidden;
   transform: translateY(-6px);
@@ -482,7 +486,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   color: var(--ink-soft);
   font-weight: 700;
   font-size: .88rem;
-  letter-spacing: .2px;
+  letter-spacing: .3px;
+  text-transform: uppercase;
   padding: 4px 2px 12px;
   margin-bottom: -1.5px;
   border-bottom: 2.5px solid transparent;
@@ -669,8 +674,13 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .custom-select-menu button:hover { background: var(--sky-50); }
 .custom-select-menu button.selected { color: var(--sky-700); background: var(--sky-50); font-weight: 800; }
 
-/* ---- Genre: multi-select dengan pencarian & centang ---- */
-.genre-select-menu { padding: 0; }
+/* ---- Genre: multi-select dengan pencarian & centang ----
+   Menu ini sengaja TIDAK memakai max-height/overflow milik
+   .custom-select-menu (yang dipakai select biasa) — scroll-nya sudah
+   ditangani sendiri oleh .genre-opt-list, supaya baris tombol
+   Reset/Selesai di paling bawah selalu ikut terlihat penuh dan
+   dropdown-nya bebas menembus ke bawah kalau perlu. */
+.genre-select-menu { padding: 0; max-height: none; overflow: visible; }
 .genre-search-wrap { padding: 10px; border-bottom: 1px solid var(--card-border-color); }
 .genre-search-wrap input {
   width: 100%;
@@ -703,6 +713,40 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .genre-opt svg { width: 15px; height: 15px; flex: 0 0 auto; opacity: 0; color: var(--sky-500); }
 .genre-opt.selected svg { opacity: 1; }
 .genre-opt-empty { padding: 16px; text-align: center; font-size: .84rem; color: var(--ink-soft); }
+
+.genre-select-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px;
+  border-top: 1px solid var(--card-border-color);
+}
+.genre-select-reset {
+  flex: 0 0 auto;
+  border: none;
+  background: none;
+  color: var(--ink-soft);
+  font-weight: 700;
+  font-size: .84rem;
+  letter-spacing: .2px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  transition: background .18s ease;
+}
+.genre-select-reset:hover { background: var(--sky-50); }
+.genre-select-done {
+  flex: 0 0 auto;
+  border: none;
+  background: var(--sky-500);
+  color: #fff;
+  font-weight: 700;
+  font-size: .84rem;
+  padding: 9px 22px;
+  border-radius: var(--radius-sm);
+  transition: background .18s ease;
+}
+.genre-select-done:hover { background: var(--sky-600); }
 
 /* ---- Tombol ikon filter (desktop, di samping bar pencarian) ---- */
 .btn-open-filter { display: none; }

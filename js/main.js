@@ -213,7 +213,11 @@ function initChrome() {
     menu.className = "custom-select-menu genre-select-menu";
     menu.innerHTML =
       '<div class="genre-search-wrap"><input type="text" placeholder="Cari genre…" id="genreSearchInput"></div>' +
-      '<div class="genre-opt-list" id="genreOptList"></div>';
+      '<div class="genre-opt-list" id="genreOptList"></div>' +
+      '<div class="genre-select-actions">' +
+        '<button type="button" class="genre-select-reset">Reset</button>' +
+        '<button type="button" class="genre-select-done">Selesai</button>' +
+      '</div>';
     wrap.appendChild(btn);
     wrap.appendChild(menu);
     container.appendChild(wrap);
@@ -221,7 +225,10 @@ function initChrome() {
     const labelEl = btn.querySelector(".custom-select-label");
     const searchInp = menu.querySelector("#genreSearchInput");
     const optList = menu.querySelector("#genreOptList");
+    const resetBtn = menu.querySelector(".genre-select-reset");
+    const doneBtn = menu.querySelector(".genre-select-done");
     let allGenres = [];
+    function closeThisMenu() { menu.classList.remove("show"); btn.classList.remove("open"); }
 
     function syncLabel() {
       const n = filterState.genres.length;
@@ -245,6 +252,7 @@ function initChrome() {
         .join("");
     }
     optList.addEventListener("click", (e) => {
+      e.stopPropagation();
       const optBtn = e.target.closest(".genre-opt[data-genre]");
       if (!optBtn) return;
       const g = optBtn.getAttribute("data-genre");
@@ -253,10 +261,26 @@ function initChrome() {
       else filterState.genres.splice(idx, 1);
       optBtn.classList.toggle("selected", filterState.genres.includes(g));
       syncLabel();
+      // Sengaja TIDAK menutup dropdown di sini — biar bisa pilih
+      // beberapa genre sekaligus, baru ditutup lewat tombol "Selesai".
     });
     if (searchInp) {
       searchInp.addEventListener("input", () => renderOpts(searchInp.value));
       searchInp.addEventListener("click", (e) => e.stopPropagation());
+    }
+    if (resetBtn) {
+      resetBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        filterState.genres = [];
+        syncLabel();
+        renderOpts(searchInp ? searchInp.value : "");
+      });
+    }
+    if (doneBtn) {
+      doneBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        closeThisMenu();
+      });
     }
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
