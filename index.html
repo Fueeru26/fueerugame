@@ -8,9 +8,9 @@
 <meta name="description" content="Fueeru Game — kumpulan game terbaru, laporkan masalah, dan info seputar dunia gaming.">
 <link rel="icon" type="image/png" href="webpictures/logo.webp">
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0f3a8a">
+<meta name="theme-color" content="#2fa8e0">
 <link rel="apple-touch-icon" href="webpictures/icon-192.png">
-<link rel="stylesheet" href="css/style.css?v=20260920">
+<link rel="stylesheet" href="css/style.css?v=20260901r3">
 
 </head>
 <body>
@@ -22,9 +22,9 @@
   <a href="index.html" class="brand-link" aria-label="Fueeru Game — Beranda">
     <img src="webpictures/header.webp" alt="Fueeru Game">
   </a>
-  <button type="button" class="icon-btn theme-toggle-btn" id="btnThemeToggleHeader" aria-label="Ganti mode tampilan">
-    <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/><line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/><line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/><line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/></svg>
-    <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
+  <button type="button" class="icon-btn theme-toggle-btn" id="btnThemeToggle" aria-label="Ganti mode tampilan">
+    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/><line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/><line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/><line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/></svg>
+    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
   </button>
   <button class="icon-btn" id="btnOpenSearch" aria-label="Buka atau tutup pencarian">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -134,16 +134,23 @@
 
   <section aria-labelledby="randomHeading">
     <div class="section-head"><h2 id="randomHeading">Rekomendasi</h2></div>
-    <div class="carousel-wrap">
-      <button class="carousel-arrow prev" id="randomPrev" aria-label="Geser ke kiri">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
-      <div class="carousel-track" id="randomTrack"></div>
-      <button class="carousel-arrow next" id="randomNext" aria-label="Geser ke kanan">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </button>
+    <div class="feature-card" id="featureCard">
+      <div class="feature-media">
+        <a class="feature-media-link" id="featureLink" href="#">
+          <img class="feature-thumb" id="featureThumb" src="" alt="" loading="lazy">
+        </a>
+        <button class="feature-arrow prev" id="featurePrev" aria-label="Geser ke kiri">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button class="feature-arrow next" id="featureNext" aria-label="Geser ke kanan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+      <a class="feature-title-link" id="featureTitleLink" href="#">
+        <div class="feature-title" id="featureTitle"></div>
+      </a>
+      <div class="feature-dots" id="featureDots"></div>
     </div>
-    <div class="carousel-dots" id="randomDots"></div>
   </section>
 
   <section aria-labelledby="updateHeading">
@@ -167,7 +174,7 @@
 
 <script>window.SITE_BASE = "web/";</script>
 <script src="js/data.js?v=20260918"></script>
-<script src="js/main.js?v=20260920"></script>
+<script src="js/main.js?v=20260901r2"></script>
 <script src="js/agegate.js"></script>
 <script>
 (async function () {
@@ -176,10 +183,9 @@
 
   const allPosts = await getPublishedPosts();
 
-  // Random Game: sampai 10 post acak
-  // Rekomendasi: 5 post acak, 1 slide per tampilan, geser otomatis tiap 5 detik
+  // Rekomendasi: 5 post acak, kartu tunggal landscape, geser otomatis tiap 5 detik
   const randomPosts = shuffleArray(allPosts).slice(0, 5);
-  initFeaturedCarousel("randomTrack", "randomDots", "randomPrev", "randomNext", randomPosts, 5000);
+  initFeatureCarousel(randomPosts);
 
   // Recent Update: terbaru dulu, dengan pagination (hanya judul, tanggal, jenis)
   const sortedPosts = allPosts.slice().sort((a, b) => new Date(b.date) - new Date(a.date));

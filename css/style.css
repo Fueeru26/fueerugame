@@ -82,67 +82,63 @@
 
 :root {
   --font-family: 'Qanelas', sans-serif;
-  --ink: #0b2947;
-  --ink-soft: #4a6a89;
-  --sky-50: #f0f5ff;
-  --sky-100: #e0ebff;
-  --sky-150: #d1e1ff;
-  --sky-200: #bdd4ff;
-  --sky-300: #8eb4fb;
-  --sky-400: #5a8ff2;
-  --sky-500: #1a5ad1;
-  --sky-600: #154aac;
-  --sky-700: #0f3a8a;
-  --sky-900: #092353;
+  --ink: #0a2036;
+  --ink-soft: #4c6482;
+  --sky-50: #eaf1fa;
+  --sky-100: #d7e5f5;
+  --sky-150: #c2d7ef;
+  --sky-200: #a9c7e6;
+  --sky-300: #6f9dd2;
+  --sky-400: #3f76b8;
+  --sky-500: #2c69b0;
+  --sky-600: #204f8c;
+  --sky-700: #1c4a86;
+  --sky-900: #081b33;
   --amber: #ffb648;
   --amber-dark: #e2933a;
   --white: #ffffff;
   /* Warna navy tetap (tidak berubah di dark mode) — dipakai untuk elemen
-     struktural yang memang selalu gelap: header, sidebar, background admin, toast. */
-  --navy-700: #0f3a8a;
-  --navy-900: #092353;
+     struktural yang memang selalu gelap: header, sidebar, section-head, admin, toast. */
+  --navy-700: #1c4a86;
+  --navy-900: #0d3269;
   /* Warna permukaan (surface) — beradaptasi antara light/dark mode */
   --surface: #ffffff;
-  --surface-alt: #f7f9ff;
-  --navbar-bg: rgba(255, 255, 255, 0.78);
+  --surface-alt: #f2f6fb;
   --input-bg: #ffffff;
   --radius-lg: 22px;
   --radius-md: 16px;
   --radius-sm: 10px;
-  --shadow-soft: 0 10px 30px -12px rgba(15, 58, 138, 0.28);
-  --shadow-card: 0 6px 18px -8px rgba(11, 41, 71, 0.18);
+  --shadow-soft: 0 10px 30px -12px rgba(8, 27, 54, 0.32);
+  --shadow-card: 0 6px 18px -8px rgba(8, 27, 54, 0.2);
   --container: 1080px;
   /* Border tipis + "warna inner" (inner glow) untuk kartu game/postingan */
   --card-border-color: var(--sky-150);
-  --shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.75), inset 0 -6px 14px -10px rgba(15, 58, 138, 0.16);
+  --shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.75), inset 0 -6px 14px -10px rgba(8, 27, 54, 0.16);
 }
 
-/* ---------------- Dark mode ---------------- */
+/* ---------------- Dark mode (abu-abu gelap) ---------------- */
 :root.dark {
-  --ink: #eaf0fb;
-  --ink-soft: #94a3ba;
-  --sky-50: #121926;
-  --sky-100: #192234;
-  --sky-150: #232e43;
-  --sky-200: #2b3850;
-  --sky-300: #3c527c;
-  --sky-400: #466eb9;
-  --sky-500: #4679d8;
-  --sky-600: #6594ec;
-  --sky-700: #90b3f4;
-  --sky-900: #cfdffc;
+  --ink: #eaedf0;
+  --ink-soft: #9aa3ad;
+  --sky-50: #16181b;
+  --sky-100: #1e2124;
+  --sky-150: #282b2f;
+  --sky-200: #33373c;
+  --sky-300: #454b52;
+  --sky-400: #4f7fb8;
+  --sky-500: #3d7fd6;
+  --sky-600: #5c96e0;
+  --sky-700: #7fb0ec;
+  --sky-900: #d8e6f7;
   --amber: #ffcf7d;
   --amber-dark: #f0b555;
-  /* Abu-abu gelap netral (bukan lagi biru navy tua) supaya mode gelap
-     terasa lebih "gelap" murni, bukan bernuansa biru pekat. */
-  --surface: #1b1e24;
-  --surface-alt: #16181d;
-  --navbar-bg: rgba(9, 20, 32, 0.85);
-  --input-bg: #21252c;
-  --shadow-soft: 0 10px 30px -12px rgba(0, 0, 0, 0.55);
-  --shadow-card: 0 6px 18px -8px rgba(0, 0, 0, 0.5);
+  --surface: #1a1c1f;
+  --surface-alt: #17191c;
+  --input-bg: #212427;
+  --shadow-soft: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 6px 18px -8px rgba(0, 0, 0, 0.55);
   --card-border-color: var(--sky-200);
-  --shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 0 -6px 14px -10px rgba(0, 0, 0, 0.45);
+  --shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.04), inset 0 -6px 14px -10px rgba(0, 0, 0, 0.5);
 }
 
 :root.dark body {
@@ -168,7 +164,7 @@ body {
   margin: 0;
   font-family: var(--font-family, 'Qanelas'), system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   color: var(--ink);
-  background: linear-gradient(180deg, var(--sky-50) 0%, var(--surface) 340px, var(--surface) 100%);
+  background: linear-gradient(180deg, var(--sky-50) 0%, var(--surface) 280px, var(--surface) 100%);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   transition: background-color .25s ease, color .25s ease;
@@ -209,15 +205,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px 18px;
-  background: linear-gradient(135deg, var(--navy-700), var(--navy-900));
+  gap: 10px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, var(--navy-700) 0%, var(--navy-900) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow-card);
 }
-.navbar .icon-btn {
-  background: transparent;
-  color: #fff;
-}
-.navbar .icon-btn:hover { background: rgba(255,255,255,0.14); }
 
 .icon-btn {
   display: inline-flex;
@@ -234,6 +227,27 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 .icon-btn:hover { background: var(--sky-200); transform: translateY(-1px); }
 .icon-btn svg { width: 20px; height: 20px; }
+
+/* Tombol ikon di dalam header (background navy gelap) butuh kontras berbeda
+   dari .icon-btn biasa yang dipakai di atas permukaan terang. */
+.navbar .icon-btn {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+.navbar .icon-btn:hover { background: rgba(255, 255, 255, 0.24); }
+
+/* ---------------- Toggle mode gelap/terang (satu ikon Matahari/Bulan) ---------------- */
+.theme-toggle-btn { position: relative; }
+.theme-toggle-btn .icon-sun,
+.theme-toggle-btn .icon-moon {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+}
+.theme-toggle-btn .icon-sun { display: none; }
+.theme-toggle-btn .icon-moon { display: block; }
+:root.dark .theme-toggle-btn .icon-sun { display: block; }
+:root.dark .theme-toggle-btn .icon-moon { display: none; }
 
 .brand-link {
   flex: 1 1 auto;
@@ -400,11 +414,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   opacity: .6;
 }
 
-/* ---------------- Theme toggle (1 tombol ikon di header) ---------------- */
-.theme-toggle-btn .theme-icon-moon { display: none; }
-:root.dark .theme-toggle-btn .theme-icon-sun { display: none; }
-:root.dark .theme-toggle-btn .theme-icon-moon { display: block; }
-
 /* ---------------- Search overlay ---------------- */
 .search-backdrop {
   position: fixed;
@@ -498,22 +507,25 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .search-close-btn svg { width: 17px; height: 17px; }
 .search-close-btn:hover { background: var(--sky-100); }
 
-/* ---------------- Section heading with wave ---------------- */
+/* ---------------- Section heading (banner navy tua) ---------------- */
 .section-head {
   position: relative;
-  margin: 22px 0 14px;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--navy-700), var(--navy-900));
-  padding: 15px 20px;
+  text-align: left;
+  margin: 22px 0 16px;
+  background: linear-gradient(135deg, var(--navy-700) 0%, var(--navy-900) 100%);
+  border-radius: var(--radius-lg);
+  padding: 13px 20px;
   box-shadow: var(--shadow-card);
 }
-.section-head-tight { margin-top: 4px; }
+.section-head-tight { margin-top: 30px; }
 .section-head h2 {
   display: block;
-  font-size: 1.28rem;
+  font-size: 1.05rem;
   font-weight: 800;
   color: #fff;
-  text-align: left;
+  background: none;
+  padding: 0;
+  position: static;
 }
 #randomHeading,
 #updateHeading {
@@ -542,109 +554,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
-.carousel-wrap {
-  position: relative;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-card);
-}
-.carousel-track {
-  display: flex;
-  transition: transform .45s ease;
-}
 .carousel-track::-webkit-scrollbar { display: none; }
 
-.featured-slide {
-  flex: 0 0 100%;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  background: var(--surface);
-  text-decoration: none;
-}
-.featured-slide-img {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  display: block;
-  background: var(--sky-100);
-}
-.featured-slide-title {
-  font-family: var(--font-family, 'Qanelas'), sans-serif;
-  font-weight: 800;
-  font-size: 1.12rem;
-  line-height: 1.35;
-  color: var(--sky-700);
-  text-align: center;
-  padding: 16px 20px;
-  min-height: calc(1.35em * 3 + 32px);
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  transition: color .2s ease;
-}
-.featured-slide:hover .featured-slide-title { color: var(--sky-500); }
-
-.carousel-dots {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 12px;
-}
-.carousel-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  border: none;
-  background: var(--sky-200);
-  padding: 0;
-  cursor: pointer;
-  transition: background .2s ease, width .2s ease;
-}
-.carousel-dot.active {
-  background: var(--sky-500);
-  width: 22px;
-  border-radius: 5px;
-}
-
-.carousel-arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 5;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(10, 24, 40, 0.45);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.carousel-arrow:hover { background: rgba(10, 24, 40, 0.65); }
-.carousel-arrow.prev { left: 10px; }
-.carousel-arrow.next { right: 10px; }
-.carousel-arrow svg { width: 20px; height: 20px; }
-
-/* ---------------- Postingan Terkait (multi-kartu, scroll horizontal) ---------------- */
-.related-wrap {
-  position: relative;
-  padding: 4px 2px 10px;
-}
-.related-track {
-  display: flex;
-  gap: 14px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  padding: 6px 4px 4px;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.related-track::-webkit-scrollbar { display: none; }
-.related-card {
+.game-card {
   flex: 0 0 auto;
   width: 152px;
   height: 268px;
@@ -658,19 +570,19 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   display: flex;
   flex-direction: column;
 }
-.related-card:hover, .related-card:active {
+.game-card:hover, .game-card:active {
   transform: translateY(-5px);
   box-shadow: var(--shadow-soft), var(--shadow-inner);
   border-color: var(--sky-300);
 }
-.related-card .thumb {
+.game-card .thumb {
   width: 100%;
   height: 134px;
   flex: 0 0 134px;
   object-fit: cover;
   background: var(--sky-100);
 }
-.related-card .rc-body {
+.game-card .gc-body {
   padding: 9px 10px;
   flex: 1 1 auto;
   display: flex;
@@ -678,7 +590,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   justify-content: center;
   min-height: 0;
 }
-.related-card .rc-title {
+.game-card .gc-title {
   font-family: var(--font-family, 'Qanelas'), sans-serif;
   font-weight: 600;
   font-size: .8rem;
@@ -691,8 +603,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.related-card:hover .rc-title { color: var(--sky-500); }
-.related-arrow {
+.game-card:hover .gc-title { color: var(--sky-500); }
+
+.carousel-arrow {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
@@ -708,9 +621,101 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   align-items: center;
   justify-content: center;
 }
-.related-arrow.prev { left: -6px; }
-.related-arrow.next { right: -6px; }
-.related-arrow svg { width: 20px; height: 20px; }
+.carousel-arrow.prev { left: -6px; }
+.carousel-arrow.next { right: -6px; }
+.carousel-arrow svg { width: 20px; height: 20px; }
+
+/* ---------------- Rekomendasi: kartu tunggal landscape (feature carousel) ----------------
+   Ukuran kartu HARUS tetap/fix di semua slide, berapa pun rasio gambar
+   aslinya — dipakai teknik "padding-top" (bukan properti aspect-ratio)
+   supaya didukung semua browser dan lebar gambar selalu 100% kartu. */
+.feature-card {
+  width: 100%;
+  background: var(--surface);
+  border: 1.5px solid var(--card-border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card), var(--shadow-inner);
+  overflow: hidden;
+}
+.feature-media {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-top: 56.25%; /* rasio 16:9, tetap di semua slide */
+  background: var(--sky-100);
+  overflow: hidden;
+}
+.feature-media-link {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.feature-thumb {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+.feature-title-link { display: block; }
+.feature-title {
+  font-family: var(--font-family, 'Qanelas'), sans-serif;
+  padding: 16px 20px 6px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  line-height: 1.4;
+  color: var(--sky-700);
+  /* Tinggi judul dikunci pas 3 baris (bukan min-height) supaya total
+     tinggi kartu SELALU sama persis di setiap slide, judul pendek
+     ataupun panjang. +22px = padding atas 16px + padding bawah 6px
+     (box-sizing: border-box), supaya baris ke-3 tidak terpotong. */
+  height: calc(1.4em * 3 + 22px);
+  overflow: hidden;
+  transition: color .2s ease;
+}
+.feature-title-link:hover .feature-title { color: var(--sky-500); }
+.feature-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 0 18px;
+}
+.feature-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: var(--sky-200);
+  cursor: pointer;
+  transition: background .2s ease, width .2s ease;
+}
+.feature-dot.active { width: 22px; background: var(--sky-500); }
+.feature-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--navy-900);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.feature-arrow:hover { background: #fff; }
+.feature-arrow.prev { left: 10px; }
+.feature-arrow.next { right: 10px; }
+.feature-arrow svg { width: 18px; height: 18px; }
 
 /* ---------------- New Update list ---------------- */
 .post-list {
@@ -1770,18 +1775,19 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
    Tampilan Desktop
    ========================================================= */
 
-/* ---------------- Navbar: search (desktop) ---------------- */
+/* ---------------- Navbar: toggle mode & search (desktop) ---------------- */
 .navbar-search {
   display: none;
   align-items: center;
   gap: 8px;
-  background: var(--sky-50);
-  border: 1.5px solid var(--sky-200);
+  background: rgba(255, 255, 255, 0.14);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
   border-radius: 999px;
   padding: 5px 5px 5px 18px;
   flex: 0 1 380px;
   min-width: 0;
 }
+.navbar-search > svg { color: rgba(255, 255, 255, 0.75) !important; }
 .navbar-search input {
   flex: 1;
   min-width: 0;
@@ -1790,10 +1796,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   outline: none;
   font-size: .95rem;
   font-family: inherit;
-  color: var(--ink);
+  color: #fff;
   padding: 8px 0;
 }
-.navbar-search input::placeholder { color: #9db6cb; }
+.navbar-search input::placeholder { color: rgba(255, 255, 255, 0.65); }
 
 /* ---------------- Menu bar kedua (navigasi horizontal desktop) ---------------- */
 /* ---------------- Teks Pengumuman (Pengaturan > Pengaturan Teks) ----------------
