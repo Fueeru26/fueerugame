@@ -10,11 +10,12 @@
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#2fa8e0">
 <link rel="apple-touch-icon" href="../webpictures/icon-192.png">
-<link rel="stylesheet" href="../css/style.css?v=20260901r6">
+<link rel="stylesheet" href="../css/style.css?v=20260901r7">
 
 </head>
 <body>
 
+<div class="header-wrap">
 <header class="navbar">
   <button class="icon-btn" id="btnOpenSidebar" aria-label="Buka menu">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
@@ -40,6 +41,7 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="4 4 20 4 14 12.5 14 19 10 21 10 12.5 4 4"/></svg>
   </button>
 </header>
+<div class="search-drawer-backdrop" id="searchDrawerBackdrop"></div>
 
 <div class="search-drawer" id="searchDrawer">
   <div class="search-drawer-inner">
@@ -73,6 +75,10 @@
           <label for="filterKeyword">Kata Kunci</label>
           <input type="text" id="filterKeyword" placeholder="Cari Judul (min 3 karakter)…">
         </div>
+
+        <div class="filter-field" id="filterGenreField">
+          <label>Genre</label>
+        </div>
         <div class="filter-field" id="filterPlatformField">
           <label>Platform</label>
         </div>
@@ -81,11 +87,7 @@
         </div>
         <div class="filter-field" id="filterJenisField">
           <label>Jenis</label>
-        </div>
-        <div class="filter-field" id="filterGenreField">
-          <label>Genre</label>
-        </div>
-      </div>
+        </div>      </div>
       <div class="filter-actions">
         <button type="button" class="btn-filter-reset" id="btnResetFilter">Reset</button>
         <button type="button" class="btn-filter-apply" id="btnApplyFilter">
@@ -95,6 +97,7 @@
       </div>
     </div>
   </div>
+</div>
 </div>
 
 <nav class="menubar" aria-label="Menu utama">
@@ -214,7 +217,7 @@
 
 <script>window.ASSET_BASE = "../";</script>
 <script src="../js/data.js"></script>
-<script src="../js/main.js?v=20260901r6"></script>
+<script src="../js/main.js?v=20260901r7"></script>
 <script src="../js/agegate.js"></script>
 <script>
 (async function () {

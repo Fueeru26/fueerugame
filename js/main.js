@@ -78,9 +78,11 @@ function initChrome() {
   if (overlay) overlay.addEventListener("click", closeSidebar);
 
   // ---------------- Search & Filter Drawer (mobile & desktop) ----------------
-  // Panel muncul DI BAWAH header (bukan overlay layar penuh) — didorong ke
-  // bawah lewat max-height transition, karena header sudah tidak sticky.
+  // Panel MENIMPA halaman (overlay) tepat di bawah header — tidak
+  // mendorong konten ke bawah. Ditutup lewat tombol X, klik backdrop
+  // gelap di belakangnya, atau tombol back (Escape).
   const searchDrawer = document.getElementById("searchDrawer");
+  const searchDrawerBackdrop = document.getElementById("searchDrawerBackdrop");
   const openSearchBtn = document.getElementById("btnOpenSearch");
   const openFilterBtn = document.getElementById("btnOpenFilter");
   const closeSearchBtn = document.getElementById("btnCloseSearchDrawer");
@@ -113,13 +115,15 @@ function initChrome() {
     if (!searchDrawer) return;
     setActiveTab(tab || "fast");
     searchDrawer.classList.add("open");
+    if (searchDrawerBackdrop) searchDrawerBackdrop.classList.add("open");
     if (tab !== "filter") {
-      setTimeout(() => searchInput && searchInput.focus(), 250);
+      setTimeout(() => searchInput && searchInput.focus(), 220);
     }
   }
   function closeSearch() {
     if (!searchDrawer) return;
     searchDrawer.classList.remove("open");
+    if (searchDrawerBackdrop) searchDrawerBackdrop.classList.remove("open");
   }
   // Tombol kaca pembesar di navbar berfungsi sebagai toggle:
   // buka jika tertutup, tutup jika sedang terbuka.
@@ -136,6 +140,7 @@ function initChrome() {
     });
   }
   if (closeSearchBtn) closeSearchBtn.addEventListener("click", closeSearch);
+  if (searchDrawerBackdrop) searchDrawerBackdrop.addEventListener("click", closeSearch);
   searchTabs.forEach((t) => {
     t.addEventListener("click", () => setActiveTab(t.getAttribute("data-tab")));
   });

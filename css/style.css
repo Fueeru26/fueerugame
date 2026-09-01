@@ -421,18 +421,46 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 
 /* ---------------- Search & Filter Drawer ----------------
-   Panel pencarian sekarang muncul DI BAWAH header (bukan overlay penuh
-   layar) — mendorong konten ke bawah saat dibuka, karena header sudah
-   tidak sticky lagi. Ada 2 tab: "Cari" (pencarian cepat) & "Filter"
-   (pencarian lanjutan: kata kunci, platform, bahasa, jenis, genre). */
-.search-drawer {
-  max-height: 0;
-  overflow: hidden;
-  background: var(--surface);
-  border-bottom: 1px solid var(--card-border-color);
-  transition: max-height .3s cubic-bezier(.2,.8,.2,1);
+   Panel pencarian MENIMPA halaman (overlay, seperti dropdown besar) —
+   posisinya nempel persis di bawah header lewat wrapper `.header-wrap`
+   yang position:relative, lalu drawer sendiri position:absolute agar
+   TIDAK mendorong konten ke bawah. Sengaja tidak dibatasi max-height +
+   overflow:hidden supaya dropdown Genre (yang punya sub-menu sendiri)
+   tidak ikut terpotong — dropdown Genre membatasi tinggi & scroll-nya
+   sendiri lewat .genre-opt-list. Ada 2 tab: "Cari" (pencarian cepat) &
+   "Filter" (pencarian lanjutan: kata kunci, genre, platform, bahasa,
+   jenis). */
+.header-wrap { position: relative; z-index: 45; }
+.search-drawer-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 20, 40, 0.4);
+  z-index: 44;
 }
-.search-drawer.open { max-height: 900px; }
+.search-drawer-backdrop.open { display: block; }
+.search-drawer {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 45;
+  background: var(--surface);
+  border-bottom: 1.5px solid var(--card-border-color);
+  box-shadow: 0 22px 48px -16px rgba(0, 0, 0, 0.4);
+  max-height: 90vh;
+  overflow-y: auto;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: opacity .18s ease, transform .18s ease, visibility 0s linear .18s;
+}
+.search-drawer.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: opacity .18s ease, transform .18s ease, visibility 0s linear 0s;
+}
 .search-drawer-inner {
   max-width: var(--container);
   margin: 0 auto;
