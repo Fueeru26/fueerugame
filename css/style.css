@@ -2435,21 +2435,25 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   }
 
   /* ---- Rekomendasi (feature carousel): efek "mengintip" 3 kartu ----
-     Kartu utama tetap di tengah dengan lebar/ukuran tetap seperti
-     sebelumnya; 2 kartu di sisi kiri-kanan cuma menampilkan sepotong
-     thumbnail slide sebelum/sesudahnya (redup + blur tipis), sebagian
-     tertutup (overlap) oleh kartu utama di tengah. */
+     Dipakai CSS Grid dengan kolom "1fr <lebar-tetap> 1fr" (BUKAN flex)
+     supaya kedua kolom sisi kiri-kanan DIJAMIN selalu sama lebar dan
+     kartu tengah selalu pas di tengah — apa pun rasio/ukuran asli
+     gambar thumbnail-nya dan biarpun slide-nya berganti-ganti.
+     (Sebelumnya pakai flex: 1 1 auto tanpa flex-basis:0, jadi ukuran
+     tiap sisi ikut dipengaruhi ukuran alami gambar di dalamnya —
+     itu penyebab bug gambar blur kiri-kanan tidak selaras & kartu
+     tengah tidak pas di tengah.) */
   .feature-carousel {
-    display: flex;
-    align-items: stretch;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: 1fr clamp(300px, 36vw, 460px) 1fr;
+    align-items: center;
     gap: 0;
   }
-  .feature-card { flex: 0 0 auto; width: min(420px, 36%); position: relative; z-index: 2; }
+  .feature-card { width: 100%; position: relative; z-index: 2; }
   .feature-side {
     display: block;
-    flex: 1 1 auto;
-    align-self: center;
+    width: 100%;
+    min-width: 0;
     position: relative;
     z-index: 1;
     border: none;
@@ -2465,9 +2469,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
     transition: opacity .2s ease, filter .2s ease;
   }
   .feature-side:hover { opacity: .8; filter: blur(0) saturate(1); }
-  .feature-side img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .feature-side-prev { margin-right: -24px; }
-  .feature-side-next { margin-left: -24px; }
+  .feature-side img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .feature-side-prev { justify-self: end; margin-right: -24px; }
+  .feature-side-next { justify-self: start; margin-left: -24px; }
   .feature-arrow.prev { left: -18px; }
   .feature-arrow.next { right: -18px; }
 }
