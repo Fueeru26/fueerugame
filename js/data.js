@@ -227,12 +227,23 @@ async function addReport(title, name, content, attachment, contactMedia) {
   );
 }
 
-/** [PUBLIK] Kirim 1 permintaan Request Game baru. */
-async function addRequestGame(gameName, name, engine, gameLink, contactMedia) {
+/** [PUBLIK] Kirim 1 permintaan Request Game baru.
+ * message = isi "Pesan Request" (opsional), attachment = {name, dataUrl} | null
+ * (lampiran bukti donasi, opsional). */
+async function addRequestGame(gameName, name, engine, gameLink, contactMedia, message, attachment) {
   await apiCall(
     "POST",
     "/api/reports",
-    { formType: "request", gameName, name: name || "", engine, gameLink, contactMedia: contactMedia || "" },
+    {
+      formType: "request",
+      gameName,
+      name: name || "",
+      engine,
+      gameLink,
+      contactMedia: contactMedia || "",
+      content: message || "",
+      attachment: attachment || null
+    },
     false
   );
 }

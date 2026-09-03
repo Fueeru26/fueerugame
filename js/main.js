@@ -533,6 +533,10 @@ function initFeatureCarousel(posts) {
   const dotsWrap = document.getElementById("featureDots");
   const prevBtn = document.getElementById("featurePrev");
   const nextBtn = document.getElementById("featureNext");
+  const sidePrevBtn = document.getElementById("featureSidePrev");
+  const sideNextBtn = document.getElementById("featureSideNext");
+  const sidePrevThumb = document.getElementById("featureSidePrevThumb");
+  const sideNextThumb = document.getElementById("featureSideNextThumb");
 
   const total = posts.length;
   let index = 0;
@@ -542,6 +546,13 @@ function initFeatureCarousel(posts) {
     .map((_, i) => `<button type="button" class="feature-dot" aria-label="Ke slide ${i + 1}"></button>`)
     .join("");
   const dots = dotsWrap.querySelectorAll(".feature-dot");
+
+  // Sisi kiri/kanan (efek "mengintip" — cuma tampak di desktop lewat CSS)
+  // hanya berguna kalau ada lebih dari 1 slide untuk diintip.
+  if (total <= 1) {
+    if (sidePrevBtn) sidePrevBtn.style.display = "none";
+    if (sideNextBtn) sideNextBtn.style.display = "none";
+  }
 
   function render() {
     const p = posts[index];
@@ -556,6 +567,19 @@ function initFeatureCarousel(posts) {
     if (titleLink) titleLink.href = href;
     if (titleEl) truncateToFit(titleEl, p.title);
     dots.forEach((d, i) => d.classList.toggle("active", i === index));
+
+    if (total > 1) {
+      const prevPost = posts[(index - 1 + total) % total];
+      const nextPost = posts[(index + 1) % total];
+      if (sidePrevThumb) {
+        sidePrevThumb.src = resolveAsset(prevPost.thumbnail);
+        sidePrevThumb.alt = `Thumbnail ${prevPost.title}`;
+      }
+      if (sideNextThumb) {
+        sideNextThumb.src = resolveAsset(nextPost.thumbnail);
+        sideNextThumb.alt = `Thumbnail ${nextPost.title}`;
+      }
+    }
   }
 
   function resetAutoplay() {
@@ -577,6 +601,8 @@ function initFeatureCarousel(posts) {
   dots.forEach((d, i) => d.addEventListener("click", () => goTo(i)));
   if (prevBtn) prevBtn.addEventListener("click", () => goTo(index - 1));
   if (nextBtn) nextBtn.addEventListener("click", () => goTo(index + 1));
+  if (sidePrevBtn) sidePrevBtn.addEventListener("click", () => goTo(index - 1));
+  if (sideNextBtn) sideNextBtn.addEventListener("click", () => goTo(index + 1));
 
   render();
   resetAutoplay();
@@ -648,15 +674,17 @@ function applyTitleClamp(containerEl, selector) {
  * Pencarian). Hanya thumbnail + judul (maks 3 baris) + tanggal — tanpa
  * tag kategori/genre — supaya ukuran kartu selalu tetap. Markup SAMA
  * persis untuk tampilan List & Grid; bedanya murni CSS lewat atribut
- * data-view di kontainer (lihat .post-items[data-view]). */
-function postItemHtml(p) {
+ * data-view di kontainer (lihat .post-items[data-view]).
+ * showDate=false dipakai di "Postingan Terkait" (grid tanpa tanggal). */
+function postItemHtml(p, showDate) {
+  const withDate = showDate !== false;
   const href = `${siteBase()}post.html?id=${encodeURIComponent(p.id)}`;
   return `
     <a class="post-item" href="${href}">
       <img class="pi-thumb" src="${resolveAsset(p.thumbnail)}" alt="Thumbnail ${escapeHtml(p.title)}" loading="lazy" ${thumbFallbackAttr()}>
       <div class="pi-body">
         <div class="pi-title">${escapeHtml(p.title)}</div>
-        <div class="pi-date">${calendarIconSvg()}${escapeHtml(formatDate(p.date))}</div>
+        ${withDate ? `<div class="pi-date">${calendarIconSvg()}${escapeHtml(formatDate(p.date))}</div>` : ""}
       </div>
     </a>`;
 }

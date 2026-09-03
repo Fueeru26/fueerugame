@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2fa8e0">
 <link rel="apple-touch-icon" href="webpictures/icon-192.png">
-<link rel="stylesheet" href="css/style.css?v=20260902r3">
+<link rel="stylesheet" href="css/style.css?v=20260903r2">
 
 </head>
 <body>
@@ -182,22 +182,30 @@
 
   <section aria-labelledby="randomHeading">
     <div class="section-head"><h2 id="randomHeading">Rekomendasi</h2></div>
-    <div class="feature-card" id="featureCard">
-      <div class="feature-media">
-        <a class="feature-media-link" id="featureLink" href="#">
-          <img class="feature-thumb" id="featureThumb" src="" alt="" loading="lazy">
+    <div class="feature-carousel" id="featureCarousel">
+      <button type="button" class="feature-side feature-side-prev" id="featureSidePrev" aria-label="Slide sebelumnya">
+        <img id="featureSidePrevThumb" src="" alt="" loading="lazy">
+      </button>
+      <div class="feature-card" id="featureCard">
+        <div class="feature-media">
+          <a class="feature-media-link" id="featureLink" href="#">
+            <img class="feature-thumb" id="featureThumb" src="" alt="" loading="lazy">
+          </a>
+          <button class="feature-arrow prev" id="featurePrev" aria-label="Geser ke kiri">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <button class="feature-arrow next" id="featureNext" aria-label="Geser ke kanan">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+        <a class="feature-title-link" id="featureTitleLink" href="#">
+          <div class="feature-title" id="featureTitle"></div>
         </a>
-        <button class="feature-arrow prev" id="featurePrev" aria-label="Geser ke kiri">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
-        <button class="feature-arrow next" id="featureNext" aria-label="Geser ke kanan">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
+        <div class="feature-dots" id="featureDots"></div>
       </div>
-      <a class="feature-title-link" id="featureTitleLink" href="#">
-        <div class="feature-title" id="featureTitle"></div>
-      </a>
-      <div class="feature-dots" id="featureDots"></div>
+      <button type="button" class="feature-side feature-side-next" id="featureSideNext" aria-label="Slide berikutnya">
+        <img id="featureSideNextThumb" src="" alt="" loading="lazy">
+      </button>
     </div>
   </section>
 
@@ -231,8 +239,8 @@
 </footer>
 
 <script>window.SITE_BASE = "web/";</script>
-<script src="js/data.js?v=20260918"></script>
-<script src="js/main.js?v=20260902r3"></script>
+<script src="js/data.js?v=20260903r2"></script>
+<script src="js/main.js?v=20260903r2"></script>
 <script src="js/agegate.js"></script>
 <script>
 (async function () {

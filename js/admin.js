@@ -2734,6 +2734,19 @@ async function openViewReportModal(id) {
     html += row("Engine Game", ENGINE_LABELS[r.engine] || r.engine || "Tidak Tahu", false);
     html += row("Link Game", r.gameLink || "Tidak diisi", !r.gameLink);
     html += row("Media Balasan", r.contactMedia || "Tidak diisi", !r.contactMedia);
+    html += row("Pesan Request", r.content || "Tidak diisi", !r.content);
+    if (r.attachment) {
+      html += `
+        <div class="vrb-row">
+          <div class="vrb-label">Lampiran Donasi</div>
+          <div class="vrb-value">
+            <a class="rep-attachment" href="${r.attachment.dataUrl}" download="${escapeHtmlAdmin(r.attachment.name)}">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              ${escapeHtmlAdmin(r.attachment.name)}
+            </a>
+          </div>
+        </div>`;
+    }
   } else {
     viewReportModalTitle.textContent = "Detail Laporan";
     html += row("Judul Laporan", r.title, false);

@@ -10,7 +10,7 @@
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#2fa8e0">
 <link rel="apple-touch-icon" href="../webpictures/icon-192.png">
-<link rel="stylesheet" href="../css/style.css?v=20260902r3">
+<link rel="stylesheet" href="../css/style.css?v=20260903r2">
 
 </head>
 <body>
@@ -213,7 +213,7 @@
 
 <script>window.ASSET_BASE = "../";</script>
 <script src="../js/data.js"></script>
-<script src="../js/main.js?v=20260902r3"></script>
+<script src="../js/main.js?v=20260903r2"></script>
 <script src="../js/agegate.js"></script>
 <script>
 (async function () {
@@ -282,6 +282,9 @@
     // ---------------- Postingan Terkait ----------------
     // Postingan lain dengan jenis yang sama & minimal 1 genre yang sama,
     // maksimal 6, diacak. Kalau tidak ada yang cocok, section tidak ditampilkan.
+    // Fungsinya tetap carousel geser (seperti sebelumnya) — cuma tampilan
+    // KARTU-nya yang diganti gaya kartu daftar postingan mode Grid
+    // (thumbnail + judul), TANPA tanggal.
     const related = await getRelatedPosts(post, 6);
     if (related.length > 0) {
       const relatedSection = document.createElement("section");
@@ -293,13 +296,13 @@
           <button class="carousel-arrow prev" id="relatedPrev" aria-label="Geser ke kiri">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <div class="carousel-track" id="relatedTrack"></div>
+          <div class="carousel-track related-track" id="relatedTrack"></div>
           <button class="carousel-arrow next" id="relatedNext" aria-label="Geser ke kanan">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
         </div>`;
       container.appendChild(relatedSection);
-      renderCarousel("relatedTrack", related);
+      document.getElementById("relatedTrack").innerHTML = related.map((p) => postItemHtml(p, false)).join("");
       initCarouselArrows("relatedTrack", "relatedPrev", "relatedNext");
     }
   }

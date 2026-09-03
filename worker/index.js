@@ -1114,7 +1114,7 @@ async function handleReports(request, env, method) {
     if (formType === "request") {
       if (!body.gameName || !body.engine || !body.gameLink) return badRequest("Data request game tidak lengkap");
       title = body.gameName;
-      content = "";
+      content = body.content || ""; // "Pesan Request" (opsional)
     } else {
       if (!body.title || !body.content) return badRequest("Data laporan tidak lengkap");
       title = body.title;

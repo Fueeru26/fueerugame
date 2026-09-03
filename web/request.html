@@ -10,7 +10,7 @@
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#2fa8e0">
 <link rel="apple-touch-icon" href="../webpictures/icon-192.png">
-<link rel="stylesheet" href="../css/style.css?v=20260902r3">
+<link rel="stylesheet" href="../css/style.css?v=20260903r2">
 
 </head>
 <body>
@@ -213,6 +213,20 @@
         <label for="fieldMedia">Media Balasan (Opsional)</label>
         <textarea id="fieldMedia" rows="2" placeholder="Masukkan Email atau Link Media Sosial yang dapat dihubungi"></textarea>
       </div>
+      <div class="form-field">
+        <label for="fieldPesanRequest">Pesan Request (Opsional)</label>
+        <textarea id="fieldPesanRequest" rows="4" placeholder="Tuliskan pesan yang ingin disampaikan jika ada…"></textarea>
+      </div>
+      <div class="form-field">
+        <label>Lampiran Donasi (Opsional)</label>
+        <div class="file-upload-box" id="uploadBoxDonasi">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div>Klik untuk upload lampiran (gambar/screenshot)</div>
+          <input type="file" id="fieldLampiranDonasi" accept="image/*,.pdf,.txt">
+        </div>
+        <div class="file-name-tag" id="fileNameTagDonasi"></div>
+        <p class="form-field-note">*Tambahkan screenshot bukti donasi untuk meningkatkan peluang digarapnya game. Perlu diperhatikan, walau sudah donasi belum tentu game yang direquest akan digarap. Untuk menyewa jasa translator, silahkan hubungi langsung ke kontak media sosial admin</p>
+      </div>
       <button type="submit" class="btn-primary">Kirim</button>
     </form>
   </div>
@@ -248,10 +262,26 @@
 
 <script>window.ASSET_BASE = "../";</script>
 <script src="../js/data.js"></script>
-<script src="../js/main.js?v=20260902r3"></script>
+<script src="../js/main.js?v=20260903r2"></script>
 <script src="../js/agegate.js"></script>
 <script>
   buildCustomSelect(document.getElementById("fieldEngine"));
+
+  const uploadBoxDonasi = document.getElementById("uploadBoxDonasi");
+  const fieldLampiranDonasi = document.getElementById("fieldLampiranDonasi");
+  const fileNameTagDonasi = document.getElementById("fileNameTagDonasi");
+  let attachmentDonasiData = null;
+
+  fieldLampiranDonasi.addEventListener("change", function () {
+    const file = fieldLampiranDonasi.files && fieldLampiranDonasi.files[0];
+    if (!file) { attachmentDonasiData = null; fileNameTagDonasi.textContent = ""; return; }
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      attachmentDonasiData = { name: file.name, dataUrl: e.target.result };
+      fileNameTagDonasi.textContent = "Terlampir: " + file.name;
+    };
+    reader.readAsDataURL(file);
+  });
 
   const alertSuccess = document.getElementById("alertSuccess");
   const alertError = document.getElementById("alertError");
@@ -279,6 +309,7 @@
     const engine = document.getElementById("fieldEngine").value;
     const linkGame = document.getElementById("fieldLinkGame").value.trim();
     const media = document.getElementById("fieldMedia").value.trim();
+    const pesanRequest = document.getElementById("fieldPesanRequest").value.trim();
 
     alertSuccess.classList.remove("show");
     alertError.classList.remove("show");
@@ -300,11 +331,13 @@
       async function () {
         if (submitBtn) submitBtn.disabled = true;
         try {
-          await addRequestGame(namaGame, nama, engine, linkGame, media);
+          await addRequestGame(namaGame, nama, engine, linkGame, media, pesanRequest, attachmentDonasiData);
           recordRequestSubmission();
           alertSuccess.classList.add("show");
           alertSuccess.scrollIntoView({ behavior: "smooth", block: "center" });
           document.getElementById("requestForm").reset();
+          attachmentDonasiData = null;
+          fileNameTagDonasi.textContent = "";
         } catch (err) {
           alertError.classList.add("show");
           alertError.scrollIntoView({ behavior: "smooth", block: "center" });
