@@ -1314,7 +1314,7 @@ async function applySiteSettings() {
     sidebarFoot.textContent = settings.text_sidebar_copyright;
   }
 
-  // ---- Teks Footer + link sosial media ----
+  // ---- Teks Footer + link tambahan ----
   const footTagline = document.getElementById("footTaglineText");
   if (footTagline && settings.text_footer) {
     footTagline.textContent = settings.text_footer;
@@ -1328,8 +1328,8 @@ async function applySiteSettings() {
           .map((l) => {
             const url = typeof l === "string" ? l : l.url;
             if (!url) return "";
-            const meta = detectSocialPlatform(url);
-            return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener" class="foot-social-icon" style="background:${meta.color};" title="${meta.label}" aria-label="${meta.label}">${meta.svg}</a>`;
+            const meta = faviconLinkMeta(url);
+            return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener" class="foot-social-icon" title="${escapeHtml(meta.label)}" aria-label="${escapeHtml(meta.label)}"><img src="${meta.favicon}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${FALLBACK_LINK_ICON}';"></a>`;
           })
           .join("");
       }
@@ -1337,33 +1337,30 @@ async function applySiteSettings() {
   }
 }
 
-/** Deteksi platform sosial media dari domain URL, dipakai untuk menampilkan
- * icon otomatis di footer (Pengaturan > Pengaturan Teks > Teks Footer). */
-function detectSocialPlatform(url) {
+/** Icon generic (rantai/link) dipakai sebagai fallback kalau favicon
+ * gagal dimuat — di-encode sebagai data-URI supaya tidak butuh request
+ * tambahan & tidak pernah gagal dimuat. */
+const FALLBACK_LINK_ICON =
+  "data:image/svg+xml;base64," +
+  btoa(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#2fa8e0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.07 0l2.83-2.83a5 5 0 00-7.07-7.07L11.5 4.5"/><path d="M14 11a5 5 0 00-7.07 0L4.1 13.83a5 5 0 007.07 7.07l1.36-1.36"/></svg>'
+  );
+
+/** Ambil "meta" untuk 1 link footer (label + URL favicon) — dipakai di
+ * "Pengaturan Teks > Teks Footer > Link Tambahan". Icon-nya diambil
+ * otomatis dari favicon domain tujuan (bukan cuma platform media
+ * sosial tertentu), jadi link website apa pun tetap dapat icon-nya
+ * sendiri. Kalau favicon gagal dimuat, fallback ke icon rantai generik
+ * (lihat atribut onerror di pemanggilnya). */
+function faviconLinkMeta(url) {
   let host = "";
   try {
     host = new URL(url).hostname.replace(/^www\./, "").toLowerCase();
   } catch (e) {
-    host = url.toLowerCase();
+    host = String(url).toLowerCase();
   }
-  const ICON_GENERIC = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.07 0l2.83-2.83a5 5 0 00-7.07-7.07L11.5 4.5"/><path d="M14 11a5 5 0 00-7.07 0L4.1 13.83a5 5 0 007.07 7.07l1.36-1.36"/></svg>`;
-  const PLATFORMS = [
-    { match: "facebook.com", label: "Facebook", color: "#1877f2", svg: `<svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><path d="M22 12a10 10 0 10-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.1 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0022 12z"/></svg>` },
-    { match: "instagram.com", label: "Instagram", color: "linear-gradient(135deg,#f58529,#dd2a7b,#8134af,#515bd4)", svg: `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="#fff" stroke="none"/></svg>` },
-    { match: "x.com", label: "X", color: "#000", svg: `<svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M18.9 3H21l-6.55 7.49L22.2 21h-6.4l-5-6.55L4.9 21H2.8l7-8.01L1.8 3h6.56l4.53 5.99L18.9 3zm-1.12 16.17h1.15L7.28 4.75H6.05l11.73 14.42z"/></svg>` },
-    { match: "twitter.com", label: "Twitter", color: "#1da1f2", svg: `<svg viewBox="0 0 24 24" width="19" height="19" fill="#fff"><path d="M22 5.9c-.7.3-1.5.5-2.3.6.8-.5 1.5-1.3 1.8-2.3-.8.5-1.6.8-2.6 1a4 4 0 00-6.9 3.7A11.5 11.5 0 013 4.9a4 4 0 001.3 5.4c-.7 0-1.3-.2-1.9-.5v.1a4 4 0 003.2 4 4 4 0 01-1.8.1 4 4 0 003.8 2.8A8.1 8.1 0 012 18.4a11.5 11.5 0 006.3 1.8c7.5 0 11.6-6.2 11.6-11.6v-.5c.8-.6 1.5-1.3 2.1-2.2z"/></svg>` },
-    { match: ["whatsapp.com", "wa.me"], label: "WhatsApp", color: "#25d366", svg: `<svg viewBox="0 0 24 24" width="19" height="19" fill="#fff"><path d="M12 2a10 10 0 00-8.6 15L2 22l5.2-1.4A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20zm4.4-5.9c-.2-.1-1.4-.7-1.7-.8-.2-.1-.4-.1-.6.1-.1.2-.6.8-.8 1-.1.1-.3.2-.5.1a6.5 6.5 0 01-3.3-2.9c-.2-.4.2-.4.6-1.2.1-.1 0-.3 0-.4l-.7-1.7c-.2-.4-.4-.4-.6-.4h-.5c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 2s.8 2.3 1 2.5c.1.1 1.7 2.6 4.1 3.6.6.2 1 .4 1.4.5.6.2 1.1.1 1.5-.1.5-.1 1.4-.6 1.6-1.1.2-.5.2-.9.1-1z"/></svg>` },
-    { match: ["telegram.org", "t.me"], label: "Telegram", color: "#26a5e4", svg: `<svg viewBox="0 0 24 24" width="19" height="19" fill="#fff"><path d="M21.9 3.5L2.7 11c-.9.4-.9 1.6.1 1.9l4.6 1.5 1.8 5.6c.2.7 1.1.9 1.6.3l2.5-2.7 4.7 3.5c.7.5 1.7.1 1.9-.7l3.3-15.1c.2-.9-.7-1.7-1.5-1.3zM9 14.5L18 8.2c.3-.2.6.2.3.4l-7.6 6.9-.3 3-1.4-3z"/></svg>` },
-    { match: ["discord.com", "discord.gg"], label: "Discord", color: "#5865f2", svg: `<svg viewBox="0 0 24 24" width="19" height="19" fill="#fff"><path d="M20 5.5A17 17 0 0015.7 4l-.3.6a13 13 0 013.8 1.6A15 15 0 004.6 6.2 13 13 0 018.4 4.6L8 4a17 17 0 00-4.3 1.5C1.7 9 1.1 12.4 1.3 15.7A16 16 0 006.1 18l.8-1.2a10 10 0 01-1.6-.8l.4-.3a12 12 0 0012.6 0l.4.3c-.5.3-1 .6-1.6.8l.8 1.2a16 16 0 004.8-2.3c.4-4-.6-7.3-2.7-10.2zM8.7 13.9c-.8 0-1.4-.7-1.4-1.6s.6-1.6 1.4-1.6c.8 0 1.5.7 1.4 1.6 0 .9-.6 1.6-1.4 1.6zm6.6 0c-.8 0-1.4-.7-1.4-1.6s.6-1.6 1.4-1.6c.8 0 1.4.7 1.4 1.6 0 .9-.6 1.6-1.4 1.6z"/></svg>` },
-    { match: "youtube.com", label: "YouTube", color: "#ff0000", svg: `<svg viewBox="0 0 24 24" width="19" height="19" fill="#fff"><path d="M23 12s0-3.6-.5-5.3c-.2-1-1-1.7-2-1.9C18.7 4.3 12 4.3 12 4.3s-6.7 0-8.5.5c-1 .2-1.8.9-2 1.9C1 8.4 1 12 1 12s0 3.6.5 5.3c.2 1 1 1.7 2 1.9 1.8.5 8.5.5 8.5.5s6.7 0 8.5-.5c1-.2 1.8-.9 2-1.9.5-1.7.5-5.3.5-5.3zM9.8 15.5v-7l6 3.5-6 3.5z"/></svg>` },
-    { match: "tiktok.com", label: "TikTok", color: "#000", svg: `<svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M16.6 5.8a4.3 4.3 0 01-3-3.8h-3v13.7a2.6 2.6 0 11-1.8-2.5v-3.1a5.7 5.7 0 105 5.6V9.4a7.3 7.3 0 004.3 1.4V7.7a4.3 4.3 0 01-1.5-1.9z"/></svg>` },
-    { match: "github.com", label: "GitHub", color: "#181717", svg: `<svg viewBox="0 0 24 24" width="19" height="19" fill="#fff"><path d="M12 2a10 10 0 00-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.3-3.4-1.3-.4-1.2-1-1.5-1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.7.4-1.1.6-1.3-2.2-.3-4.6-1.1-4.6-4.9 0-1.1.4-2 1-2.6-.1-.3-.5-1.4.1-2.8 0 0 .8-.3 2.7 1a9.4 9.4 0 015 0c1.9-1.3 2.7-1 2.7-1 .6 1.4.2 2.5.1 2.8.6.6 1 1.5 1 2.6 0 3.8-2.4 4.6-4.6 4.9.4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10 10 0 0012 2z"/></svg>` }
-  ];
-  for (const p of PLATFORMS) {
-    const matches = Array.isArray(p.match) ? p.match : [p.match];
-    if (matches.some((m) => host === m || host.endsWith("." + m))) {
-      return { label: p.label, color: p.color, svg: p.svg };
-    }
-  }
-  return { label: "Link", color: "var(--sky-500)", svg: ICON_GENERIC };
+  return {
+    label: host || "Link",
+    favicon: `https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(host)}`
+  };
 }

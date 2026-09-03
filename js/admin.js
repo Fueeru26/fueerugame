@@ -3360,7 +3360,7 @@ function addFooterSocialRow(url) {
   const row = document.createElement("div");
   row.className = "social-link-row";
   row.innerHTML = `
-    <input type="text" class="info-text-input social-link-url" placeholder="https://facebook.com/namamu" value="${escapeHtmlAdmin(url || "")}" style="flex:1;">
+    <input type="text" class="info-text-input social-link-url" placeholder="https://namawebsite.com" value="${escapeHtmlAdmin(url || "")}" style="flex:1;">
     <button type="button" class="btn-remove-social" aria-label="Hapus link">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>`;

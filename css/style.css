@@ -1407,10 +1407,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
+  background: var(--surface);
+  border: 1.5px solid var(--card-border-color);
   box-shadow: var(--shadow-card);
-  transition: transform .15s ease;
+  transition: transform .15s ease, border-color .15s ease;
+  overflow: hidden;
 }
-.foot-social-icon:hover { transform: translateY(-2px); }
+.foot-social-icon:hover { transform: translateY(-2px); border-color: var(--sky-300); }
+.foot-social-icon img { width: 20px; height: 20px; object-fit: contain; display: block; }
 
 /* ---------------- Generic page / card ---------------- */
 .page-card {
