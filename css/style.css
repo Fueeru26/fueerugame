@@ -2445,7 +2445,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
     justify-content: center;
     gap: 0;
   }
-  .feature-card { flex: 0 0 auto; width: min(640px, 64%); position: relative; z-index: 2; }
+  .feature-card { flex: 0 0 auto; width: min(420px, 36%); position: relative; z-index: 2; }
   .feature-side {
     display: block;
     flex: 1 1 auto;
@@ -2466,8 +2466,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   }
   .feature-side:hover { opacity: .8; filter: blur(0) saturate(1); }
   .feature-side img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .feature-side-prev { margin-right: -46px; }
-  .feature-side-next { margin-left: -46px; }
+  .feature-side-prev { margin-right: -24px; }
+  .feature-side-next { margin-left: -24px; }
   .feature-arrow.prev { left: -18px; }
   .feature-arrow.next { right: -18px; }
 }
