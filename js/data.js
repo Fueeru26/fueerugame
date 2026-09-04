@@ -203,9 +203,14 @@ async function getPopularPosts(max) {
 }
 
 async function getTopGenres(max) {
-  const genres = await getAllGenres();
-  const withCount = [];
-  for (const g of genres) withCount.push({ genre: g, count: await countPostsByGenre(g) });
+  // Dulu: getAllGenres() (1x fetch semua post) lalu countPostsByGenre(g)
+  // per genre (fetch ULANG semua post lagi, untuk SETIAP genre) — pola
+  // N+1 yang bikin lambat kalau genre-nya banyak. Sekarang cukup 1x
+  // fetch, hitung semuanya dari situ.
+  const posts = await getPublishedPosts();
+  const counts = {};
+  posts.forEach((p) => (p.genres || []).forEach((g) => { counts[g] = (counts[g] || 0) + 1; }));
+  const withCount = Object.keys(counts).map((g) => ({ genre: g, count: counts[g] }));
   for (let i = withCount.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [withCount[i], withCount[j]] = [withCount[j], withCount[i]];
