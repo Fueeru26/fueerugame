@@ -322,16 +322,16 @@ function initChrome() {
     buildPublicSelect(filterBahasaField, {
       placeholder: "Semua Bahasa",
       options: [{ value: "", label: "Semua Bahasa" }].concat(
-        (typeof BAHASA_LIST !== "undefined" ? BAHASA_LIST : ["Bahasa Indonesia", "Indonesia & English"]).map((v) => ({ value: v, label: v }))
+        (typeof BAHASA_LIST !== "undefined" ? BAHASA_LIST : ["Indonesia", "English"]).map((v) => ({ value: v, label: v }))
       ),
       onChange: (v) => { filterState.bahasa = v; },
     });
   }
   if (filterJenisField) {
     buildPublicSelect(filterJenisField, {
-      placeholder: "Semua Jenis",
-      options: [{ value: "", label: "Semua Jenis" }].concat(
-        (typeof JENIS_LIST !== "undefined" ? JENIS_LIST : ["RPGM", "VN"]).map((v) => ({ value: v, label: v }))
+      placeholder: "Semua Engine",
+      options: [{ value: "", label: "Semua Engine" }].concat(
+        (typeof JENIS_LIST !== "undefined" ? JENIS_LIST : ["RPGM", "TyranoBuilder"]).map((v) => ({ value: v, label: v }))
       ),
       onChange: (v) => { filterState.jenis = v; },
     });
@@ -356,7 +356,7 @@ function initChrome() {
       });
       if (filterPlatformField) filterPlatformField.querySelector(".custom-select-label").textContent = "Semua Platform";
       if (filterBahasaField) filterBahasaField.querySelector(".custom-select-label").textContent = "Semua Bahasa";
-      if (filterJenisField) filterJenisField.querySelector(".custom-select-label").textContent = "Semua Jenis";
+      if (filterJenisField) filterJenisField.querySelector(".custom-select-label").textContent = "Semua Engine";
       if (genreSelectApi) genreSelectApi.syncLabel();
     });
   }
@@ -633,9 +633,9 @@ function bahasaIconSvg() {
 function metaRowInnerHtml(p) {
   return `
     <span class="meta-date">${calendarIconSvg()}${escapeHtml(formatDate(p.date))}</span>
-    <span class="pill">${jenisIconSvg()}${escapeHtml(p.jenis)}</span>
+    <span class="pill">${jenisIconSvg()}${escapeHtml(normalizeJenis(p.jenis))}</span>
     ${(p.platform || []).map((t) => `<span class="pill">${platformIconSvg(t)}${escapeHtml(t)}</span>`).join("")}
-    ${p.bahasa ? `<span class="pill">${bahasaIconSvg()}${escapeHtml(p.bahasa)}</span>` : ""}`;
+    ${p.bahasa ? `<span class="pill">${bahasaIconSvg()}${escapeHtml(normalizeBahasa(p.bahasa))}</span>` : ""}`;
 }
 
 /** Potong teks (mis. judul) supaya pas persis di tinggi box-nya (elemen
@@ -766,6 +766,22 @@ function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str == null ? "" : String(str);
   return div.innerHTML;
+}
+
+/** Tampilan fallback kalau pengambilan data awal 1 halaman (mis.
+ * getPublishedPosts()) gagal/error — supaya halaman tidak diam-diam
+ * jadi kosong (cuma header/footer/navigasi doang tanpa penjelasan),
+ * ada pesan + tombol muat ulang. Dipakai lewat try/catch di script
+ * masing-masing halaman (index, list, search, category). */
+function renderDataLoadError(containerEl) {
+  if (!containerEl) return;
+  containerEl.innerHTML = `
+    <div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16.5" x2="12.01" y2="16.5"/></svg>
+      <h3>Gagal memuat data</h3>
+      <p>Terjadi masalah saat mengambil data dari server. Coba muat ulang halaman.</p>
+      <button type="button" class="btn-filter-apply" style="margin-top:10px;" onclick="window.location.reload()">Muat Ulang</button>
+    </div>`;
 }
 
 /* =========================================================
@@ -1200,7 +1216,7 @@ function openShareModal(post) {
   const title = post.title;
   const text = `${title} — Fueeru Game`;
   const platform = post.platform || [];
-  const metaText = [platform.join(", "), post.bahasa, post.jenis].filter(Boolean).join(" • ");
+  const metaText = [platform.join(", "), normalizeBahasa(post.bahasa), normalizeJenis(post.jenis)].filter(Boolean).join(" • ");
 
   const backdrop = document.createElement("div");
   backdrop.className = "share-modal-backdrop";

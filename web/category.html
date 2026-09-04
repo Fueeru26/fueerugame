@@ -10,7 +10,7 @@
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#2fa8e0">
 <link rel="apple-touch-icon" href="../webpictures/icon-192.png">
-<link rel="stylesheet" href="../css/style.css?v=20260903r5">
+<link rel="stylesheet" href="../css/style.css?v=20260904r1">
 
 </head>
 <body>
@@ -86,7 +86,7 @@
           <label>Bahasa</label>
         </div>
         <div class="filter-field" id="filterJenisField">
-          <label>Jenis</label>
+          <label>Engine</label>
         </div>      </div>
       <div class="filter-actions">
         <button type="button" class="btn-filter-reset" id="btnResetFilter">Reset</button>
@@ -213,7 +213,7 @@
 
 <script>window.ASSET_BASE = "../";</script>
 <script src="../js/data.js"></script>
-<script src="../js/main.js?v=20260903r5"></script>
+<script src="../js/main.js?v=20260904r1"></script>
 <script src="../js/agegate.js"></script>
 <script>
 (async function () {
@@ -223,94 +223,93 @@
   const jenisParam = params.get("jenis");
   const genreParam = params.get("genre");
   const catContent = document.getElementById("catContent");
-  const allPosts = await getPublishedPosts();
 
-  async function renderOverview() {
-    document.title = "Kategori — Fueeru Game";
-    const genres = await getAllGenres();
-    const genreCounts = {};
-    for (const g of genres) genreCounts[g] = await countPostsByGenre(g);
+  try {
+    const allPosts = await getPublishedPosts();
 
-    catContent.innerHTML = `
-      <div class="section-head"><h2>Platform</h2></div>
-      <div class="jenis-grid">
-        ${PLATFORM_TAGS.map((t) => `
-          <a class="category-card" href="category.html?platform=${encodeURIComponent(t)}">${escapeHtml(t)}</a>
-        `).join("")}
-      </div>
+    async function renderOverview() {
+      document.title = "Kategori — Fueeru Game";
+      const genres = await getAllGenres();
+      const genreCounts = {};
+      for (const g of genres) genreCounts[g] = await countPostsByGenre(g);
 
-      <div class="section-head" style="margin-top:36px;"><h2>Bahasa</h2></div>
-      <div class="jenis-grid">
-        ${BAHASA_LIST.map((b) => `
-          <a class="category-card" href="category.html?bahasa=${encodeURIComponent(b)}">${escapeHtml(b)}</a>
-        `).join("")}
-      </div>
+      catContent.innerHTML = `
+        <div class="section-head"><h2>Platform</h2></div>
+        <div class="genre-tag-list">
+          ${PLATFORM_TAGS.map((t) => `<a class="genre-tag" href="category.html?platform=${encodeURIComponent(t)}">${escapeHtml(t)}</a>`).join("")}
+        </div>
 
-      <div class="section-head" style="margin-top:36px;"><h2>Jenis</h2></div>
-      <div class="jenis-grid">
-        ${JENIS_LIST.map((j) => `
-          <a class="category-card" href="category.html?jenis=${encodeURIComponent(j)}">${escapeHtml(j)}</a>
-        `).join("")}
-      </div>
+        <div class="section-head" style="margin-top:36px;"><h2>Bahasa</h2></div>
+        <div class="genre-tag-list">
+          ${BAHASA_LIST.map((b) => `<a class="genre-tag" href="category.html?bahasa=${encodeURIComponent(b)}">${escapeHtml(b)}</a>`).join("")}
+        </div>
 
-      <div class="section-head" style="margin-top:36px;"><h2>Genre</h2></div>
-      <div class="genre-tag-list" id="genreTagList"></div>
-    `;
+        <div class="section-head" style="margin-top:36px;"><h2>Engine</h2></div>
+        <div class="genre-tag-list">
+          ${JENIS_LIST.map((j) => `<a class="genre-tag" href="category.html?jenis=${encodeURIComponent(j)}">${escapeHtml(j)}</a>`).join("")}
+        </div>
 
-    const genreListEl = document.getElementById("genreTagList");
-    if (genres.length === 0) {
-      genreListEl.innerHTML = `<p style="color:var(--ink-soft);font-size:.9rem;">Belum ada genre. Genre akan muncul otomatis begitu ada postingan yang memakainya.</p>`;
-    } else {
-      genreListEl.innerHTML = genres
-        .map((g) => `<a class="genre-tag" href="category.html?genre=${encodeURIComponent(g)}">${escapeHtml(g)} <span class="count">(${genreCounts[g] || 0})</span></a>`)
-        .join("");
-    }
-  }
+        <div class="section-head" style="margin-top:36px;"><h2>Genre</h2></div>
+        <div class="genre-tag-list" id="genreTagList"></div>
+      `;
 
-  function renderFilteredList(heading, filterFn) {
-    document.title = heading + " — Fueeru Game";
-    const filtered = allPosts.filter(filterFn).sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    catContent.innerHTML = `
-      ${sectionHeadWithViewToggleHtml(`<h2>${escapeHtml(heading)}</h2>`, "btnViewToggleCat")}
-      <div class="post-items" id="catPostList"></div>
-      <div class="pagination" id="catPagination"></div>`;
-
-    wireViewToggle("btnViewToggleCat", "catPostList");
-    let currentPage = 1;
-
-    function renderCatPage(page) {
-      currentPage = page;
-      const PAGE_SIZE = getPostPageSize();
-      const start = (page - 1) * PAGE_SIZE;
-      const pagePosts = filtered.slice(start, start + PAGE_SIZE);
-      const listEl = document.getElementById("catPostList");
-      if (filtered.length === 0) {
-        listEl.innerHTML = `
-          <div class="empty-state">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-            <h3>Belum ada postingan</h3>
-            <p>Belum ada game yang cocok. Coba pilihan lain.</p>
-          </div>`;
+      const genreListEl = document.getElementById("genreTagList");
+      if (genres.length === 0) {
+        genreListEl.innerHTML = `<p style="color:var(--ink-soft);font-size:.9rem;">Belum ada genre. Genre akan muncul otomatis begitu ada postingan yang memakainya.</p>`;
       } else {
-        listEl.innerHTML = pagePosts.map((p) => postItemHtml(p)).join("");
-        applyTitleClamp(listEl, ".pi-title");
+        genreListEl.innerHTML = genres
+          .map((g) => `<a class="genre-tag" href="category.html?genre=${encodeURIComponent(g)}">${escapeHtml(g)} <span class="count">(${genreCounts[g] || 0})</span></a>`)
+          .join("");
       }
-      renderPagination("catPagination", filtered.length, PAGE_SIZE, currentPage, renderCatPage);
     }
-    renderCatPage(1);
-  }
 
-  if (platformParam) {
-    renderFilteredList("Platform: " + platformParam, (p) => (p.platform || []).some((t) => t.toLowerCase() === platformParam.toLowerCase()));
-  } else if (bahasaParam) {
-    renderFilteredList("Bahasa: " + bahasaParam, (p) => (p.bahasa || "").toLowerCase() === bahasaParam.toLowerCase());
-  } else if (jenisParam) {
-    renderFilteredList("Jenis: " + jenisParam, (p) => (p.jenis || "").toLowerCase() === jenisParam.toLowerCase());
-  } else if (genreParam) {
-    renderFilteredList("Genre: " + genreParam, (p) => (p.genres || []).some((g) => g.toLowerCase() === genreParam.toLowerCase()));
-  } else {
-    renderOverview();
+    function renderFilteredList(heading, filterFn) {
+      document.title = heading + " — Fueeru Game";
+      const filtered = allPosts.filter(filterFn).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      catContent.innerHTML = `
+        ${sectionHeadWithViewToggleHtml(`<h2>${escapeHtml(heading)}</h2>`, "btnViewToggleCat")}
+        <div class="post-items" id="catPostList"></div>
+        <div class="pagination" id="catPagination"></div>`;
+
+      wireViewToggle("btnViewToggleCat", "catPostList");
+      let currentPage = 1;
+
+      function renderCatPage(page) {
+        currentPage = page;
+        const PAGE_SIZE = getPostPageSize();
+        const start = (page - 1) * PAGE_SIZE;
+        const pagePosts = filtered.slice(start, start + PAGE_SIZE);
+        const listEl = document.getElementById("catPostList");
+        if (filtered.length === 0) {
+          listEl.innerHTML = `
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              <h3>Belum ada postingan</h3>
+              <p>Belum ada game yang cocok. Coba pilihan lain.</p>
+            </div>`;
+        } else {
+          listEl.innerHTML = pagePosts.map((p) => postItemHtml(p)).join("");
+          applyTitleClamp(listEl, ".pi-title");
+        }
+        renderPagination("catPagination", filtered.length, PAGE_SIZE, currentPage, renderCatPage);
+      }
+      renderCatPage(1);
+    }
+
+    if (platformParam) {
+      renderFilteredList("Platform: " + platformParam, (p) => (p.platform || []).some((t) => t.toLowerCase() === platformParam.toLowerCase()));
+    } else if (bahasaParam) {
+      renderFilteredList("Bahasa: " + bahasaParam, (p) => bahasaMatches(p.bahasa, bahasaParam));
+    } else if (jenisParam) {
+      renderFilteredList("Engine: " + jenisParam, (p) => normalizeJenis(p.jenis || "").toLowerCase() === normalizeJenis(jenisParam).toLowerCase());
+    } else if (genreParam) {
+      renderFilteredList("Genre: " + genreParam, (p) => (p.genres || []).some((g) => g.toLowerCase() === genreParam.toLowerCase()));
+    } else {
+      renderOverview();
+    }
+  } catch (err) {
+    renderDataLoadError(catContent);
   }
 })();
 </script>

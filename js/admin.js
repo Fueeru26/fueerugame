@@ -881,7 +881,7 @@ async function renderPostsList() {
       <img src="${resolveAdminAsset(p.thumbnail)}" alt="" ${adminThumbFallbackAttr()}>
       <div class="api-body">
         <div class="api-title">${escapeHtmlAdmin(p.title)}</div>
-        <div class="api-meta">${escapeHtmlAdmin(p.jenis)} • ${
+        <div class="api-meta">${escapeHtmlAdmin(normalizeJenis(p.jenis))} • ${
         p.published === false
           ? '<span class="draft-label">Draft</span>'
           : p.scheduledAt && new Date(p.scheduledAt).getTime() > Date.now()
@@ -941,7 +941,7 @@ function populatePlatformSelect() {
   fieldPlatform.innerHTML = PLATFORM_OPTIONS.map((o) => `<option value="${o}">${o}</option>`).join("");
 }
 function populateBahasaSelect() {
-  fieldBahasa.innerHTML = BAHASA_LIST.map((b) => `<option value="${b}">${b}</option>`).join("");
+  fieldBahasa.innerHTML = BAHASA_OPTIONS.map((b) => `<option value="${b}">${b}</option>`).join("");
 }
 function populateJenisSelect() {
   fieldJenis.innerHTML = JENIS_LIST.map((j) => `<option value="${j}">${j}</option>`).join("");
@@ -1154,7 +1154,7 @@ function resetForm() {
   fieldPlatform.value = PLATFORM_OPTIONS[0];
   refreshCustomSelect(fieldPlatform);
   populateBahasaSelect();
-  fieldBahasa.value = BAHASA_LIST[0];
+  fieldBahasa.value = BAHASA_OPTIONS[0];
   refreshCustomSelect(fieldBahasa);
   populateJenisSelect();
   fieldJenis.value = JENIS_LIST[0];
@@ -1193,10 +1193,10 @@ async function openEditForm(id) {
   fieldPlatform.value = platformTagsToOption(post.platform);
   refreshCustomSelect(fieldPlatform);
   populateBahasaSelect();
-  fieldBahasa.value = post.bahasa || BAHASA_LIST[0];
+  fieldBahasa.value = normalizeBahasa(post.bahasa) || BAHASA_OPTIONS[0];
   refreshCustomSelect(fieldBahasa);
   populateJenisSelect();
-  fieldJenis.value = post.jenis;
+  fieldJenis.value = normalizeJenis(post.jenis);
   refreshCustomSelect(fieldJenis);
   currentGenres = (post.genres || []).slice();
   renderGenreChips();
@@ -2711,7 +2711,7 @@ async function renderReportsList() {
 const viewReportModalBackdrop = document.getElementById("viewReportModalBackdrop");
 const viewReportModalBody = document.getElementById("viewReportModalBody");
 const viewReportModalTitle = document.getElementById("viewReportModalTitle");
-const ENGINE_LABELS = { "tidak-tahu": "Tidak Tahu", rpgm: "RPGM", tyrano: "Tyrano Builder" };
+const ENGINE_LABELS = { "tidak-tahu": "Tidak Tahu", rpgm: "RPGM", tyrano: "TyranoBuilder" };
 
 async function openViewReportModal(id) {
   const reports = await loadReports();
@@ -4455,7 +4455,8 @@ async function renderInfoPostinganHalaman() {
   const jenisCounts = {};
   JENIS_LIST.forEach((j) => (jenisCounts[j] = 0));
   posts.forEach((p) => {
-    if (jenisCounts[p.jenis] !== undefined) jenisCounts[p.jenis]++;
+    const j = normalizeJenis(p.jenis);
+    if (jenisCounts[j] !== undefined) jenisCounts[j]++;
   });
   renderInfoBarList(
     document.getElementById("listPostsByJenis"),
@@ -4806,7 +4807,7 @@ async function renderPostViewsModal() {
       <img src="${resolveAdminAsset(p.thumbnail)}" alt="" ${adminThumbFallbackAttr()}>
       <div class="pvi-body">
         <div class="pvi-title">${escapeHtmlAdmin(p.title)}</div>
-        <div class="pvi-meta">${escapeHtmlAdmin(p.jenis)} • ${
+        <div class="pvi-meta">${escapeHtmlAdmin(normalizeJenis(p.jenis))} • ${
         p.published === false ? '<span class="draft-label">Draft</span>' : escapeHtmlAdmin(formatDate(p.date))
       }</div>
       </div>

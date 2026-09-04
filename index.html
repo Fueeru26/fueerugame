@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2fa8e0">
 <link rel="apple-touch-icon" href="webpictures/icon-192.png">
-<link rel="stylesheet" href="css/style.css?v=20260903r5">
+<link rel="stylesheet" href="css/style.css?v=20260904r1">
 
 </head>
 <body>
@@ -86,7 +86,7 @@
           <label>Bahasa</label>
         </div>
         <div class="filter-field" id="filterJenisField">
-          <label>Jenis</label>
+          <label>Engine</label>
         </div>      </div>
       <div class="filter-actions">
         <button type="button" class="btn-filter-reset" id="btnResetFilter">Reset</button>
@@ -239,39 +239,44 @@
 </footer>
 
 <script>window.SITE_BASE = "web/";</script>
-<script src="js/data.js?v=20260903r5"></script>
-<script src="js/main.js?v=20260903r5"></script>
+<script src="js/data.js?v=20260904r1"></script>
+<script src="js/main.js?v=20260904r1"></script>
 <script src="js/agegate.js"></script>
 <script>
 (async function () {
   let currentPage = 1;
+  const updateList = document.getElementById("updateList");
 
-  const allPosts = await getPublishedPosts();
+  try {
+    const allPosts = await getPublishedPosts();
 
-  // Rekomendasi: 5 post acak, kartu tunggal landscape, geser otomatis tiap 5 detik
-  const randomPosts = shuffleArray(allPosts).slice(0, 5);
-  initFeatureCarousel(randomPosts);
+    // Rekomendasi: 5 post acak, kartu tunggal landscape, geser otomatis tiap 5 detik
+    const randomPosts = shuffleArray(allPosts).slice(0, 5);
+    initFeatureCarousel(randomPosts);
 
-  // Update Terbaru: terbaru dulu, dengan pagination + toggle List/Grid
-  // (10 post/halaman di mobile, 20 post/halaman di desktop)
-  const sortedPosts = allPosts.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
-  wireViewToggle("btnViewToggleUpdate", "updateList");
+    // Update Terbaru: terbaru dulu, dengan pagination + toggle List/Grid
+    // (10 post/halaman di mobile, 20 post/halaman di desktop)
+    const sortedPosts = allPosts.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+    wireViewToggle("btnViewToggleUpdate", "updateList");
 
-  function renderUpdatePage(page) {
-    currentPage = page;
-    const PAGE_SIZE = getPostPageSize();
-    const start = (page - 1) * PAGE_SIZE;
-    const pagePosts = sortedPosts.slice(start, start + PAGE_SIZE);
-    const list = document.getElementById("updateList");
-    if (pagePosts.length === 0) {
-      list.innerHTML = `<div class="empty-state"><h3>Belum ada postingan</h3><p>Silakan tambahkan postingan lewat Admin Panel.</p></div>`;
-    } else {
-      list.innerHTML = pagePosts.map((p) => postItemHtml(p)).join("");
-      applyTitleClamp(list, ".pi-title");
+    function renderUpdatePage(page) {
+      currentPage = page;
+      const PAGE_SIZE = getPostPageSize();
+      const start = (page - 1) * PAGE_SIZE;
+      const pagePosts = sortedPosts.slice(start, start + PAGE_SIZE);
+      const list = document.getElementById("updateList");
+      if (pagePosts.length === 0) {
+        list.innerHTML = `<div class="empty-state"><h3>Belum ada postingan</h3><p>Silakan tambahkan postingan lewat Admin Panel.</p></div>`;
+      } else {
+        list.innerHTML = pagePosts.map((p) => postItemHtml(p)).join("");
+        applyTitleClamp(list, ".pi-title");
+      }
+      renderPagination("updatePagination", sortedPosts.length, PAGE_SIZE, currentPage, renderUpdatePage);
     }
-    renderPagination("updatePagination", sortedPosts.length, PAGE_SIZE, currentPage, renderUpdatePage);
+    renderUpdatePage(1);
+  } catch (err) {
+    renderDataLoadError(updateList);
   }
-  renderUpdatePage(1);
 })();
 </script>
 

@@ -16,10 +16,15 @@
 const ADMIN_PW_SESSION_KEY = "fueeru_admin_session_password";
 
 /* Jenis game bersifat tetap (2 opsi). */
-const JENIS_LIST = ["RPGM", "VN"];
+const JENIS_LIST = ["RPGM", "TyranoBuilder"];
 const PLATFORM_OPTIONS = ["Android", "PC", "Keduanya"];
 const PLATFORM_TAGS = ["Android", "PC"];
-const BAHASA_LIST = ["Bahasa Indonesia", "Indonesia & English"];
+/* BAHASA_LIST = tag publik yang bisa di-filter/dibrowse (dipakai di
+   halaman Kategori, filter pencarian, dsb). BAHASA_OPTIONS dipakai di
+   form Tambah/Edit Postingan Admin Panel — ada tambahan "Keduanya"
+   (sama seperti PLATFORM_OPTIONS vs PLATFORM_TAGS di atas). */
+const BAHASA_LIST = ["Indonesia", "English"];
+const BAHASA_OPTIONS = ["Indonesia", "English", "Keduanya"];
 
 function platformOptionToTags(option) {
   if (option === "Keduanya") return PLATFORM_TAGS.slice();
@@ -32,6 +37,34 @@ function platformTagsToOption(tags) {
   if (hasAndroid && hasPC) return "Keduanya";
   if (hasPC) return "PC";
   return "Android";
+}
+
+/** Normalisasi nilai "jenis" postingan LAMA ke label baru — supaya
+ * postingan lama yang masih tersimpan dengan nilai lama ("VN", sebelum
+ * di-rename jadi "TyranoBuilder") tetap match & tampil benar tanpa
+ * perlu di-edit ulang satu-satu. */
+function normalizeJenis(j) {
+  if (j === "VN") return "TyranoBuilder";
+  return j;
+}
+
+/** Normalisasi nilai "bahasa" postingan LAMA ke label baru — supaya
+ * postingan lama ("Bahasa Indonesia" / "Indonesia & English", sebelum
+ * di-rename) tetap match & tampil benar tanpa perlu di-edit ulang. */
+function normalizeBahasa(b) {
+  if (b === "Bahasa Indonesia") return "Indonesia";
+  if (b === "Indonesia & English") return "English";
+  return b;
+}
+
+/** Cek apakah bahasa 1 postingan cocok dengan 1 nilai filter bahasa —
+ * postingan dengan bahasa "Keduanya" otomatis dianggap cocok dengan
+ * filter bahasa apa pun (Indonesia maupun English). */
+function bahasaMatches(postBahasa, filterValue) {
+  if (!filterValue) return true;
+  const b = normalizeBahasa(postBahasa || "");
+  const f = normalizeBahasa(filterValue);
+  return b === "Keduanya" || b.toLowerCase() === f.toLowerCase();
 }
 
 /* ---------------- API helper ---------------- */
@@ -122,7 +155,7 @@ async function getRelatedPosts(post, max) {
   const all = await getPublishedPosts();
   const candidates = all.filter((p) => {
     if (p.id === post.id) return false;
-    if (p.jenis !== post.jenis) return false;
+    if (normalizeJenis(p.jenis) !== normalizeJenis(post.jenis)) return false;
     const pGenres = (p.genres || []).map((g) => g.toLowerCase());
     return pGenres.some((g) => postGenres.includes(g));
   });
@@ -156,7 +189,7 @@ async function countPostsByPlatform(tag) {
 }
 async function countPostsByBahasa(bahasa) {
   const posts = await getPublishedPosts();
-  return posts.filter((p) => p.bahasa === bahasa).length;
+  return posts.filter((p) => bahasaMatches(p.bahasa, bahasa)).length;
 }
 
 /** [PUBLIK] Postingan paling populer berdasarkan total views di server
